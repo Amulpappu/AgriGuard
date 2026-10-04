@@ -5,6 +5,6 @@
   "outputDirectory": "frontend/.next",
   "installCommand": "cd frontend && npm install",
   "env": {
-    "NEXT_PUBLIC_SUPABASE_URL": "https://hfvdfoxsmmwhhlanumcg.supabase.co"
+    "NEXT_PUBLIC_SUPABASE_URL": "https://todwosflbwzuizvedouy.supabase.co"
   }
 }

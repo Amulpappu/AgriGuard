@@ -2,6 +2,6 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "nextjs",
   "env": {
-    "NEXT_PUBLIC_SUPABASE_URL": "https://hfvdfoxsmmwhhlanumcg.supabase.co"
+    "NEXT_PUBLIC_SUPABASE_URL": "https://todwosflbwzuizvedouy.supabase.co"
   }
 }

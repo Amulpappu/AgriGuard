@@ -797,9 +797,9 @@ export default function AdminDatabasePage() {
             <div>
               <div className="flex items-center gap-2">
                 <Cloud size={20} className="text-emerald-400" />
-                <h2 className="text-base font-bold text-white">Amulpappu&apos;s Project (Supabase)</h2>
+                <h2 className="text-base font-bold text-white">AgriGuard Project (Supabase)</h2>
                 <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-mono">
-                  Ref: hfvdfoxsmmwhhlanumcg
+                  Ref: todwosflbwzuizvedouy
                 </span>
               </div>
               <p className="text-xs text-gray-400 mt-1">
@@ -809,7 +809,7 @@ export default function AdminDatabasePage() {
             
             <div className="flex flex-wrap items-center gap-2">
               <a
-                href="https://supabase.com/dashboard/project/hfvdfoxsmmwhhlanumcg/sql/new"
+                href="https://supabase.com/dashboard/project/todwosflbwzuizvedouy/sql/new"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 text-xs font-semibold border border-emerald-500/30 transition"
@@ -819,7 +819,7 @@ export default function AdminDatabasePage() {
                 <ExternalLink size={11} />
               </a>
               <a
-                href="https://supabase.com/dashboard/project/hfvdfoxsmmwhhlanumcg/settings/database"
+                href="https://supabase.com/dashboard/project/todwosflbwzuizvedouy/settings/database"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-gray-200 text-xs font-medium border border-white/10 transition"
@@ -863,7 +863,7 @@ export default function AdminDatabasePage() {
               <div className="flex items-center justify-between">
                 <span className="font-bold text-emerald-400">Step 1: SQL Migration</span>
                 <a 
-                  href="https://supabase.com/dashboard/project/hfvdfoxsmmwhhlanumcg/sql/new"
+                  href="https://supabase.com/dashboard/project/todwosflbwzuizvedouy/sql/new"
                   target="_blank"
                   rel="noreferrer"
                   className="text-[10px] text-emerald-400 underline flex items-center gap-0.5"
@@ -879,7 +879,7 @@ export default function AdminDatabasePage() {
               <div className="flex items-center justify-between">
                 <span className="font-bold text-emerald-400">Step 2: Get Connection URI</span>
                 <a 
-                  href="https://supabase.com/dashboard/project/hfvdfoxsmmwhhlanumcg/settings/database"
+                  href="https://supabase.com/dashboard/project/todwosflbwzuizvedouy/settings/database"
                   target="_blank"
                   rel="noreferrer"
                   className="text-[10px] text-emerald-400 underline flex items-center gap-0.5"
@@ -914,7 +914,7 @@ export default function AdminDatabasePage() {
             <div className="flex flex-col sm:flex-row gap-2">
               <input
                 type="text"
-                placeholder="postgresql://postgres:[YOUR-PASSWORD]@db.hfvdfoxsmmwhhlanumcg.supabase.co:5432/postgres"
+                placeholder="postgresql://postgres:[YOUR-PASSWORD]@db.todwosflbwzuizvedouy.supabase.co:5432/postgres"
                 value={supabaseUri}
                 onChange={(e) => setSupabaseUri(e.target.value)}
                 className="flex-1 px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-xs text-white placeholder-gray-500 font-mono outline-none focus:border-emerald-500"
