@@ -167,33 +167,40 @@ async function handleResponse<T>(res: Response): Promise<T> {
   return res.json();
 }
 
+const isPureCloudMode = () => {
+  if (typeof window === "undefined") return false;
+  return window.location.hostname.includes("vercel.app") && !process.env.NEXT_PUBLIC_API_URL;
+};
+
 // ─── Auth ────────────────────────────────────────────────────────────────────
 
 export async function login(email: string, password: string): Promise<TokenResponse> {
   const cleanEmail = email.trim().toLowerCase();
 
-  // 1. Try local/tunnel backend proxy first
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 3500);
-    const res = await fetch(`${getApiPrefix()}/auth/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: cleanEmail, password }),
-      signal: controller.signal,
-    });
-    clearTimeout(timeoutId);
-    if (res.ok) {
-      return await res.json();
+  // 1. Try local/tunnel backend proxy first if not pure cloud mode
+  if (!isPureCloudMode()) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3500);
+      const res = await fetch(`${getApiPrefix()}/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: cleanEmail, password }),
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+      if (res.ok) {
+        return await res.json();
+      }
+      const err = await res.json().catch(() => null);
+      if (err?.detail) {
+        const msg = typeof err.detail === "string" ? err.detail : err.detail?.message;
+        throw { code: "invalid_credentials", message: msg || "Invalid credentials." };
+      }
+    } catch (err: any) {
+      if (err?.code === "invalid_credentials") throw err;
+      // Backend offline / proxy timeout -> seamless fallback to Supabase Cloud Database!
     }
-    const err = await res.json().catch(() => null);
-    if (err?.detail) {
-      const msg = typeof err.detail === "string" ? err.detail : err.detail?.message;
-      throw { code: "invalid_credentials", message: msg || "Invalid credentials." };
-    }
-  } catch (err: any) {
-    if (err?.code === "invalid_credentials") throw err;
-    // Backend offline / proxy timeout -> seamless fallback to Supabase Cloud Database!
   }
 
   // 2. Direct Supabase Cloud Database verification
@@ -218,28 +225,30 @@ export async function login(email: string, password: string): Promise<TokenRespo
 export async function register(email: string, password: string, fullName?: string): Promise<TokenResponse> {
   const cleanEmail = email.trim().toLowerCase();
 
-  // 1. Try local/tunnel backend proxy first
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 3500);
-    const res = await fetch(`${getApiPrefix()}/auth/register`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: cleanEmail, password, full_name: fullName }),
-      signal: controller.signal,
-    });
-    clearTimeout(timeoutId);
-    if (res.ok) {
-      return await res.json();
+  // 1. Try local/tunnel backend proxy first if not pure cloud mode
+  if (!isPureCloudMode()) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3500);
+      const res = await fetch(`${getApiPrefix()}/auth/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: cleanEmail, password, full_name: fullName }),
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+      if (res.ok) {
+        return await res.json();
+      }
+      const err = await res.json().catch(() => null);
+      if (err?.detail) {
+        const msg = typeof err.detail === "string" ? err.detail : err.detail?.message;
+        throw { code: "register_error", message: msg || "Registration failed." };
+      }
+    } catch (err: any) {
+      if (err?.code === "register_error") throw err;
+      // Backend offline / proxy timeout -> seamless fallback to Supabase Cloud Database!
     }
-    const err = await res.json().catch(() => null);
-    if (err?.detail) {
-      const msg = typeof err.detail === "string" ? err.detail : err.detail?.message;
-      throw { code: "register_error", message: msg || "Registration failed." };
-    }
-  } catch (err: any) {
-    if (err?.code === "register_error") throw err;
-    // Backend offline / proxy timeout -> seamless fallback to Supabase Cloud Database!
   }
 
   // 2. Check if user already exists in Supabase
@@ -278,13 +287,15 @@ export async function register(email: string, password: string, fullName?: strin
 // ─── Crops ───────────────────────────────────────────────────────────────────
 
 export async function getCrops(): Promise<CropOut[]> {
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 3000);
-    const res = await fetch(`${getApiPrefix()}/crops`, { headers: authHeaders(), signal: controller.signal });
-    clearTimeout(timeoutId);
-    if (res.ok) return await res.json();
-  } catch {}
+  if (!isPureCloudMode()) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 2000);
+      const res = await fetch(`${getApiPrefix()}/crops`, { headers: authHeaders(), signal: controller.signal });
+      clearTimeout(timeoutId);
+      if (res.ok) return await res.json();
+    } catch {}
+  }
 
   // Fallback to live Supabase cloud catalog
   const { data } = await supabase.from("crops").select("id, slug, name_key, icon_emoji").order("slug");
@@ -365,13 +376,15 @@ export async function compareScans(a: string, b: string): Promise<CompareOut> {
 // ─── Dashboard ───────────────────────────────────────────────────────────────
 
 export async function getDashboardSummary(): Promise<DashboardSummary> {
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 3000);
-    const res = await fetch(`${getApiPrefix()}/dashboard/summary`, { headers: authHeaders(), signal: controller.signal });
-    clearTimeout(timeoutId);
-    if (res.ok) return await res.json();
-  } catch {}
+  if (!isPureCloudMode()) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 2000);
+      const res = await fetch(`${getApiPrefix()}/dashboard/summary`, { headers: authHeaders(), signal: controller.signal });
+      clearTimeout(timeoutId);
+      if (res.ok) return await res.json();
+    } catch {}
+  }
 
   // Fallback: Compute summary from live Supabase cloud scans
   const { data: scans } = await supabase.from("scans").select("*").order("created_at", { ascending: false });
@@ -417,13 +430,15 @@ export async function getAdvisory(diseaseId: string, lang = "en"): Promise<Advis
 // ─── Sensors ─────────────────────────────────────────────────────────────────
 
 export async function getSensorLatest(): Promise<SensorLatestOut> {
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 3000);
-    const res = await fetch(`${getApiPrefix()}/sensors/latest`, { headers: authHeaders(), signal: controller.signal });
-    clearTimeout(timeoutId);
-    if (res.ok) return await res.json();
-  } catch {}
+  if (!isPureCloudMode()) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 2000);
+      const res = await fetch(`${getApiPrefix()}/sensors/latest`, { headers: authHeaders(), signal: controller.signal });
+      clearTimeout(timeoutId);
+      if (res.ok) return await res.json();
+    } catch {}
+  }
 
   // Fallback to Supabase live IoT cloud readings
   const { data } = await supabase
