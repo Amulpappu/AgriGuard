@@ -476,12 +476,15 @@ CREATE INDEX IF NOT EXISTS idx_scans_user_id ON scans(user_id);
                 val_strs = []
                 for c in cols:
                     v = r[c]
-                    if v is None:
+                    boolean_cols = {"is_active", "is_healthy", "low_confidence", "crop_auto_detected"}
+                    if c in boolean_cols:
+                        val_strs.append("TRUE" if v in (1, True, "1", "true") else "FALSE")
+                    elif v is None:
                         val_strs.append("NULL")
-                    elif isinstance(v, (int, float)):
-                        val_strs.append(str(v))
                     elif isinstance(v, bool):
                         val_strs.append("TRUE" if v else "FALSE")
+                    elif isinstance(v, (int, float)):
+                        val_strs.append(str(v))
                     else:
                         v_str = str(v).replace("'", "''")
                         val_strs.append(f"'{v_str}'")
