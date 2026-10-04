@@ -1,8 +1,11 @@
 /** @type {import('next').NextConfig} */
-const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || process.env.BACKEND_API_URL || "http://127.0.0.1:8001";
+const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || process.env.BACKEND_API_URL;
 
 const nextConfig = {
   async rewrites() {
+    if (!backendUrl) {
+      return [];
+    }
     return [
       {
         source: "/api/v1/:path*",

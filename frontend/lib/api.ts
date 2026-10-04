@@ -169,7 +169,7 @@ async function handleResponse<T>(res: Response): Promise<T> {
 
 const isPureCloudMode = () => {
   if (typeof window === "undefined") return false;
-  return window.location.hostname.includes("vercel.app") && !process.env.NEXT_PUBLIC_API_URL;
+  return window.location.hostname.includes("vercel.app") || !process.env.NEXT_PUBLIC_API_URL;
 };
 
 // ─── Auth ────────────────────────────────────────────────────────────────────
@@ -437,7 +437,12 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
       created_at: s.created_at || new Date().toISOString(),
       image_url: s.image_path || "/agriguard_logo_4k.png",
     })) : [],
-    chart_data: [],
+    chart_data: scans ? scans.slice(0, 10).reverse().map((s: any) => ({
+      date: (s.created_at || new Date().toISOString()).slice(5, 10),
+      crop_slug: s.crop_slug || "crop",
+      affected_pct: s.affected_pct || (s.is_healthy ? 0 : 35),
+      status: s.is_healthy ? "healthy" : "affected",
+    })) : [],
   };
 }
 
