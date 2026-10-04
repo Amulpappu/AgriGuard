@@ -1,0 +1,119 @@
+{
+  "$schema": "https://tokens.studio/schema.json",
+  "name": "AgriGuard Master Design Tokens 2026",
+  "version": "2.4.0",
+  "color": {
+    "background": {
+      "base": {
+        "value": "#080D0B",
+        "type": "color",
+        "description": "Obsidian Deep Field - primary surface"
+      },
+      "card": {
+        "value": "#0D1612",
+        "type": "color",
+        "description": "Elevated card backdrop"
+      },
+      "cardElevated": {
+        "value": "#13221C",
+        "type": "color",
+        "description": "Interactive hover and selected card surface"
+      },
+      "subtle": {
+        "value": "rgba(255, 255, 255, 0.05)",
+        "type": "color"
+      }
+    },
+    "brand": {
+      "emerald": {
+        "value": "#10B981",
+        "type": "color",
+        "description": "Primary Brand Color"
+      },
+      "neonMint": {
+        "value": "#34D399",
+        "type": "color",
+        "description": "Accent glow and confirmed healthy indicator"
+      },
+      "forest": {
+        "value": "#059669",
+        "type": "color",
+        "description": "Gradient dark stop"
+      }
+    },
+    "feedback": {
+      "danger": {
+        "value": "#EF4444",
+        "type": "color",
+        "description": "Urgent disease alert / high severity"
+      },
+      "warning": {
+        "value": "#F59E0B",
+        "type": "color",
+        "description": "Mild damage / caution advisory"
+      },
+      "info": {
+        "value": "#06B6D4",
+        "type": "color",
+        "description": "Telemetry and sensor indicators"
+      }
+    },
+    "text": {
+      "primary": {
+        "value": "#FFFFFF",
+        "type": "color"
+      },
+      "secondary": {
+        "value": "#E5E7EB",
+        "type": "color"
+      },
+      "muted": {
+        "value": "#9CA3AF",
+        "type": "color"
+      },
+      "dim": {
+        "value": "#6B7280",
+        "type": "color"
+      }
+    }
+  },
+  "typography": {
+    "fontFamilies": {
+      "display": {
+        "value": "Outfit, sans-serif",
+        "type": "fontFamilies"
+      },
+      "body": {
+        "value": "Inter, sans-serif",
+        "type": "fontFamilies"
+      },
+      "mono": {
+        "value": "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+        "type": "fontFamilies"
+      }
+    },
+    "fontSizes": {
+      "xs": { "value": "11px", "type": "fontSizes" },
+      "sm": { "value": "13px", "type": "fontSizes" },
+      "base": { "value": "15px", "type": "fontSizes" },
+      "lg": { "value": "18px", "type": "fontSizes" },
+      "xl": { "value": "22px", "type": "fontSizes" },
+      "2xl": { "value": "28px", "type": "fontSizes" }
+    }
+  },
+  "radii": {
+    "sm": { "value": "6px", "type": "borderRadius" },
+    "md": { "value": "12px", "type": "borderRadius" },
+    "lg": { "value": "16px", "type": "borderRadius" },
+    "xl": { "value": "24px", "type": "borderRadius" },
+    "full": { "value": "9999px", "type": "borderRadius" }
+  },
+  "spacing": {
+    "1": { "value": "4px", "type": "spacing" },
+    "2": { "value": "8px", "type": "spacing" },
+    "3": { "value": "12px", "type": "spacing" },
+    "4": { "value": "16px", "type": "spacing" },
+    "6": { "value": "24px", "type": "spacing" },
+    "8": { "value": "32px", "type": "spacing" }
+  }
+}

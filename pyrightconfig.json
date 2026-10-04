@@ -1,0 +1,31 @@
+{
+  "pythonVersion": "3.11",
+  "pythonPlatform": "Windows",
+  "pythonPath": "C:\\Users\\lohit\\AppData\\Local\\Programs\\Python\\Python311\\python.exe",
+  "extraPaths": [
+    "backend",
+    "C:\\Users\\lohit\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages"
+  ],
+  "executionEnvironments": [
+    {
+      "root": "backend",
+      "extraPaths": [
+        ".",
+        "backend",
+        "C:\\Users\\lohit\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages"
+      ]
+    }
+  ],
+  "include": [
+    "backend"
+  ],
+  "exclude": [
+    "frontend",
+    "**/__pycache__",
+    "**/.venv",
+    "backend/iot"
+  ],
+  "reportMissingModuleSource": "none",
+  "reportMissingImports": "none",
+  "useLibraryCodeForTypes": true
+}

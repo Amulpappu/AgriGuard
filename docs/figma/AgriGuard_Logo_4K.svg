@@ -1,0 +1,123 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <!-- Background Gradient -->
+    <radialGradient id="bgGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#082015" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#040706" stop-opacity="1"/>
+    </radialGradient>
+
+    <!-- Shield Outline Gradient -->
+    <linearGradient id="shieldBorder" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#34D399"/>
+      <stop offset="50%" stop-color="#10B981"/>
+      <stop offset="100%" stop-color="#06B6D4"/>
+    </linearGradient>
+
+    <!-- Shield Fill Gradient -->
+    <linearGradient id="shieldFill" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#0F241C" stop-opacity="0.95"/>
+      <stop offset="100%" stop-color="#081410" stop-opacity="0.98"/>
+    </linearGradient>
+
+    <!-- Vibrant Leaf Gradient -->
+    <linearGradient id="leafGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6EE7B7"/>
+      <stop offset="40%" stop-color="#10B981"/>
+      <stop offset="100%" stop-color="#047857"/>
+    </linearGradient>
+
+    <!-- Secondary Leaf Accent -->
+    <linearGradient id="leafAccent" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#A7F3D0"/>
+      <stop offset="60%" stop-color="#34D399"/>
+      <stop offset="100%" stop-color="#059669"/>
+    </linearGradient>
+
+    <!-- Glow Filter -->
+    <filter id="neonGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="16" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+    <filter id="subtleGlow" x="-10%" y="-10%" width="120%" height="120%">
+      <feGaussianBlur stdDeviation="8" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+  </defs>
+
+  <!-- Background Canvas -->
+  <rect width="1024" height="1024" rx="220" fill="url(#bgGlow)"/>
+  <rect width="1020" height="1020" x="2" y="2" rx="218" fill="none" stroke="rgba(52, 211, 153, 0.2)" stroke-width="3"/>
+
+  <!-- Cyber Circuit Node Rings in Background -->
+  <g opacity="0.25">
+    <circle cx="512" cy="512" r="380" fill="none" stroke="#10B981" stroke-width="1.5" stroke-dasharray="12 16"/>
+    <circle cx="512" cy="512" r="440" fill="none" stroke="#06B6D4" stroke-width="1" stroke-dasharray="6 20"/>
+  </g>
+
+  <!-- Master Protection Shield -->
+  <g filter="url(#neonGlow)">
+    <path d="M 512,140 
+             C 670,180 790,210 820,330 
+             C 850,490 810,680 512,870 
+             C 214,680 174,490 204,330 
+             C 234,210 354,180 512,140 Z" 
+          fill="none" 
+          stroke="url(#shieldBorder)" 
+          stroke-width="12" 
+          stroke-linejoin="round"/>
+  </g>
+
+  <path d="M 512,156 
+           C 660,194 774,222 802,336 
+           C 830,486 792,664 512,846 
+           C 232,664 194,486 222,336 
+           C 250,222 364,194 512,156 Z" 
+        fill="url(#shieldFill)" 
+        stroke="rgba(255, 255, 255, 0.08)" 
+        stroke-width="2"/>
+
+  <!-- Cyber Grid Circuit Traces Inside Shield -->
+  <g opacity="0.35" stroke="#34D399" stroke-width="2" fill="none">
+    <path d="M 330,300 L 400,370 L 400,430"/>
+    <circle cx="330" cy="300" r="4" fill="#34D399"/>
+    <path d="M 694,300 L 624,370 L 624,430"/>
+    <circle cx="694" cy="300" r="4" fill="#34D399"/>
+    <path d="M 512,780 L 512,710"/>
+    <circle cx="512" cy="780" r="5" fill="#10B981"/>
+  </g>
+
+  <!-- Central Organic Plant Leaf -->
+  <g filter="url(#subtleGlow)">
+    <!-- Right Leaf Half -->
+    <path d="M 512,250 
+             C 660,320 710,500 580,680 
+             C 540,730 512,750 512,750 
+             C 512,750 500,640 512,500 Z" 
+          fill="url(#leafGrad)"/>
+
+    <!-- Left Leaf Half -->
+    <path d="M 512,250 
+             C 364,320 314,500 444,680 
+             C 484,730 512,750 512,750 
+             C 512,750 524,640 512,500 Z" 
+          fill="url(#leafAccent)"/>
+
+    <!-- Central Vein / Cyber Conduit -->
+    <path d="M 512,260 L 512,740" 
+          stroke="#ECFDF5" 
+          stroke-width="7" 
+          stroke-linecap="round"/>
+
+    <!-- Radiating Veins -->
+    <path d="M 512,380 C 560,400 610,430 635,475" stroke="#A7F3D0" stroke-width="4.5" stroke-linecap="round" fill="none"/>
+    <path d="M 512,470 C 555,490 595,525 615,570" stroke="#A7F3D0" stroke-width="4" stroke-linecap="round" fill="none"/>
+    <path d="M 512,560 C 545,580 575,615 585,645" stroke="#A7F3D0" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+
+    <path d="M 512,380 C 464,400 414,430 389,475" stroke="#D1FAE5" stroke-width="4.5" stroke-linecap="round" fill="none"/>
+    <path d="M 512,470 C 469,490 429,525 409,570" stroke="#D1FAE5" stroke-width="4" stroke-linecap="round" fill="none"/>
+    <path d="M 512,560 C 479,580 449,615 439,645" stroke="#D1FAE5" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+  </g>
+
+  <!-- Glowing Crown Sparkle -->
+  <circle cx="512" cy="245" r="7" fill="#FFFFFF" filter="url(#neonGlow)"/>
+</svg>

@@ -1,0 +1,263 @@
+{
+  "tomato_early_blight": {
+    "name": "Tomato Early Blight",
+    "summary": "Early blight is a common fungal disease caused by Alternaria solani. It appears as dark, concentric ring lesions on older leaves and can significantly reduce yield if unmanaged. [TODO_VERIFY against ICAR guidelines]",
+    "symptoms": [
+      "Dark brown spots with concentric rings (target-like pattern) on lower/older leaves",
+      "Yellow (chlorotic) halo around lesions",
+      "Lesions enlarge and merge, causing leaves to turn yellow and drop",
+      "Dark, sunken lesions may appear on stems and fruit"
+    ],
+    "prevention": [
+      "Use certified, disease-free seeds and healthy transplants",
+      "Practice crop rotation — avoid planting tomato or potato in the same field for 2–3 seasons",
+      "Maintain adequate spacing between plants to improve air circulation",
+      "Mulch around plants to reduce soil splash onto leaves",
+      "Remove and destroy infected plant debris after harvest",
+      "Water at the base of plants; avoid wetting foliage",
+      "Choose resistant or tolerant varieties when available"
+    ],
+    "management": [
+      "Remove and destroy severely infected leaves as soon as symptoms appear",
+      "Ensure balanced soil nutrition — avoid excess nitrogen",
+      "Keep the field free of weeds that may harbour disease",
+      "Consult your local agriculture officer or Krishi Vigyan Kendra (KVK) for treatment"
+    ],
+    "seek_help_when": [
+      "Lesions appear on more than 30% of the plant canopy",
+      "Disease spreads rapidly to new growth within a few days",
+      "Fruit begins to show lesions"
+    ],
+    "severity_notes": {
+      "low": "Monitor plants closely. Improve air circulation and remove affected leaves.",
+      "moderate": "Disease is spreading. Consult your local KVK for guidance immediately.",
+      "high": "Severe infection detected. Seek advice from a qualified agriculture officer without delay."
+    },
+    "sources": [
+      "TODO_VERIFY: ICAR-IARI Technical Bulletin on Tomato Diseases",
+      "TODO_VERIFY: State Agriculture University extension materials"
+    ],
+    "reviewed_by": "TODO_VERIFY: Subject Matter Specialist, Horticulture"
+  },
+  "tomato_late_blight": {
+    "name": "Tomato Late Blight",
+    "summary": "Late blight (Phytophthora infestans) is a destructive disease that can destroy an entire crop within days under cool, wet conditions. It also affects potatoes. [TODO_VERIFY against ICAR guidelines]",
+    "symptoms": [
+      "Water-soaked, greasy-looking lesions on leaves — often at leaf margins",
+      "White, fuzzy sporulation on the underside of leaves in humid conditions",
+      "Lesions turn dark brown to black and the leaf collapses",
+      "Dark, firm lesions on stems; fruit shows brown, greasy rot"
+    ],
+    "prevention": [
+      "Plant certified disease-free seeds or transplants",
+      "Avoid overhead irrigation — water at the base of plants",
+      "Improve drainage; avoid waterlogged conditions",
+      "Practice crop rotation (minimum 2 seasons away from tomato/potato)",
+      "Remove volunteer tomato or potato plants from nearby areas",
+      "Stake or trellis plants to improve air circulation"
+    ],
+    "management": [
+      "Remove and bag all infected plant parts immediately — do not compost",
+      "Destroy crop residue promptly after harvest",
+      "Consult your local agriculture officer or Krishi Vigyan Kendra (KVK) for treatment"
+    ],
+    "seek_help_when": [
+      "Water-soaked lesions appear suddenly on multiple plants",
+      "White sporulation is visible on leaf undersides",
+      "Disease spreads to more than 20% of the field within 2–3 days"
+    ],
+    "severity_notes": {
+      "low": "Act quickly — late blight can escalate within 24 hours in humid weather.",
+      "moderate": "Contact your KVK or agriculture officer today.",
+      "high": "Emergency — seek expert help immediately to prevent total crop loss."
+    },
+    "sources": [
+      "TODO_VERIFY: ICAR guidelines on late blight management",
+      "TODO_VERIFY: Krishi Vigyan Kendra extension advisory"
+    ],
+    "reviewed_by": "TODO_VERIFY: Plant Pathologist"
+  },
+  "tomato_leaf_mold": {
+    "name": "Tomato Leaf Mold",
+    "summary": "Leaf mold (Passalora fulva) thrives in high-humidity environments such as greenhouses or dense plantings. It reduces photosynthesis but rarely destroys the entire plant. [TODO_VERIFY]",
+    "symptoms": [
+      "Pale green or yellow patches on the upper surface of leaves",
+      "Olive-green to grey-brown, velvety mold growth on the underside of leaves",
+      "Affected leaves may curl, wither, and drop prematurely"
+    ],
+    "prevention": [
+      "Maintain good air circulation through proper plant spacing and pruning",
+      "Keep humidity below 85% in enclosed growing areas",
+      "Remove lower leaves to improve ventilation",
+      "Avoid wetting foliage when irrigating"
+    ],
+    "management": [
+      "Prune and remove affected leaves",
+      "Improve ventilation in the growing area",
+      "Consult your local agriculture officer or Krishi Vigyan Kendra (KVK) for treatment"
+    ],
+    "seek_help_when": [
+      "Mold covers more than 50% of the leaf area on multiple plants",
+      "Fruit begins to show symptoms"
+    ],
+    "severity_notes": {
+      "low": "Improve air circulation and remove affected leaves.",
+      "moderate": "Reduce humidity and consult your local KVK.",
+      "high": "Seek advice from a qualified agriculture officer."
+    },
+    "sources": ["TODO_VERIFY: ICAR extension bulletin on tomato diseases"],
+    "reviewed_by": "TODO_VERIFY"
+  },
+  "tomato_healthy": {
+    "name": "Healthy Tomato",
+    "summary": "Your tomato plant appears healthy. Continue good agronomic practices to maintain plant health.",
+    "symptoms": [],
+    "prevention": [
+      "Maintain crop rotation every 2–3 seasons",
+      "Use quality seeds and healthy transplants",
+      "Ensure adequate and balanced nutrition through soil testing",
+      "Monitor plants regularly for early signs of disease or pest damage"
+    ],
+    "management": [
+      "Continue regular monitoring",
+      "Consult your local agriculture officer or Krishi Vigyan Kendra (KVK) for any concerns"
+    ],
+    "seek_help_when": [
+      "You notice sudden wilting, yellowing, or unusual spots appearing on leaves"
+    ],
+    "severity_notes": {},
+    "sources": [],
+    "reviewed_by": null
+  },
+  "potato_early_blight": {
+    "name": "Potato Early Blight",
+    "summary": "Early blight on potato (Alternaria solani) produces characteristic target-spot lesions and leads to premature defoliation, reducing tuber size and yield. [TODO_VERIFY]",
+    "symptoms": [
+      "Small dark spots with concentric rings (target-board pattern) on older leaves",
+      "Yellow chlorosis surrounding lesions",
+      "Premature yellowing and death of lower leaves"
+    ],
+    "prevention": [
+      "Use certified disease-free seed tubers",
+      "Practice crop rotation (2–3 year break from potato and tomato)",
+      "Remove and destroy crop debris after harvest",
+      "Ensure adequate plant nutrition through soil testing"
+    ],
+    "management": [
+      "Remove infected leaves promptly",
+      "Maintain balanced soil nutrition",
+      "Consult your local agriculture officer or Krishi Vigyan Kendra (KVK) for treatment"
+    ],
+    "seek_help_when": [
+      "More than 30% of leaves show lesions",
+      "Disease progresses rapidly to upper canopy"
+    ],
+    "severity_notes": {
+      "low": "Monitor closely and remove affected foliage.",
+      "moderate": "Consult your local KVK immediately.",
+      "high": "Seek expert guidance from an agriculture officer."
+    },
+    "sources": ["TODO_VERIFY: ICAR potato production guidelines"],
+    "reviewed_by": "TODO_VERIFY"
+  },
+  "potato_late_blight": {
+    "name": "Potato Late Blight",
+    "summary": "Late blight (Phytophthora infestans) is the most devastating potato disease, capable of destroying an entire field in days under cool, wet conditions. [TODO_VERIFY]",
+    "symptoms": [
+      "Dark water-soaked lesions on leaf margins and tips",
+      "White cottony growth on underside of leaves in humid conditions",
+      "Rapid blackening and collapse of stems",
+      "Brown, rotten patches on tubers"
+    ],
+    "prevention": [
+      "Use certified, disease-free seed tubers",
+      "Plant in well-drained soils; avoid waterlogging",
+      "Maintain wide row spacing for air circulation",
+      "Monitor weather — risk is highest during cool, wet spells"
+    ],
+    "management": [
+      "Remove and destroy infected plants immediately — do not compost",
+      "Consult your local agriculture officer or Krishi Vigyan Kendra (KVK) for treatment"
+    ],
+    "seek_help_when": [
+      "Water-soaked lesions appear suddenly across multiple rows",
+      "Tubers in storage show brown rot"
+    ],
+    "severity_notes": {
+      "low": "Act quickly — late blight progresses very fast in wet weather.",
+      "moderate": "Contact your KVK or agriculture officer today.",
+      "high": "Emergency — seek expert help immediately."
+    },
+    "sources": ["TODO_VERIFY: ICAR-CPRI advisory on potato late blight"],
+    "reviewed_by": "TODO_VERIFY"
+  },
+  "potato_healthy": {
+    "name": "Healthy Potato",
+    "summary": "Your potato plant appears healthy. Maintain good agronomic practices to protect your crop.",
+    "symptoms": [],
+    "prevention": [
+      "Use certified seed tubers each season",
+      "Rotate crops — avoid planting potato in the same plot for 2–3 seasons",
+      "Monitor regularly for signs of pest or disease"
+    ],
+    "management": [
+      "Continue regular monitoring",
+      "Consult your local agriculture officer or Krishi Vigyan Kendra (KVK) for any concerns"
+    ],
+    "seek_help_when": ["You notice wilting, unusual spots, or yellowing of leaves"],
+    "severity_notes": {},
+    "sources": [],
+    "reviewed_by": null
+  },
+  "pepper_bacterial_spot": {
+    "name": "Pepper Bacterial Spot",
+    "summary": "Bacterial spot (Xanthomonas campestris pv. vesicatoria) causes water-soaked lesions on leaves, stems, and fruit, and spreads rapidly in warm, wet conditions. [TODO_VERIFY]",
+    "symptoms": [
+      "Small, water-soaked spots on leaves that turn brown with a yellow halo",
+      "Lesions may have a greasy appearance",
+      "Severely infected leaves turn yellow and drop",
+      "Raised, rough, scab-like lesions on fruit"
+    ],
+    "prevention": [
+      "Use certified disease-free seed and healthy transplants",
+      "Avoid overhead irrigation; water at the base",
+      "Practice crop rotation (2–3 year break from pepper and tomato)",
+      "Remove and destroy crop debris after harvest",
+      "Avoid working in the field when plants are wet"
+    ],
+    "management": [
+      "Remove and destroy severely infected plant parts",
+      "Improve air circulation through spacing and pruning",
+      "Consult your local agriculture officer or Krishi Vigyan Kendra (KVK) for treatment"
+    ],
+    "seek_help_when": [
+      "Spots appear on fruit",
+      "Disease spreads to more than 25% of the canopy"
+    ],
+    "severity_notes": {
+      "low": "Remove affected leaves and monitor closely.",
+      "moderate": "Consult your local KVK for guidance.",
+      "high": "Seek advice from a qualified agriculture officer immediately."
+    },
+    "sources": ["TODO_VERIFY: ICAR advisory on pepper diseases"],
+    "reviewed_by": "TODO_VERIFY"
+  },
+  "pepper_healthy": {
+    "name": "Healthy Pepper",
+    "summary": "Your pepper plant appears healthy. Continue regular monitoring and good crop management practices.",
+    "symptoms": [],
+    "prevention": [
+      "Use disease-free seeds or certified transplants",
+      "Rotate crops every 2–3 seasons",
+      "Maintain balanced nutrition based on soil testing"
+    ],
+    "management": [
+      "Continue regular monitoring",
+      "Consult your local agriculture officer or Krishi Vigyan Kendra (KVK) for any concerns"
+    ],
+    "seek_help_when": ["You notice sudden wilting, spots, or discolouration"],
+    "severity_notes": {},
+    "sources": [],
+    "reviewed_by": null
+  }
+}

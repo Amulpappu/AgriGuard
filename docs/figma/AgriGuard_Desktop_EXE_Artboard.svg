@@ -1,0 +1,280 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 900" width="1440" height="900" style="background:#080D0B; font-family:'Inter', -apple-system, sans-serif;">
+  <defs>
+    <linearGradient id="deskBg" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#0B1510"/>
+      <stop offset="100%" stop-color="#050907"/>
+    </linearGradient>
+    <linearGradient id="emeraldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#34D399"/>
+      <stop offset="100%" stop-color="#059669"/>
+    </linearGradient>
+    <linearGradient id="cardGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0F1F17"/>
+      <stop offset="100%" stop-color="#09130E"/>
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+  </defs>
+
+  <!-- Desktop App Window Frame -->
+  <rect width="1440" height="900" rx="16" fill="url(#deskBg)"/>
+  <rect width="1438" height="898" x="1" y="1" rx="15" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="1.5"/>
+
+  <!-- Native Windows 11 Titlebar -->
+  <g>
+    <rect width="1440" height="38" rx="16" fill="#0C1410"/>
+    <!-- App Emblem & Title -->
+    <rect x="14" y="9" width="20" height="20" rx="5" fill="url(#emeraldGrad)"/>
+    <path d="M 24,13 C 27,15 28,19 26,23 C 25,24 24,25 24,25 C 24,25 23,22 24,19 Z" fill="#FFFFFF"/>
+    <text x="44" y="24" font-size="12" font-weight="600" fill="#E5E7EB">AgriGuard AI — Professional Agricultural Diagnostic Station v2.4 (Laptop Server Mode)</text>
+
+    <!-- Windows Caption Controls (Minimize, Maximize, Close) -->
+    <g transform="translate(1335, 0)">
+      <rect x="0" y="0" width="35" height="38" fill="transparent"/>
+      <line x1="12" y1="20" x2="22" y2="20" stroke="#9CA3AF" stroke-width="1"/>
+      
+      <rect x="35" y="0" width="35" height="38" fill="transparent"/>
+      <rect x="47" y="14" width="10" height="10" fill="none" stroke="#9CA3AF" stroke-width="1"/>
+
+      <rect x="70" y="0" width="35" height="38" fill="transparent"/>
+      <path d="M 82 14 L 92 24 M 92 14 L 82 24" stroke="#9CA3AF" stroke-width="1"/>
+    </g>
+  </g>
+
+  <!-- Main Body Layout (Sidebar + Center Content + Right Telemetry) -->
+  <g transform="translate(0, 38)">
+    
+    <!-- ─── 1. LEFT SIDEBAR (Width: 240) ─── -->
+    <rect width="240" height="862" fill="#09120E" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+    
+    <!-- Sidebar Brand Header -->
+    <g transform="translate(20, 24)">
+      <rect width="32" height="32" rx="8" fill="url(#emeraldGrad)"/>
+      <text x="42" y="22" font-size="16" font-weight="800" fill="#FFFFFF">AgriGuard</text>
+      <text x="42" y="32" font-size="9.5" font-weight="700" fill="#34D399" letter-spacing="0.5">LOCAL HOST</text>
+    </g>
+
+    <!-- Sidebar Navigation Items -->
+    <g transform="translate(16, 80)">
+      <!-- Item 1: Dashboard (Active) -->
+      <rect width="208" height="42" rx="10" fill="rgba(16,185,129,0.15)" stroke="rgba(16,185,129,0.3)" stroke-width="1"/>
+      <text x="18" y="26" font-size="13" font-weight="600" fill="#34D399">📊 Dashboard Overview</text>
+
+      <!-- Item 2: AI Scanner -->
+      <g transform="translate(0, 48)">
+        <rect width="208" height="42" rx="10" fill="transparent"/>
+        <text x="18" y="26" font-size="13" font-weight="500" fill="#9CA3AF">🔬 Batch AI Scanner</text>
+      </g>
+
+      <!-- Item 3: Crop Health History -->
+      <g transform="translate(0, 96)">
+        <rect width="208" height="42" rx="10" fill="transparent"/>
+        <text x="18" y="26" font-size="13" font-weight="500" fill="#9CA3AF">📜 Crop Health Records</text>
+      </g>
+
+      <!-- Item 4: Compare -->
+      <g transform="translate(0, 144)">
+        <rect width="208" height="42" rx="10" fill="transparent"/>
+        <text x="18" y="26" font-size="13" font-weight="500" fill="#9CA3AF">⚖️ Comparative Progression</text>
+      </g>
+
+      <!-- Item 5: IoT Sensors -->
+      <g transform="translate(0, 192)">
+        <rect width="208" height="42" rx="10" fill="transparent"/>
+        <text x="18" y="26" font-size="13" font-weight="500" fill="#9CA3AF">📡 IoT Field Nodes</text>
+      </g>
+    </g>
+
+    <!-- Sidebar Multi-Tenant Profile Box (Bottom) -->
+    <g transform="translate(16, 760)">
+      <rect width="208" height="78" rx="12" fill="#0D1A14" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+      <circle cx="28" cy="28" r="14" fill="url(#emeraldGrad)"/>
+      <text x="28" y="32" font-size="12" font-weight="700" fill="#FFFFFF" text-anchor="middle">L</text>
+      <text x="48" y="24" font-size="12" font-weight="700" fill="#FFFFFF">lohit (Admin)</text>
+      <text x="48" y="38" font-size="10" font-weight="500" fill="#10B981">Multi-tenant: user &lt; data</text>
+      
+      <rect x="14" y="52" width="180" height="18" rx="4" fill="rgba(0,0,0,0.3)"/>
+      <text x="20" y="64" font-size="9" font-family="monospace" fill="#9CA3AF">Storage: C:\AgriGuard\data\lohit</text>
+    </g>
+
+    <!-- ─── 2. CENTRAL WORKSPACE (X: 240, Width: 880) ─── -->
+    <g transform="translate(260, 20)">
+      <!-- Top Workspace Bar -->
+      <text x="0" y="22" font-size="20" font-weight="800" fill="#FFFFFF">Agricultural Health Station &amp; Batch Vision</text>
+      <text x="0" y="40" font-size="12" font-weight="400" fill="#9CA3AF">Real-time local neural engine processing multiple field sensor and camera feeds</text>
+
+      <!-- 4 Quick Metric Cards -->
+      <g transform="translate(0, 56)">
+        <!-- Metric 1 -->
+        <rect x="0" y="0" width="205" height="80" rx="14" fill="url(#cardGrad)" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+        <text x="18" y="26" font-size="11" font-weight="600" fill="#9CA3AF">TOTAL CROPS SCANNED</text>
+        <text x="18" y="56" font-size="24" font-weight="800" fill="#FFFFFF">1,482</text>
+        <text x="18" y="72" font-size="10" font-weight="600" fill="#34D399">+14% vs last week</text>
+
+        <!-- Metric 2 -->
+        <rect x="220" y="0" width="205" height="80" rx="14" fill="url(#cardGrad)" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+        <text x="238" y="26" font-size="11" font-weight="600" fill="#9CA3AF">CROP HEALTH RATE</text>
+        <text x="238" y="56" font-size="24" font-weight="800" fill="#34D399">92.4%</text>
+        <text x="238" y="72" font-size="10" font-weight="600" fill="#6EE7B7">137 healthy clusters</text>
+
+        <!-- Metric 3 -->
+        <rect x="440" y="0" width="205" height="80" rx="14" fill="url(#cardGrad)" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+        <text x="458" y="26" font-size="11" font-weight="600" fill="#9CA3AF">OFFLINE AI ENGINE</text>
+        <text x="458" y="56" font-size="22" font-weight="800" fill="#60A5FA">ACTIVE</text>
+        <text x="458" y="72" font-size="10" font-weight="600" fill="#93C5FD">MobileNetV3 + ResNet50</text>
+
+        <!-- Metric 4 -->
+        <rect x="660" y="0" width="195" height="80" rx="14" fill="url(#cardGrad)" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+        <text x="678" y="26" font-size="11" font-weight="600" fill="#9CA3AF">TUNNEL LATENCY</text>
+        <text x="678" y="56" font-size="24" font-weight="800" fill="#F59E0B">18ms</text>
+        <text x="678" y="72" font-size="10" font-weight="600" fill="#FBBF24">Bengaluru Cloudflare</text>
+      </g>
+
+      <!-- Multi-Stream Camera & Batch Viewport -->
+      <g transform="translate(0, 154)">
+        <rect width="855" height="380" rx="16" fill="#0A140F" stroke="rgba(16,185,129,0.25)" stroke-width="1.5"/>
+        
+        <!-- Stream 1: Main Camera -->
+        <g transform="translate(20, 20)">
+          <rect width="520" height="340" rx="12" fill="#08100C" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+          
+          <!-- Silhouette Leaf Graphic -->
+          <path d="M 260,80 C 340,110 380,200 300,280 C 275,300 260,310 260,310 C 260,310 245,300 220,280 C 140,200 180,110 260,80 Z" fill="rgba(16,185,129,0.1)"/>
+          <path d="M 260,90 L 260,300" stroke="rgba(52,211,153,0.3)" stroke-width="2"/>
+
+          <!-- Bounding Box -->
+          <rect x="180" y="110" width="160" height="150" fill="none" stroke="#EF4444" stroke-width="2" stroke-dasharray="6 4"/>
+          <rect x="180" y="90" width="160" height="22" rx="4" fill="#EF4444"/>
+          <text x="186" y="105" font-size="11" font-weight="700" fill="#FFFFFF">Tomato: Late Blight (94%)</text>
+
+          <text x="20" y="30" font-size="12" font-weight="700" fill="#FFFFFF">📹 Feed 01: Polyhouse North Section</text>
+          <text x="20" y="325" font-size="11" font-weight="600" fill="#34D399">Visible damage: 32% (AI estimate) • Low confidence filter active</text>
+        </g>
+
+        <!-- Secondary Batch Feeds (Right of Stream) -->
+        <g transform="translate(560, 20)">
+          <!-- Feed 2: Potato -->
+          <rect width="275" height="160" rx="10" fill="#08100C" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+          <rect x="15" y="15" width="245" height="100" rx="6" fill="#0F1F17"/>
+          <text x="20" y="135" font-size="11" font-weight="700" fill="#FFFFFF">🥔 Potato Field Bed C</text>
+          <text x="20" y="150" font-size="10" font-weight="600" fill="#34D399">Status: Confirmed Healthy (98%)</text>
+
+          <!-- Feed 3: Chilli -->
+          <g transform="translate(0, 180)">
+            <rect width="275" height="160" rx="10" fill="#08100C" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+            <rect x="15" y="15" width="245" height="100" rx="6" fill="#0F1F17"/>
+            <text x="20" y="135" font-size="11" font-weight="700" fill="#FFFFFF">🌶️ Chilli Greenhouse Row 4</text>
+            <text x="20" y="150" font-size="10" font-weight="600" fill="#F59E0B">Status: Mild Leaf Curl (71%)</text>
+          </g>
+        </g>
+      </g>
+
+      <!-- Recent Diagnostics Table -->
+      <g transform="translate(0, 552)">
+        <rect width="855" height="280" rx="16" fill="url(#cardGrad)" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+        <text x="24" y="34" font-size="14" font-weight="700" fill="#FFFFFF">Active Field Health Logs &amp; Auto-Detected Crops</text>
+        
+        <!-- Table Header -->
+        <rect x="24" y="50" width="807" height="30" rx="6" fill="rgba(0,0,0,0.3)"/>
+        <text x="36" y="70" font-size="11" font-weight="700" fill="#9CA3AF">TIMESTAMP</text>
+        <text x="180" y="70" font-size="11" font-weight="700" fill="#9CA3AF">DETECTED CROP</text>
+        <text x="340" y="70" font-size="11" font-weight="700" fill="#9CA3AF">DIAGNOSIS</text>
+        <text x="520" y="70" font-size="11" font-weight="700" fill="#9CA3AF">CONFIDENCE</text>
+        <text x="680" y="70" font-size="11" font-weight="700" fill="#9CA3AF">DEVICE NODE</text>
+
+        <!-- Row 1 -->
+        <text x="36" y="105" font-size="11.5" font-family="monospace" fill="#E5E7EB">10:24:12 AM</text>
+        <text x="180" y="105" font-size="12" font-weight="600" fill="#FFFFFF">🍅 Tomato</text>
+        <text x="340" y="105" font-size="12" font-weight="600" fill="#F87171">Late Blight Detected</text>
+        <text x="520" y="105" font-size="12" font-weight="700" fill="#34D399">94% (High)</text>
+        <text x="680" y="105" font-size="11" fill="#9CA3AF">Mobile APK (lohit)</text>
+
+        <!-- Row 2 -->
+        <text x="36" y="145" font-size="11.5" font-family="monospace" fill="#E5E7EB">10:19:40 AM</text>
+        <text x="180" y="145" font-size="12" font-weight="600" fill="#FFFFFF">🥔 Potato</text>
+        <text x="340" y="145" font-size="12" font-weight="600" fill="#34D399">Healthy Foliage</text>
+        <text x="520" y="145" font-size="12" font-weight="700" fill="#34D399">98% (High)</text>
+        <text x="680" y="145" font-size="11" fill="#9CA3AF">Remote Phone (Friend)</text>
+
+        <!-- Row 3 -->
+        <text x="36" y="185" font-size="11.5" font-family="monospace" fill="#E5E7EB">09:55:18 AM</text>
+        <text x="180" y="185" font-size="12" font-weight="600" fill="#FFFFFF">🌾 Rice</text>
+        <text x="340" y="185" font-size="12" font-weight="600" fill="#FBBF24">Brown Spot Suspect</text>
+        <text x="520" y="185" font-size="12" font-weight="700" fill="#9CA3AF">Low Confidence</text>
+        <text x="680" y="185" font-size="11" fill="#9CA3AF">Desktop Workstation</text>
+      </g>
+    </g>
+
+    <!-- ─── 3. RIGHT TELEMETRY & REPORT PANEL (Width: 300) ─── -->
+    <g transform="translate(1135, 20)">
+      <rect width="285" height="812" rx="16" fill="#09120E" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+      
+      <!-- Panel Header -->
+      <g transform="translate(20, 24)">
+        <text x="0" y="16" font-size="14" font-weight="700" fill="#FFFFFF">🌐 Remote Cloudflare Sync</text>
+        <text x="0" y="32" font-size="10.5" font-weight="500" fill="#9CA3AF">Laptop serving as 24/7 host</text>
+        
+        <!-- Tunnel Card -->
+        <g transform="translate(0, 48)">
+          <rect width="245" height="74" rx="10" fill="#0F1E17" stroke="rgba(16,185,129,0.3)" stroke-width="1"/>
+          <circle cx="20" cy="22" r="5" fill="#34D399" filter="url(#glow)"/>
+          <text x="32" y="26" font-size="12" font-weight="700" fill="#FFFFFF">Tunnel Active (4G/5G)</text>
+          <text x="16" y="46" font-size="10" font-family="monospace" fill="#6EE7B7">https://agriguard-live.trycloudflare.com</text>
+          <text x="16" y="62" font-size="9" font-weight="500" fill="#9CA3AF">Accessible anywhere without same Wi-Fi</text>
+        </g>
+      </g>
+
+      <!-- Connected Remote Clients -->
+      <g transform="translate(20, 180)">
+        <text x="0" y="16" font-size="12" font-weight="700" fill="#FFFFFF">📱 Connected User Devices</text>
+        
+        <!-- Device 1 -->
+        <g transform="translate(0, 30)">
+          <rect width="245" height="42" rx="8" fill="rgba(255,255,255,0.04)"/>
+          <text x="14" y="26" font-size="11.5" font-weight="600" fill="#FFFFFF">📱 Xiaomi 12 Pro (lohit)</text>
+          <text x="195" y="26" font-size="10" font-weight="700" fill="#34D399">ACTIVE</text>
+        </g>
+
+        <!-- Device 2 -->
+        <g transform="translate(0, 80)">
+          <rect width="245" height="42" rx="8" fill="rgba(255,255,255,0.04)"/>
+          <text x="14" y="26" font-size="11.5" font-weight="600" fill="#FFFFFF">📱 Friend Phone (Remote)</text>
+          <text x="195" y="26" font-size="10" font-weight="700" fill="#34D399">SYNCED</text>
+        </g>
+
+        <!-- Device 3 -->
+        <g transform="translate(0, 130)">
+          <rect width="245" height="42" rx="8" fill="rgba(255,255,255,0.04)"/>
+          <text x="14" y="26" font-size="11.5" font-weight="600" fill="#FFFFFF">💻 Laptop Workstation</text>
+          <text x="195" y="26" font-size="10" font-weight="700" fill="#60A5FA">SERVER</text>
+        </g>
+      </g>
+
+      <!-- Soil & Weather Sensor Radar -->
+      <g transform="translate(20, 380)">
+        <text x="0" y="16" font-size="12" font-weight="700" fill="#FFFFFF">🌿 Field Environment Node</text>
+        
+        <g transform="translate(0, 30)">
+          <rect width="245" height="150" rx="12" fill="#0D1A14" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+          
+          <text x="16" y="30" font-size="11" font-weight="600" fill="#9CA3AF">SOIL N-P-K BALANCE</text>
+          <text x="16" y="52" font-size="18" font-weight="800" fill="#34D399">42 - 18 - 35 mg/kg</text>
+
+          <text x="16" y="85" font-size="11" font-weight="600" fill="#9CA3AF">SOIL MOISTURE</text>
+          <text x="16" y="105" font-size="18" font-weight="800" fill="#60A5FA">64% (Optimal)</text>
+
+          <text x="16" y="132" font-size="10" font-weight="500" fill="#6EE7B7">● IoT LoRa Node 04 Transmitting</text>
+        </g>
+      </g>
+
+      <!-- Export Advisory Report Button (Bottom Action) -->
+      <g transform="translate(20, 730)">
+        <rect width="245" height="48" rx="12" fill="url(#emeraldGrad)" filter="url(#glow)"/>
+        <text x="122" y="29" font-size="13" font-weight="700" fill="#FFFFFF" text-anchor="middle">📄 Generate PDF Advisory</text>
+      </g>
+    </g>
+
+  </g>
+</svg>

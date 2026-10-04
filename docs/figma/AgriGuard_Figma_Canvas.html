@@ -1,0 +1,1307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AgriGuard — Figma UI Design Canvas (Mobile & Desktop EXE)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --figma-bg: #1e1e1e;
+      --figma-panel: #2c2c2c;
+      --figma-border: #383838;
+      --figma-accent: #0d99ff;
+      --agri-bg: #080D0B;
+      --agri-card: #0D1612;
+      --agri-card-elevated: #13221C;
+      --agri-emerald: #10B981;
+      --agri-mint: #34D399;
+      --agri-gold: #F59E0B;
+      --agri-red: #EF4444;
+      --agri-cyan: #06B6D4;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--figma-bg);
+      color: #e5e7eb;
+      font-family: 'Inter', sans-serif;
+      overflow-x: auto;
+      user-select: none;
+    }
+
+    /* Figma Top Header Bar */
+    .figma-header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: var(--figma-panel);
+      height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      border-bottom: 1px solid var(--figma-border);
+    }
+    .figma-title-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .figma-logo-badge {
+      width: 24px;
+      height: 24px;
+      background: linear-gradient(135deg, #10b981, #06b6d4);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+    }
+    .figma-file-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: #fff;
+    }
+    .figma-badge {
+      font-size: 11px;
+      background: rgba(16, 185, 129, 0.2);
+      color: #34d399;
+      padding: 2px 8px;
+      border-radius: 4px;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+    .figma-tools {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .figma-tool-btn {
+      background: transparent;
+      border: none;
+      color: #9ca3af;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+    }
+    .figma-tool-btn:hover {
+      background: rgba(255, 255, 255, 0.08);
+      color: #fff;
+    }
+    .figma-tool-btn.active {
+      background: rgba(255, 255, 255, 0.12);
+      color: #fff;
+    }
+    .figma-right-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .zoom-ctrl-btn {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #e5e7eb;
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .zoom-ctrl-btn:hover {
+      background: rgba(255, 255, 255, 0.18);
+      color: #fff;
+    }
+    .zoom-label {
+      font-size: 12px;
+      color: #9ca3af;
+      font-family: monospace;
+      min-width: 44px;
+      text-align: center;
+    }
+    .fit-btn {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #e5e7eb;
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .fit-btn:hover {
+      background: rgba(255, 255, 255, 0.18);
+      color: #fff;
+    }
+    .figma-share-btn {
+      background: var(--figma-accent);
+      color: #fff;
+      border: none;
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-left: 6px;
+      transition: filter 0.15s;
+    }
+    .figma-share-btn:hover {
+      filter: brightness(1.1);
+    }
+
+    /* Figma Workspace Canvas */
+    .figma-canvas {
+      padding: 32px 48px 80px 48px;
+      overflow: visible;
+    }
+    .canvas-scaler {
+      display: flex;
+      gap: 56px;
+      align-items: flex-start;
+      transform-origin: 0 0;
+      transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      width: max-content;
+    }
+
+    /* Mockup Render Card */
+    .mockup-render-card {
+      background: #111;
+      border-radius: 20px;
+      border: 1px solid var(--figma-border);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      box-shadow: 0 25px 60px rgba(0,0,0,0.8);
+      max-width: 1380px;
+    }
+    .mockup-img {
+      width: 100%;
+      height: auto;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      display: block;
+    }
+
+    /* Figma Modal */
+    .figma-modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      backdrop-filter: blur(8px);
+      z-index: 999;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .figma-modal-backdrop.open {
+      display: flex;
+    }
+    .figma-modal {
+      background: #1e1e1e;
+      border: 1px solid #444;
+      border-radius: 16px;
+      width: 100%;
+      max-width: 620px;
+      padding: 28px;
+      box-shadow: 0 30px 90px rgba(0,0,0,0.9);
+      position: relative;
+    }
+    .modal-close-btn {
+      position: absolute;
+      top: 18px;
+      right: 18px;
+      background: none;
+      border: none;
+      color: #9ca3af;
+      font-size: 20px;
+      cursor: pointer;
+    }
+
+    /* Artboard Container */
+    .artboard-container {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .artboard-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .artboard-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: #9ca3af;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .artboard-dimensions {
+      font-size: 11px;
+      color: #6b7280;
+      font-family: monospace;
+    }
+
+    /* ─── ARTBOARD 1: MOBILE (390 x 844) ─── */
+    .mobile-frame {
+      width: 390px;
+      height: 844px;
+      background: var(--agri-bg);
+      border-radius: 44px;
+      border: 10px solid #222;
+      box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.1);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .mobile-notch {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 120px;
+      height: 28px;
+      background: #000;
+      border-bottom-left-radius: 18px;
+      border-bottom-right-radius: 18px;
+      z-index: 50;
+    }
+    .mobile-content {
+      padding: 44px 18px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      height: 100%;
+      overflow-y: auto;
+    }
+    .mobile-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .brand-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 18px;
+      font-weight: 800;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .brand-icon {
+      width: 26px;
+      height: 26px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #10B981, #06B6D4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+    }
+    .lang-pill {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 20px;
+      padding: 4px 10px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #34d399;
+    }
+
+    /* Mobile Camera Viewport */
+    .mobile-scanner-box {
+      width: 100%;
+      height: 230px;
+      background: #0f1a14 url('./AgriGuard_Mobile_Design_Figma.png') center/cover;
+      border-radius: 20px;
+      border: 1px solid rgba(52, 211, 153, 0.4);
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5), inset 0 0 30px rgba(16, 185, 129, 0.2);
+    }
+    .scanner-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.6) 100%);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 12px;
+    }
+    .scanner-badge {
+      align-self: flex-start;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(52, 211, 153, 0.5);
+      border-radius: 8px;
+      padding: 4px 10px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #34D399;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .scanner-bounding-box {
+      position: absolute;
+      top: 30px;
+      left: 45px;
+      right: 45px;
+      bottom: 40px;
+      border: 2px dashed #10B981;
+      border-radius: 14px;
+      box-shadow: 0 0 15px rgba(16, 185, 129, 0.5);
+      display: flex;
+      align-items: flex-end;
+      padding: 8px;
+    }
+    .tag-detection {
+      background: rgba(16, 185, 129, 0.9);
+      color: #000;
+      font-size: 10px;
+      font-weight: 800;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    /* Auto-Detect Card */
+    .auto-detect-card {
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(6, 182, 212, 0.08));
+      border: 1px solid rgba(52, 211, 153, 0.4);
+      border-radius: 16px;
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .auto-detect-info h4 {
+      font-size: 13px;
+      font-weight: 700;
+      color: #fff;
+    }
+    .auto-detect-info p {
+      font-size: 11px;
+      color: #9ca3af;
+      margin-top: 2px;
+    }
+    .default-chip {
+      background: #10b981;
+      color: #000;
+      font-size: 10px;
+      font-weight: 800;
+      padding: 2px 8px;
+      border-radius: 999px;
+    }
+
+    /* 14 Crops Grid */
+    .crops-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #9ca3af;
+      font-weight: 700;
+    }
+    .crops-grid-mini {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+    }
+    .crop-chip-mini {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: 12px;
+      padding: 8px 4px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      font-size: 10px;
+      font-weight: 600;
+      color: #d1d5db;
+    }
+    .crop-chip-mini.active {
+      background: rgba(16, 185, 129, 0.18);
+      border-color: #10B981;
+      color: #34d399;
+    }
+
+    /* Floating Navigation Bar */
+    .mobile-tab-bar {
+      margin-top: auto;
+      background: rgba(13, 22, 18, 0.85);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 24px;
+      padding: 8px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .tab-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      font-size: 9px;
+      color: #9ca3af;
+      font-weight: 600;
+    }
+    .tab-item.active {
+      color: #10B981;
+    }
+    .tab-item span.icon {
+      font-size: 16px;
+    }
+
+    /* ─── ARTBOARD 2: DESKTOP EXE (1380 x 840) ─── */
+    .desktop-frame {
+      width: 1380px;
+      height: 840px;
+      background: var(--agri-bg);
+      border-radius: 20px;
+      border: 1px solid var(--figma-border);
+      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.8);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .desktop-titlebar {
+      height: 38px;
+      background: #0f1613;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      font-size: 12px;
+      color: #9ca3af;
+    }
+    .win-controls {
+      display: flex;
+      gap: 12px;
+      font-size: 11px;
+    }
+    .desktop-body {
+      display: flex;
+      flex: 1;
+      height: calc(100% - 38px);
+    }
+    /* Desktop Sidebar */
+    .desktop-sidebar {
+      width: 240px;
+      background: #0b120f;
+      border-right: 1px solid rgba(255, 255, 255, 0.06);
+      padding: 24px 16px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .sidebar-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: 'Outfit', sans-serif;
+      font-size: 18px;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 32px;
+    }
+    .sidebar-menu {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .sidebar-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #9ca3af;
+      cursor: pointer;
+    }
+    .sidebar-item.active {
+      background: linear-gradient(90deg, rgba(16, 185, 129, 0.2), rgba(16, 185, 129, 0.05));
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      color: #34D399;
+    }
+    .sidebar-footer {
+      font-size: 11px;
+      color: #6b7280;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+      padding-top: 16px;
+    }
+
+    /* Desktop Main Content */
+    .desktop-main {
+      flex: 1;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      overflow-y: auto;
+    }
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+    .stat-card {
+      background: var(--agri-card);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: 16px;
+      padding: 16px 18px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .stat-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
+    .stat-val {
+      font-size: 22px;
+      font-weight: 800;
+      color: #fff;
+    }
+    .stat-label {
+      font-size: 11px;
+      color: #9ca3af;
+      font-weight: 600;
+    }
+
+    /* Dual Pane Comparison & Advisory */
+    .desktop-middle-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 20px;
+      flex: 1;
+    }
+    .desktop-panel {
+      background: var(--agri-card);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: 18px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      font-weight: 700;
+      color: #fff;
+    }
+    .compare-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      flex: 1;
+    }
+    .compare-leaf-card {
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: #000;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+    .compare-img {
+      height: 180px;
+      background-size: cover;
+      background-position: center;
+    }
+    .compare-leaf-info {
+      padding: 12px;
+      background: #0b1410;
+    }
+    .compare-leaf-info h5 {
+      font-size: 12px;
+      font-weight: 700;
+      color: #fff;
+    }
+    .compare-leaf-info p {
+      font-size: 11px;
+      color: #9ca3af;
+      margin-top: 4px;
+    }
+
+    /* Emergency Rescue Banner */
+    .rescue-alert {
+      background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(245, 158, 11, 0.1));
+      border: 1px solid rgba(239, 68, 68, 0.35);
+      border-radius: 14px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .rescue-alert h4 {
+      color: #f87171;
+      font-size: 13px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .rescue-alert p {
+      font-size: 11px;
+      color: #fecaca;
+      line-height: 1.4;
+    }
+
+    /* Desktop Right Status Rail */
+    .desktop-right-rail {
+      width: 260px;
+      background: #0b120f;
+      border-left: 1px solid rgba(255, 255, 255, 0.06);
+      padding: 20px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .server-status-pill {
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      padding: 12px;
+      border-radius: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      background: #10B981;
+      border-radius: 50%;
+      box-shadow: 0 0 10px #10B981;
+      display: inline-block;
+      margin-right: 6px;
+    }
+    .connected-device-item {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      padding: 10px 12px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+      color: #d1d5db;
+    }
+
+    /* ─── ARTBOARD 3: DESIGN TOKENS (420 x 840) ─── */
+    .tokens-frame {
+      width: 380px;
+      height: 840px;
+      background: var(--figma-panel);
+      border-radius: 20px;
+      border: 1px solid var(--figma-border);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      overflow-y: auto;
+    }
+    .token-section h3 {
+      font-size: 13px;
+      font-weight: 700;
+      color: #9ca3af;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 12px;
+    }
+    .swatch-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+    .swatch-item {
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 10px;
+      padding: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .swatch-color {
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    .swatch-name {
+      font-size: 11px;
+      font-weight: 600;
+      color: #fff;
+    }
+    .swatch-hex {
+      font-size: 10px;
+      color: #9ca3af;
+      font-family: monospace;
+    }
+    .type-specimen {
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Figma-Style Toolbar -->
+  <header class="figma-header">
+    <div class="figma-title-group">
+      <div class="figma-logo-badge">🛡️</div>
+      <span class="figma-file-name">AgriGuard / Master Design System 2026</span>
+      <span class="figma-badge">Figma Multi-Platform</span>
+    </div>
+
+    <div class="figma-tools">
+      <button class="figma-tool-btn" onclick="scrollToArtboard('artboard-mobile')"><span>📱</span> Mobile Artboard</button>
+      <button class="figma-tool-btn" onclick="scrollToArtboard('artboard-desktop')"><span>💻</span> Desktop EXE</button>
+      <button class="figma-tool-btn" onclick="scrollToArtboard('artboard-mockups')"><span>🖼️</span> 3D Studio Mockups</button>
+      <button class="figma-tool-btn" onclick="scrollToArtboard('artboard-logo')"><span>🛡️</span> 4K Logo</button>
+      <button class="figma-tool-btn" onclick="scrollToArtboard('artboard-tokens')"><span>🎨</span> Design Tokens</button>
+    </div>
+
+    <div class="figma-right-actions">
+      <button class="zoom-ctrl-btn" onclick="changeZoom(-0.1)" title="Zoom Out">−</button>
+      <span id="zoom-text" class="zoom-label">100%</span>
+      <button class="zoom-ctrl-btn" onclick="changeZoom(0.1)" title="Zoom In">+</button>
+      <button class="fit-btn" onclick="resetZoom()" title="Reset to 100%">100%</button>
+      <button class="fit-btn" onclick="fitZoom()" title="Fit all artboards to window">Fit All</button>
+      <button class="figma-share-btn" onclick="openModal()">Export to Figma</button>
+    </div>
+  </header>
+
+  <!-- Figma Canvas Area with Artboards Side by Side -->
+  <main class="figma-canvas">
+    <div class="canvas-scaler" id="canvasScaler">
+
+    <!-- 1. MOBILE ARTBOARD -->
+    <div class="artboard-container" id="artboard-mobile">
+      <div class="artboard-meta">
+        <span class="artboard-label">📱 Frame 1: Mobile App (PWA & APK)</span>
+        <span class="artboard-dimensions">390 × 844</span>
+      </div>
+
+      <div class="mobile-frame">
+        <div class="mobile-notch"></div>
+        <div class="mobile-content">
+          <!-- Top Header -->
+          <div class="mobile-header">
+            <div class="brand-title">
+              <div class="brand-icon">🌱</div>
+              <span>AgriGuard AI</span>
+            </div>
+            <div class="lang-pill">தமிழ் | EN</div>
+          </div>
+
+          <!-- Camera Scanner Viewport -->
+          <div class="mobile-scanner-box">
+            <div class="scanner-overlay">
+              <div class="scanner-badge">
+                <span>🔴</span> AI Active Scanner
+              </div>
+              <div class="scanner-bounding-box">
+                <span class="tag-detection">Tomato Late Blight (94%)</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Auto-Detect Card -->
+          <div class="auto-detect-card">
+            <div class="auto-detect-info">
+              <h4>✨ Auto-Detect Any Crop</h4>
+              <p>Just snap photo — AI identifies crop & condition</p>
+            </div>
+            <span class="default-chip">DEFAULT</span>
+          </div>
+
+          <!-- 14 Crop Chips -->
+          <div>
+            <div class="crops-title" style="margin-bottom: 6px;">14+ Supported Crops & Vegetables:</div>
+            <div class="crops-grid-mini">
+              <div class="crop-chip-mini active"><span>🍅</span> Tomato</div>
+              <div class="crop-chip-mini"><span>🥔</span> Potato</div>
+              <div class="crop-chip-mini"><span>🌶️</span> Chilli</div>
+              <div class="crop-chip-mini"><span>🌾</span> Rice</div>
+              <div class="crop-chip-mini"><span>🌾</span> Wheat</div>
+              <div class="crop-chip-mini"><span>🌽</span> Corn</div>
+              <div class="crop-chip-mini"><span>🍆</span> Brinjal</div>
+              <div class="crop-chip-mini"><span>🧅</span> Onion</div>
+            </div>
+          </div>
+
+          <!-- Floating Tab Bar -->
+          <div class="mobile-tab-bar">
+            <div class="tab-item"><span class="icon">📊</span>Dashboard</div>
+            <div class="tab-item active"><span class="icon">📷</span>New Scan</div>
+            <div class="tab-item"><span class="icon">📜</span>History</div>
+            <div class="tab-item"><span class="icon">⚖️</span>Compare</div>
+            <div class="tab-item"><span class="icon">📡</span>Field</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. DESKTOP EXE ARTBOARD -->
+    <div class="artboard-container" id="artboard-desktop">
+      <div class="artboard-meta">
+        <span class="artboard-label">💻 Frame 2: Desktop EXE Application</span>
+        <span class="artboard-dimensions">1380 × 840</span>
+      </div>
+
+      <div class="desktop-frame">
+        <!-- Titlebar -->
+        <div class="desktop-titlebar">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span>🛡️</span>
+            <span style="font-weight: 600; color: #fff;">AgriGuard AI — Professional Agricultural Diagnostic Station</span>
+          </div>
+          <div class="win-controls">
+            <span>─</span>
+            <span>□</span>
+            <span>✕</span>
+          </div>
+        </div>
+
+        <div class="desktop-body">
+          <!-- Left Sidebar -->
+          <aside class="desktop-sidebar">
+            <div>
+              <div class="sidebar-brand">
+                <span style="font-size: 24px;">🌱</span>
+                <span>AgriGuard AI</span>
+              </div>
+              <div class="sidebar-menu">
+                <div class="sidebar-item active">📊 Dashboard</div>
+                <div class="sidebar-item">🔬 AI Diagnostic Scanner</div>
+                <div class="sidebar-item">📜 Crop Health History</div>
+                <div class="sidebar-item">⚖️ Comparative Progression</div>
+                <div class="sidebar-item">📡 IoT Greenhouse Monitor</div>
+              </div>
+            </div>
+            <div class="sidebar-footer">
+              <p>v2.0 Native EXE</p>
+              <p style="margin-top: 4px; color: #10B981;">● Server Active</p>
+            </div>
+          </aside>
+
+          <!-- Main Dashboard Workspace -->
+          <section class="desktop-main">
+            <!-- 4 Top Telemetry Stats -->
+            <div class="stats-row">
+              <div class="stat-card">
+                <div class="stat-icon">🌡️</div>
+                <div>
+                  <div class="stat-val">28.0°C</div>
+                  <div class="stat-label">Ambient Temperature</div>
+                </div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-icon">💧</div>
+                <div>
+                  <div class="stat-val">64.5%</div>
+                  <div class="stat-label">Soil Moisture (Root)</div>
+                </div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-icon">💨</div>
+                <div>
+                  <div class="stat-val">72.0%</div>
+                  <div class="stat-label">Canopy Humidity</div>
+                </div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-icon" style="background: rgba(6, 182, 212, 0.15); border-color: rgba(6, 182, 212, 0.3);">📈</div>
+                <div>
+                  <div class="stat-val">94.8%</div>
+                  <div class="stat-label">Diagnostic Confidence</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Middle Dual-Pane Comparison & Emergency Rescue Card -->
+            <div class="desktop-middle-grid">
+              <!-- Comparison Panel -->
+              <div class="desktop-panel">
+                <div class="panel-header">
+                  <span>🔬 Leaf Progression & AI Verification</span>
+                  <span style="color: #34d399; font-size: 11px;">Side-by-Side Analysis</span>
+                </div>
+                <div class="compare-container">
+                  <div class="compare-leaf-card">
+                    <div class="compare-img" style="background-image: url('./AgriGuard_Desktop_EXE_Design_Figma.png');"></div>
+                    <div class="compare-leaf-info">
+                      <h5>Reference Healthy Leaf</h5>
+                      <p>Vigorous chlorophyll, balanced cellular structure</p>
+                    </div>
+                  </div>
+                  <div class="compare-leaf-card">
+                    <div class="compare-img" style="background-image: url('./AgriGuard_Mobile_Design_Figma.png');"></div>
+                    <div class="compare-leaf-info">
+                      <h5 style="color: #f87171;">Scanned Infected Leaf</h5>
+                      <p>Early Blight lesion spots detected (24% damage)</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Rescue Advisory Panel -->
+              <div class="desktop-panel" style="gap: 16px;">
+                <div class="panel-header">
+                  <span>🚨 Urgent Actionable Advisory</span>
+                  <span style="color: #f87171; font-size: 11px;">ICAR / KVK Safe</span>
+                </div>
+
+                <div class="rescue-alert">
+                  <h4>⚠️ Immediate Rescue Protocol</h4>
+                  <p>Prune affected lower leaves immediately. Spray cold-pressed Neem Oil (10,000 ppm) @ 3ml/L in the evening.</p>
+                </div>
+
+                <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 12px; padding: 12px;">
+                  <h5 style="font-size: 12px; color: #34d399; font-weight: 700;">🌱 Biological & Soil Remedy</h5>
+                  <p style="font-size: 11px; color: #d1d5db; margin-top: 4px;">Incorporate enriched vermicompost with Trichoderma viride to prevent fungal reinfection.</p>
+                </div>
+
+                <div style="margin-top: auto; display: flex; gap: 8px;">
+                  <button style="flex: 1; background: #10B981; color: #000; border: none; padding: 10px; border-radius: 10px; font-weight: 700; font-size: 12px; cursor: pointer;">
+                    📞 Dial KVK Officer
+                  </button>
+                  <button style="background: rgba(255,255,255,0.08); color: #fff; border: 1px solid rgba(255,255,255,0.15); padding: 10px 14px; border-radius: 10px; font-weight: 600; font-size: 12px; cursor: pointer;">
+                    Export PDF
+                  </button>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Right Status Rail -->
+          <aside class="desktop-right-rail">
+            <div>
+              <div style="font-size: 12px; font-weight: 700; color: #fff; margin-bottom: 12px;">🌍 Remote Public Tunnel</div>
+              <div class="server-status-pill">
+                <div style="display: flex; align-items: center; justify-content: space-between;">
+                  <span style="font-size: 12px; font-weight: 700; color: #fff;"><span class="status-dot"></span>Online</span>
+                  <span style="font-size: 10px; color: #34d399; font-family: monospace;">24ms</span>
+                </div>
+                <div style="font-size: 11px; color: #9ca3af; margin-top: 4px;">Cloudflare Quick Tunnel</div>
+                <div style="font-size: 10px; color: #6b7280; font-family: monospace;">Bengaluru Edge Node</div>
+              </div>
+            </div>
+
+            <div>
+              <div style="font-size: 12px; font-weight: 700; color: #fff; margin-bottom: 12px;">📱 Connected Devices</div>
+              <div style="display: flex; flex-direction: column; gap: 8px;">
+                <div class="connected-device-item">
+                  <span>📱 Xiaomi 12 Pro</span>
+                  <span style="color: #34D399; font-size: 10px; font-weight: 700;">ACTIVE</span>
+                </div>
+                <div class="connected-device-item">
+                  <span>📱 Friend (Remote 4G)</span>
+                  <span style="color: #34D399; font-size: 10px; font-weight: 700;">SYNCED</span>
+                </div>
+                <div class="connected-device-item">
+                  <span>💻 Laptop Host</span>
+                  <span style="color: #60a5fa; font-size: 10px; font-weight: 700;">SERVER</span>
+                </div>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. DESIGN TOKENS & ATOMS -->
+    <div class="artboard-container" id="artboard-tokens">
+      <div class="artboard-meta">
+        <span class="artboard-label">🎨 Frame 3: Design Tokens & Components</span>
+        <span class="artboard-dimensions">380 × 840</span>
+      </div>
+
+      <div class="tokens-frame">
+        <div class="token-section">
+          <h3>Brand Color Tokens</h3>
+          <div class="swatch-grid">
+            <div class="swatch-item">
+              <div class="swatch-color" style="background: #080D0B;"></div>
+              <div>
+                <div class="swatch-name">Obsidian BG</div>
+                <div class="swatch-hex">#080D0B</div>
+              </div>
+            </div>
+            <div class="swatch-item">
+              <div class="swatch-color" style="background: #10B981;"></div>
+              <div>
+                <div class="swatch-name">Emerald Main</div>
+                <div class="swatch-hex">#10B981</div>
+              </div>
+            </div>
+            <div class="swatch-item">
+              <div class="swatch-color" style="background: #34D399;"></div>
+              <div>
+                <div class="swatch-name">Neon Mint</div>
+                <div class="swatch-hex">#34D399</div>
+              </div>
+            </div>
+            <div class="swatch-item">
+              <div class="swatch-color" style="background: #EF4444;"></div>
+              <div>
+                <div class="swatch-name">Rescue Red</div>
+                <div class="swatch-hex">#EF4444</div>
+              </div>
+            </div>
+            <div class="swatch-item">
+              <div class="swatch-color" style="background: #F59E0B;"></div>
+              <div>
+                <div class="swatch-name">Caution Gold</div>
+                <div class="swatch-hex">#F59E0B</div>
+              </div>
+            </div>
+            <div class="swatch-item">
+              <div class="swatch-color" style="background: #06B6D4;"></div>
+              <div>
+                <div class="swatch-name">Telemetry Cyan</div>
+                <div class="swatch-hex">#06B6D4</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="token-section">
+          <h3>Typography System</h3>
+          <div class="type-specimen">
+            <div style="font-family: 'Outfit'; font-size: 20px; font-weight: 800; color: #fff;">AgriGuard Display</div>
+            <div style="font-size: 14px; font-weight: 600; color: #34D399;">Heading 1 (Inter 600)</div>
+            <div style="font-size: 12px; color: #9ca3af;">Body Regular — Precision agriculture advisory text for Indian farmers.</div>
+          </div>
+        </div>
+
+        <div class="token-section">
+          <h3>Component Atoms</h3>
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <button style="background: linear-gradient(135deg, #10B981, #059669); color: #fff; padding: 12px; border-radius: 12px; font-weight: 700; border: none; cursor: pointer;">
+              Button / Primary (48px)
+            </button>
+            <div style="display: flex; gap: 6px;">
+              <span style="background: rgba(16, 185, 129, 0.2); color: #34d399; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; border: 1px solid rgba(16, 185, 129, 0.3);">
+                ● Confirmed Healthy
+              </span>
+              <span style="background: rgba(239, 68, 68, 0.2); color: #f87171; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; border: 1px solid rgba(239, 68, 68, 0.3);">
+                ▲ Action Required
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. HIGH-RES STUDIO 3D RENDERS -->
+    <div class="artboard-container" id="artboard-mockups">
+      <div class="artboard-meta">
+        <span class="artboard-label">🖼️ Frame 4: Studio 3D Mockup Renders (Mobile & Desktop EXE)</span>
+        <span class="artboard-dimensions">High-Resolution Render Assets</span>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 32px; width: 1200px;">
+        <div class="mockup-render-card">
+          <div style="display: flex; align-items: center; justify-content: space-between; padding-bottom: 8px;">
+            <span style="font-size: 13px; font-weight: 700; color: #34D399;">📱 Mobile App Studio Presentation (iPhone & Android APK)</span>
+            <a href="AgriGuard_Mobile_Design_Figma.png" target="_blank" style="font-size: 11px; color: #0d99ff; text-decoration: none; font-weight: 600;">↗ View Full Size</a>
+          </div>
+          <img src="AgriGuard_Mobile_Design_Figma.png" alt="AgriGuard Mobile Figma Mockup" class="mockup-img" />
+        </div>
+
+        <div class="mockup-render-card">
+          <div style="display: flex; align-items: center; justify-content: space-between; padding-bottom: 8px;">
+            <span style="font-size: 13px; font-weight: 700; color: #34D399;">💻 Desktop EXE Workstation Studio Presentation (Windows 11)</span>
+            <a href="AgriGuard_Desktop_EXE_Design_Figma.png" target="_blank" style="font-size: 11px; color: #0d99ff; text-decoration: none; font-weight: 600;">↗ View Full Size</a>
+          </div>
+          <img src="AgriGuard_Desktop_EXE_Design_Figma.png" alt="AgriGuard Desktop EXE Figma Mockup" class="mockup-img" />
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. 4K APP MASTER LOGO -->
+    <div class="artboard-container" id="artboard-logo">
+      <div class="artboard-meta">
+        <span class="artboard-label">🛡️ Frame 5: AgriGuard 4K Master Brand Logo</span>
+        <span class="artboard-dimensions">3840 × 2160 (4K UHD)</span>
+      </div>
+
+      <div class="mockup-render-card" style="width: 500px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; padding-bottom: 8px;">
+          <span style="font-size: 13px; font-weight: 700; color: #34D399;">🛡️ Official AgriGuard 4K Emblem</span>
+          <a href="AgriGuard_Logo_4K.png" download="AgriGuard_Logo_4K.png" style="font-size: 11px; color: #0d99ff; text-decoration: none; font-weight: 600;">⬇ Download 4K</a>
+        </div>
+        <div style="width: 100%; border-radius: 12px; overflow: hidden; background: #000; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.1);">
+          <img src="AgriGuard_Logo_4K.png" alt="AgriGuard 4K Logo" class="mockup-img" style="max-height: 480px; object-fit: contain;" />
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 6px; margin-top: 8px; font-size: 11px; color: #9ca3af;">
+          <div><strong>Concept:</strong> Cyber-Organic Plant Leaf protected by Obsidian Crystalline Shield with Neon Trace Accents.</div>
+          <div><strong>Palette:</strong> Obsidian (#080D0B), Emerald (#10B981), Neon Mint (#34D399).</div>
+        </div>
+      </div>
+    </div>
+
+    </div> <!-- Close canvas-scaler -->
+  </main>
+
+  <!-- Export to Figma Modal -->
+  <div class="figma-modal-backdrop" id="figmaModal" onclick="if(event.target === this) closeModal()">
+    <div class="figma-modal">
+      <button class="modal-close-btn" onclick="closeModal()">✕</button>
+      <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px;">
+        <div style="font-size: 24px;">🛡️</div>
+        <div>
+          <h2 style="font-size: 18px; color: #fff; font-weight: 700;">Export Design to Figma</h2>
+          <p style="font-size: 12px; color: #9ca3af;">Quickly import these complete frames into your Figma workspace</p>
+        </div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 16px; margin-bottom: 24px; font-size: 13px; line-height: 1.6; color: #d1d5db;">
+        <div style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 14px;">
+          <div style="font-weight: 700; color: #34D399; margin-bottom: 4px;">Option 1: 1-Click Import via Figma Plugin (Recommended)</div>
+          <p style="font-size: 12px; color: #9ca3af;">1. Open Figma and create a blank draft file.<br>
+          2. Right-click on canvas &rarr; <strong>Plugins &rarr; "html.to.design"</strong> (or search in Figma Community).<br>
+          3. Paste the local file path or click "Import HTML" and select this file (<code style="color: #60a5fa;">AgriGuard_Figma_Canvas.html</code>).<br>
+          4. All layers, typography, vectors, and components are instantly editable Figma frames!</p>
+        </div>
+
+        <div style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 14px;">
+          <div style="font-weight: 700; color: #34D399; margin-bottom: 4px;">Option 2: Direct High-Res Artboard Placement</div>
+          <p style="font-size: 12px; color: #9ca3af;">Drag & Drop <code style="color: #60a5fa;">AgriGuard_Mobile_Design_Figma.png</code> and <code style="color: #60a5fa;">AgriGuard_Desktop_EXE_Design_Figma.png</code> directly onto your Figma canvas as master artboard references.</p>
+        </div>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 10px;">
+        <button onclick="copyTokensJson()" id="copyTokensBtn" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 8px 16px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer;">
+          📋 Copy Color Tokens JSON
+        </button>
+        <button onclick="closeModal()" style="background: var(--figma-accent); color: #fff; border: none; padding: 8px 16px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer;">
+          Done
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentZoom = 1.0;
+    const canvasScaler = document.getElementById('canvasScaler');
+    const zoomText = document.getElementById('zoom-text');
+
+    function updateZoomDisplay() {
+      zoomText.innerText = Math.round(currentZoom * 100) + '%';
+      canvasScaler.style.transform = `scale(${currentZoom})`;
+    }
+
+    function changeZoom(delta) {
+      currentZoom = Math.min(2.0, Math.max(0.3, currentZoom + delta));
+      updateZoomDisplay();
+    }
+
+    function resetZoom() {
+      currentZoom = 1.0;
+      updateZoomDisplay();
+    }
+
+    function fitZoom() {
+      const windowWidth = window.innerWidth;
+      // The canvas total content width is approximately 3800px
+      const fitScale = Math.min(1.0, Math.max(0.3, (windowWidth - 80) / 3800));
+      currentZoom = Math.round(fitScale * 10) / 10;
+      updateZoomDisplay();
+    }
+
+    function scrollToArtboard(id) {
+      const el = document.getElementById(id);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+      }
+    }
+
+    function openModal() {
+      document.getElementById('figmaModal').classList.add('open');
+    }
+
+    function closeModal() {
+      document.getElementById('figmaModal').classList.remove('open');
+    }
+
+    function copyTokensJson() {
+      const tokens = {
+        name: "AgriGuard Design Tokens 2026",
+        colors: {
+          obsidianBg: "#080D0B",
+          cardElevated: "#0D1612",
+          emeraldMain: "#10B981",
+          neonMint: "#34D399",
+          rescueRed: "#EF4444",
+          cautionGold: "#F59E0B",
+          telemetryCyan: "#06B6D4"
+        },
+        typography: {
+          display: "Outfit, 800",
+          heading: "Inter, 600",
+          body: "Inter, 400"
+        }
+      };
+      navigator.clipboard.writeText(JSON.stringify(tokens, null, 2)).then(() => {
+        const btn = document.getElementById('copyTokensBtn');
+        btn.innerText = "✓ Copied Tokens!";
+        setTimeout(() => { btn.innerText = "📋 Copy Color Tokens JSON"; }, 2500);
+      });
+    }
+
+    // Keyboard shortcuts
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeModal();
+      if ((e.ctrlKey || e.metaKey) && (e.key === '=' || e.key === '+')) {
+        e.preventDefault();
+        changeZoom(0.1);
+      }
+      if ((e.ctrlKey || e.metaKey) && (e.key === '-' || e.key === '_')) {
+        e.preventDefault();
+        changeZoom(-0.1);
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key === '0') {
+        e.preventDefault();
+        resetZoom();
+      }
+    });
+  </script>
+</body>
+</html>

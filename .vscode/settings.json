@@ -1,0 +1,15 @@
+{
+  "python.defaultInterpreterPath": "C:\\Users\\lohit\\AppData\\Local\\Programs\\Python\\Python311\\python.exe",
+  "python.analysis.extraPaths": [
+    "${workspaceFolder}/backend",
+    "C:\\Users\\lohit\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages"
+  ],
+  "python.autoComplete.extraPaths": [
+    "${workspaceFolder}/backend",
+    "C:\\Users\\lohit\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages"
+  ],
+  "css.lint.unknownAtRules": "ignore",
+  "files.associations": {
+    "*.ino": "cpp"
+  }
+}
