@@ -35,7 +35,9 @@ export default function LoginPage() {
       }
       router.replace("/dashboard");
     } catch (err: any) {
-      setError(err?.message || (isRegisterMode ? "Registration failed." : "Login failed. Please try again."));
+      console.error("Auth submit error:", err);
+      const msg = err?.message || (typeof err === "string" ? err : null);
+      setError(msg || (isRegisterMode ? "Registration failed." : "Login failed. Please try again."));
     } finally {
       setLoading(false);
     }

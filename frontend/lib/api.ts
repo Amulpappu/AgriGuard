@@ -211,7 +211,7 @@ export async function login(email: string, password: string): Promise<TokenRespo
     .maybeSingle();
 
   if (error || !data) {
-    throw { code: "not_found", message: "User not found in Supabase database. Please create an account." };
+    throw new Error("User not found in Supabase database. Please create an account.");
   }
 
   return {
@@ -243,10 +243,10 @@ export async function register(email: string, password: string, fullName?: strin
       const err = await res.json().catch(() => null);
       if (err?.detail) {
         const msg = typeof err.detail === "string" ? err.detail : err.detail?.message;
-        throw { code: "register_error", message: msg || "Registration failed." };
+        throw new Error(msg || "Registration failed.");
       }
     } catch (err: any) {
-      if (err?.code === "register_error") throw err;
+      if (err?.message) throw err;
       // Backend offline / proxy timeout -> seamless fallback to Supabase Cloud Database!
     }
   }
@@ -259,7 +259,7 @@ export async function register(email: string, password: string, fullName?: strin
     .maybeSingle();
 
   if (existing) {
-    throw { code: "email_exists", message: "This email is already registered! Please click 'Already have an account? Sign in'." };
+    throw new Error("This email is already registered! Please click 'Already have an account? Sign in'.");
   }
 
   // 3. Insert new farmer directly into Supabase Cloud
@@ -273,7 +273,7 @@ export async function register(email: string, password: string, fullName?: strin
   });
 
   if (insertErr) {
-    throw { code: "db_error", message: insertErr.message || "Failed to create account in database." };
+    throw new Error(insertErr.message || "Failed to create account in database.");
   }
 
   return {
