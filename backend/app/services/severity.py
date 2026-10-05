@@ -16,8 +16,8 @@ def _pil_to_hsv(img: Image.Image) -> np.ndarray:
     rgb = np.array(img.convert("RGB"), dtype=np.uint8)
     try:
         import cv2
-        bgr = cv2.cvtColor(rgb, cv2.COLOR_RGB2BGR)
-        hsv = cv2.cvtColor(bgr, cv2.COLOR_BGR2HSV)
+        bgr = cv2.cvtColor(rgb, cv2.COLOR_RGB2BGR)  # type: ignore
+        hsv = cv2.cvtColor(bgr, cv2.COLOR_BGR2HSV)  # type: ignore
         return hsv
     except ImportError:
         # Fallback: simple numpy HSV

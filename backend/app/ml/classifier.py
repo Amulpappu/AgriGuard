@@ -151,10 +151,14 @@ def auto_detect_crop_from_image(image_bytes: bytes) -> str:
 
         # Sample color distribution
         small = img.resize((32, 32))
-        pixels = [small.getpixel((x, y)) for y in range(32) for x in range(32)]
-        avg_r = sum(p[0] for p in pixels) / len(pixels)
-        avg_g = sum(p[1] for p in pixels) / len(pixels)
-        avg_b = sum(p[2] for p in pixels) / len(pixels)
+        r_band, g_band, b_band = small.split()
+        r_data = list(r_band.getdata())
+        g_data = list(g_band.getdata())
+        b_data = list(b_band.getdata())
+        n_pixels = max(len(r_data), 1)
+        avg_r = sum(r_data) / n_pixels
+        avg_g = sum(g_data) / n_pixels
+        avg_b = sum(b_data) / n_pixels
         green_ratio = avg_g / max(avg_r + avg_b + 1, 1)
 
         # Hash image data for deterministic consistency for identical images

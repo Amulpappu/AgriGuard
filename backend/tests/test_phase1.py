@@ -358,8 +358,8 @@ async def test_sensor_validation(client):
     from app.schemas.schemas import SensorReadingIn
     from pydantic import ValidationError
     with pytest.raises(ValidationError):
-        SensorReadingIn(soil_moisture=150)  # > 100
+        SensorReadingIn.model_validate({"soil_moisture": 150})  # > 100
     with pytest.raises(ValidationError):
-        SensorReadingIn(temp_c=100)  # > 60
+        SensorReadingIn.model_validate({"temp_c": 100})  # > 60
     with pytest.raises(ValidationError):
-        SensorReadingIn(humidity=-5)  # < 0
+        SensorReadingIn.model_validate({"humidity": -5})  # < 0

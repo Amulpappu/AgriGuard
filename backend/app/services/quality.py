@@ -40,7 +40,7 @@ def _brightness(img: Image.Image) -> float:
 def _laplacian_variance(img: Image.Image) -> float:
     import cv2  # optional, fall back to numpy
     gray = np.array(img.convert("L"), dtype=np.uint8)
-    lap = cv2.Laplacian(gray, cv2.CV_64F)
+    lap = cv2.Laplacian(gray, cv2.CV_64F)  # type: ignore
     return float(lap.var())
 
 
