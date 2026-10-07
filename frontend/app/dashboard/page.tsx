@@ -42,17 +42,34 @@ export default function DashboardPage() {
   const { t } = useI18n();
   const { fullName, logout } = useAuth();
   const router = useRouter();
-  const [data, setData] = useState<DashboardSummary | null>(null);
+  const [data, setData] = useState<DashboardSummary | null>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const cached = sessionStorage.getItem("dashboard_summary_cache");
+        if (cached) return JSON.parse(cached);
+      } catch {}
+    }
+    return null;
+  });
   const [sensor, setSensor] = useState<SensorLatestOut | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!data);
   const [error, setError] = useState("");
 
   useEffect(() => {
     Promise.all([
-      getDashboardSummary().then(setData),
+      getDashboardSummary().then((d) => {
+        setData(d);
+        if (typeof window !== "undefined") {
+          try {
+            sessionStorage.setItem("dashboard_summary_cache", JSON.stringify(d));
+          } catch {}
+        }
+      }),
       getSensorLatest().then(setSensor).catch(() => {}),
     ])
-      .catch(() => setError("Failed to load dashboard."))
+      .catch(() => {
+        if (!data) setError("Failed to load dashboard.");
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -294,8 +311,8 @@ export default function DashboardPage() {
               </div>
             ) : (
               <div className="text-center py-4">
-                <p className="text-xs text-gray-400">No active sensor node telemetry.</p>
-                <p className="text-[10px] text-gray-500 mt-1">Run fake_sensor.py to simulate ESP32 readings.</p>
+                <p className="text-xs text-gray-400">Agricultural Microclimate Station</p>
+                <p className="text-[10px] text-emerald-400 mt-1">Connect ESP32 field node or view Bio-Shield 360° radar.</p>
               </div>
             )}
           </div>

@@ -38,15 +38,9 @@ const Ctx = createContext<AuthContext>({
   lockLohith: () => {},
 });
 
-function checkLohithClearance(emailStr: string | null, nameStr: string | null, isUnlocked: boolean): boolean {
-  if (isUnlocked) return true;
+function checkLohithClearance(emailStr: string | null): boolean {
   const e = (emailStr || "").toLowerCase().trim();
-  const n = (nameStr || "").toLowerCase().trim();
-  return (
-    e === "lohithgamer12@gmail.com" ||
-    e.includes("lohith") ||
-    n.includes("lohith")
-  );
+  return e === "lohithgamer12@gmail.com" || e === "lohithgamer12@gmail";
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -59,15 +53,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const t = localStorage.getItem(TOKEN_KEY);
     const u = localStorage.getItem(USER_KEY);
-    const k = sessionStorage.getItem(ADMIN_PASSKEY_KEY);
     if (t) setToken(t);
-    if (k === "lohith" || k === "true") setAdminUnlocked(true);
     if (u) {
       try {
         const parsed = JSON.parse(u);
+        const resolvedEmail = parsed.email || null;
         setUserId(parsed.userId || null);
-        setEmail(parsed.email || null);
+        setEmail(resolvedEmail);
         setFullName(parsed.fullName || null);
+        if (checkLohithClearance(resolvedEmail)) {
+          setAdminUnlocked(true);
+        }
       } catch {}
     }
   }, []);
@@ -88,9 +84,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setEmail(resolvedEmail);
     setFullName(resolvedName);
 
-    if (res.is_lohith || resolvedEmail.toLowerCase().includes("lohith")) {
+    if (checkLohithClearance(resolvedEmail)) {
       sessionStorage.setItem(ADMIN_PASSKEY_KEY, "lohith");
       setAdminUnlocked(true);
+    } else {
+      sessionStorage.removeItem(ADMIN_PASSKEY_KEY);
+      setAdminUnlocked(false);
     }
   }, []);
 
@@ -157,7 +156,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setAdminUnlocked(false);
   }, []);
 
-  const isLohith = checkLohithClearance(email, fullName, adminUnlocked);
+  const isLohith = checkLohithClearance(email);
 
   return (
     <Ctx.Provider

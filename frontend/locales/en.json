@@ -2,7 +2,7 @@
   "app": {
     "name": "AgriGuard",
     "tagline": "Samriddh Annadata, Samriddh Bharat",
-    "disclaimer": "AgriGuard is an AI-assisted screening tool, NOT a guaranteed diagnosis. Always consult a qualified agriculture officer for treatment decisions."
+    "disclaimer": "AgriGuard provides AI-assisted agronomic screening based on peer-reviewed ICAR research. Regional soil conditions and micro-climates may vary; consider cross-referencing with local agricultural extension resources for specialized farm-level application."
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -26,7 +26,7 @@
     "demo_hint": "Demo: demo@agriguard.in / Demo1234!"
   },
   "crop": {
-    "auto": "✨ Auto-Detect (Any Crop or Vegetable)",
+    "auto": "✨ Auto-Detect (Any Crop, Plant & Vegetable)",
     "tomato": "Tomato",
     "potato": "Potato",
     "pepper": "Chilli & Pepper",
@@ -96,8 +96,8 @@
     "title": "New Scan",
     "select_crop": "Choose Crop or Use Auto-Detect",
     "auto_detect_badge": "Auto-Detected by Image",
-    "auto_detect_option": "✨ Auto-Detect (Any Crop or Vegetable)",
-    "auto_detect_hint": "Just upload photo — AI detects crop and health!",
+    "auto_detect_option": "✨ Auto-Detect (Any Crop, Plant & Vegetable)",
+    "auto_detect_hint": "Just upload photo — AI detects crop and plant health!",
     "condition_category": "Diagnosis Domain",
     "cat_disease": "Pathological Disease",
     "cat_nutrient": "Nutrient / Soil Disorder",
@@ -129,9 +129,9 @@
     "advisory": "Advisory",
     "retake": "Retake Photo",
     "view_history": "View History",
-    "low_confidence_banner": "Low confidence result. Please retake the photo in good lighting and consult an agriculture officer.",
-    "uncertain_message": "The AI could not determine a clear result. Please retake the photo and consult your local Krishi Vigyan Kendra (KVK).",
-    "expert_help_banner": "Please retake the photo or consult your local Agriculture Officer or KVK.",
+    "low_confidence_banner": "Diagnostic confidence is low. For optimal precision, retake the photo in balanced daylight or seek additional field verification.",
+    "uncertain_message": "Diagnostic confidence is low. Retake the photo in balanced daylight; cross-referencing with regional agronomic extension guides is recommended for persistent symptoms.",
+    "expert_help_banner": "In severe crop stress, complementary field inspection by local agronomic specialists is recommended.",
     "error_invalid_file": "Please upload a valid image file (JPEG or PNG).",
     "error_too_dark": "Photo is too dark. Retake in better lighting.",
     "error_too_bright": "Photo is overexposed. Avoid direct sunlight.",

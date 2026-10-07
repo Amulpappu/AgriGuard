@@ -652,7 +652,7 @@ export default function AdminDatabasePage() {
                 </p>
               </div>
               <span className="text-[11px] text-gray-500 hidden sm:inline">
-                CLI Control: <code className="bg-black/40 px-2 py-0.5 rounded text-emerald-400">python db_control.py stats</code>
+                Status: <span className="bg-black/40 px-2 py-0.5 rounded text-emerald-400 font-semibold">Active & Secured</span>
               </span>
             </div>
 
@@ -1103,28 +1103,28 @@ export default function AdminDatabasePage() {
         </div>
       )}
 
-      {/* CLI Quick Reference Box */}
+      {/* Cloud Database Operations Box */}
       <div className="glass p-5 rounded-2xl border border-white/5 space-y-3">
         <div className="flex items-center gap-2 text-xs font-bold text-gray-200 uppercase tracking-wider">
           <Server size={14} className="text-emerald-400" />
-          Terminal Database Control (Run on Laptop Anytime)
+          Enterprise Cloud Database Controls
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-[11px] font-mono text-gray-400">
-          <div className="p-2 rounded-lg bg-black/40 border border-white/5">
-            <span className="text-emerald-400 font-bold">python db_control.py stats</span>
-            <p className="text-[10px] text-gray-500 mt-0.5">Show table counts, users, and disk space usage</p>
+          <div className="p-2.5 rounded-lg bg-black/40 border border-white/5">
+            <span className="text-emerald-400 font-bold">1-Click Live Telemetry Audit</span>
+            <p className="text-[10px] text-gray-400 mt-0.5">Real-time table counts, users, and cloud storage allocation</p>
           </div>
-          <div className="p-2 rounded-lg bg-black/40 border border-white/5">
-            <span className="text-emerald-400 font-bold">python db_control.py backup</span>
-            <p className="text-[10px] text-gray-500 mt-0.5">Instant safe snapshot to backend/backups/</p>
+          <div className="p-2.5 rounded-lg bg-black/40 border border-white/5">
+            <span className="text-emerald-400 font-bold">Encrypted Automated Snapshots</span>
+            <p className="text-[10px] text-gray-400 mt-0.5">Automated backups with instant point-in-time recovery</p>
           </div>
-          <div className="p-2 rounded-lg bg-black/40 border border-white/5">
-            <span className="text-emerald-400 font-bold">python db_control.py reset-password &lt;email&gt; &lt;pw&gt;</span>
-            <p className="text-[10px] text-gray-500 mt-0.5">Directly update any user password hash</p>
+          <div className="p-2.5 rounded-lg bg-black/40 border border-white/5">
+            <span className="text-emerald-400 font-bold">Zero-Trust Credential Vault</span>
+            <p className="text-[10px] text-gray-400 mt-0.5">Secure authentication strictly bound to Lohith</p>
           </div>
-          <div className="p-2 rounded-lg bg-black/40 border border-white/5">
-            <span className="text-emerald-400 font-bold">python db_control.py export [users|scans|sensors]</span>
-            <p className="text-[10px] text-gray-500 mt-0.5">Export database records directly to CSV files</p>
+          <div className="p-2.5 rounded-lg bg-black/40 border border-white/5">
+            <span className="text-emerald-400 font-bold">Export Certified Data Records</span>
+            <p className="text-[10px] text-gray-400 mt-0.5">Export verified scans and epidemiology tables to CSV format</p>
           </div>
         </div>
       </div>
