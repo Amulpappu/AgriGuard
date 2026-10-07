@@ -389,6 +389,14 @@ export async function getScan(id: string): Promise<ScanOut> {
   return handleResponse<ScanOut>(res);
 }
 
+export async function reclassifyScan(id: string, cropSlug: string): Promise<ScanOut> {
+  const res = await fetch(`${getApiPrefix()}/scans/${id}/reclassify?crop_slug=${encodeURIComponent(cropSlug)}`, {
+    method: "POST",
+    headers: authHeaders(),
+  });
+  return handleResponse<ScanOut>(res);
+}
+
 export async function compareScans(a: string, b: string): Promise<CompareOut> {
   const res = await fetch(`${getApiPrefix()}/scans/compare?a=${a}&b=${b}`, {
     headers: authHeaders(),

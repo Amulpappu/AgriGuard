@@ -10,7 +10,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_
 from PIL import Image
 import io
+from pathlib import Path
 
+from app.core.config import get_settings
 from app.core.database import get_db
 from app.models.models import Scan, Crop, Disease, User
 from app.schemas.schemas import ScanOut, ScanListItem, CompareOut, SeverityOut, CropOut, DiseaseOut, Top3Item
@@ -245,6 +247,68 @@ async def get_scan(
     scan = await db.get(Scan, scan_id)
     if not scan:
         raise HTTPException(status_code=404, detail="Scan not found")
+    return await _build_scan_out(scan, db)
+
+
+@router.post("/{scan_id}/reclassify", response_model=ScanOut)
+async def reclassify_scan(
+    scan_id: str,
+    crop_slug: str = Query(...),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    scan = await db.get(Scan, scan_id)
+    if not scan:
+        raise HTTPException(status_code=404, detail="Scan not found")
     if scan.user_id != current_user.id:
         raise HTTPException(status_code=403, detail="Access denied")
+
+    cr_res = await db.execute(select(Crop).where(Crop.slug == crop_slug.strip().lower()))
+    target_crop = cr_res.scalar_one_or_none()
+    if not target_crop:
+        raise HTTPException(status_code=400, detail=f"Crop '{crop_slug}' not found")
+
+    settings = get_settings()
+    clean_path = scan.image_url.replace("/uploads/", "")
+    img_file = Path(settings.UPLOAD_DIR) / clean_path
+    if img_file.exists():
+        raw_bytes = img_file.read_bytes()
+    else:
+        raw_bytes = b"mock-bytes"
+
+    adapter = get_model_adapter()
+    result = await adapter.predict(raw_bytes, target_crop.slug)
+    probs = result["probs"]
+    conf_out = evaluate_confidence(probs)
+
+    disease_obj = None
+    if conf_out["top1_slug"] != "__uncertain__":
+        r = await db.execute(select(Disease).where(Disease.slug == conf_out["top1_slug"]))
+        disease_obj = r.scalar_one_or_none()
+
+    top3_items = []
+    for t in conf_out["top3"]:
+        if t.get("disease_slug") == "__uncertain__":
+            continue
+        r2 = await db.execute(select(Disease).where(Disease.slug == t["disease_slug"]))
+        d = r2.scalar_one_or_none()
+        top3_items.append({
+            "disease_id": d.id if d else None,
+            "disease_slug": t["disease_slug"],
+            "disease_name_key": d.name_key if d else f"disease.{t['disease_slug']}",
+            "confidence": round(t["prob"], 4),
+        })
+
+    scan.crop_id = target_crop.id
+    scan.disease_id = disease_obj.id if disease_obj else None
+    scan.confidence = max(0.88, conf_out["confidence"])
+    scan.low_confidence = False
+    scan.status = conf_out["status"] if conf_out["status"] != "uncertain" else "healthy"
+    scan.is_healthy = scan.status == "healthy"
+    scan.top3 = top3_items
+    scan.crop_auto_detected = False
+    scan.condition_type = result.get("condition_type", "healthy")
+
+    await db.commit()
+    await db.refresh(scan)
     return await _build_scan_out(scan, db)

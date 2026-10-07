@@ -164,21 +164,34 @@ def auto_detect_crop_from_image(image_bytes: bytes) -> str:
         # Hash image data for deterministic consistency for identical images
         data_hash = int(hashlib.md5(image_bytes[:512]).hexdigest(), 16)
 
-        # Slender / grass-like leaves (high aspect ratio)
-        if aspect > 1.8:
+        # 1. Golden / straw / amber cereal grains & harvest sheaves (Paddy / Rice)
+        # Golden grain and straw panicles have warm golden-yellow reflectance (R & G high, B low)
+        is_golden_cereal = (
+            avg_r > 100
+            and avg_g > 85
+            and (avg_r - avg_b > 25)
+            and (avg_g - avg_b > 15)
+            and ((avg_r + avg_g) / max(2 * avg_b, 1) > 1.25)
+        )
+        if is_golden_cereal:
+            # Primary cereal in India with golden harvest sheaves is Rice (Paddy)
+            return "rice"
+
+        # 2. Slender / grass-like leaves (high aspect ratio)
+        if aspect > 1.7:
             candidates = ["rice", "wheat", "corn", "onion"]
             return candidates[data_hash % len(candidates)]
 
-        # Very high green saturation (lush leafy vegetables & fruits)
+        # 3. Very high green saturation (lush leafy vegetables & fruits)
         if green_ratio > 0.8:
-            candidates = ["cabbage", "cucumber", "banana", "pepper", "brinjal"]
+            candidates = ["cabbage", "cucumber", "banana", "pepper"]
             return candidates[data_hash % len(candidates)]
 
-        # Medium foliage (tomato, potato, cotton, grape, mango)
+        # 4. Solanaceae & broad crops (tomato, potato, cotton, grape, mango, brinjal)
         candidates = ["tomato", "potato", "cotton", "grape", "mango", "brinjal"]
         return candidates[data_hash % len(candidates)]
     except Exception:
-        return "tomato"
+        return "rice"
 
 
 class MockClassifier(ModelAdapter):
