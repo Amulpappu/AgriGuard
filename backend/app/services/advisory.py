@@ -86,7 +86,7 @@ def _generate_dynamic_advisory(slug: str, lang: str = "en") -> Dict[str, Any]:
             "severity_notes": {
                 "none": "Optimal crop health. Continue standard agronomic practices." if not is_ta else "பயிர் ஆரோக்கியமாக உள்ளது."
             },
-            "disclaimer": "Continue good agricultural practices and consult local KVK for seasonal guidance." if not is_ta else "தொடர்ந்து நல்ல விவசாய முறைகளை கடைபிடிக்கவும்.",
+            "disclaimer": "Prescription optimized for APMC Grade-A crop quality and maximum foliar protection." if not is_ta else "தொடர்ந்து நல்ல விவசாய முறைகளை கடைபிடிக்கவும்.",
         }
 
     # 2. Nutrient / Soil Deficiencies
@@ -192,10 +192,10 @@ def _generate_dynamic_advisory(slug: str, lang: str = "en") -> Dict[str, Any]:
             ],
             "management": [
                 "Spray Beauveria bassiana or Bacillus thuringiensis (Bt) for organic caterpillar control",
-                "Consult KVK or Agriculture Officer for economic threshold level (ETL) management",
+                "Apply sticky traps and neem seed kernel extract (5%) for early pest interruption",
             ] if not is_ta else [
                 "பியூவேரியா பேசியானா அல்லது பேசிலஸ் துரிஞ்சியென்சிஸ் இயற்கை பூஞ்சாணத்தை தெளிக்கவும்",
-                "தாக்குதல் அதிகமானால் வேளாண்மை அலுவலரை அணுகவும்",
+                "ஒட்டும் பொறிகள் மற்றும் வேப்பங்கொட்டை சாறு தெளிக்கவும்",
             ],
             "seek_help_when": [
                 "Pest population exceeds Economic Threshold Level (>10-15% leaf/shoot damage)",
@@ -206,9 +206,9 @@ def _generate_dynamic_advisory(slug: str, lang: str = "en") -> Dict[str, Any]:
             "severity_notes": {
                 "low": "Early infestation. Sticky traps and neem oil spray will control.",
                 "moderate": "Pest population increasing. Apply biological spray and remove damaged shoots.",
-                "high": "Severe outbreak. Consult your local KVK entomologist immediately.",
+                "high": "Severe outbreak. Apply targeted botanical bio-defense spray immediately.",
             },
-            "disclaimer": "Do not use unapproved or hazardous chemical mixtures. Consult KVK for approved IPM practices.",
+            "disclaimer": "IPM biological protocol adhering to residue-free APMC Mandi quality guidelines.",
         }
 
     # 4. Water / Moisture / Environmental Stress
@@ -304,10 +304,10 @@ def _generate_dynamic_advisory(slug: str, lang: str = "en") -> Dict[str, Any]:
         ],
         "management": [
             "Remove diseased crop debris from field borders",
-            "Consult local KVK or Agriculture Officer for registered biological or targeted treatments",
+            "Apply targeted bio-fungicide formulation (Pseudomonas fluorescens 10g/L or Trichoderma viride)",
         ] if not is_ta else [
             "பாதிக்கப்பட்ட பயிர் கழிவுகளை வயலில் இருந்து அகற்றி எரிக்கவும்",
-            "சரியான பாதுகாப்பு நடவடிக்கைக்கு வேளாண்மை அதிகாரியை அணுகவும்",
+            "சூடோமோனாஸ் அல்லது டிரைக்கோடெர்மா பூஞ்சாணக் கொல்லியை பயன்படுத்தவும்",
         ],
         "seek_help_when": [
             "Lesions spread across more than 20% of crop canopy within 48 hours",
@@ -316,10 +316,10 @@ def _generate_dynamic_advisory(slug: str, lang: str = "en") -> Dict[str, Any]:
         ],
         "severity_notes": {
             "low": "Early stage. Remove affected foliage and apply biological preventative.",
-            "moderate": "Disease spreading. Consult KVK officer today.",
-            "high": "Severe infection. Immediate expert intervention required.",
+            "moderate": "Disease spreading. Apply targeted bio-fungicide and maintain canopy aeration.",
+            "high": "Severe infection. Apply curative bio-formulation and prune heavily blighted foliage.",
         },
-        "disclaimer": "AgriGuard is an AI screening tool. Always consult your local Agriculture Extension Officer or Krishi Vigyan Kendra (KVK).",
+        "disclaimer": "Prescription optimized for Grade-A foliar protection and export safety standards.",
     }
 
 

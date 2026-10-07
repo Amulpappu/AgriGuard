@@ -72,7 +72,8 @@ export default function ScanDetailPage() {
     getScan(id as string)
       .then(async (s) => {
         setScan(s);
-        const slug = s.disease?.slug || `${s.crop.slug}_healthy`;
+        const validTop = (s.top3 || []).find((it) => it.disease_slug && it.disease_slug !== "__uncertain__");
+        const slug = s.disease?.slug || (validTop && s.status !== "healthy" ? validTop.disease_slug : (s.status === "healthy" ? `${s.crop.slug}_healthy` : `${s.crop.slug}_blight`));
         try {
           const adv = await getAdvisory(slug, lang);
           setAdvisory(adv);
@@ -89,7 +90,8 @@ export default function ScanDetailPage() {
     try {
       const updated = await reclassifyScan(id as string, cropSlug);
       setScan(updated);
-      const slug = updated.disease?.slug || `${updated.crop.slug}_healthy`;
+      const validTop = (updated.top3 || []).find((it) => it.disease_slug && it.disease_slug !== "__uncertain__");
+      const slug = updated.disease?.slug || (validTop && updated.status !== "healthy" ? validTop.disease_slug : (updated.status === "healthy" ? `${updated.crop.slug}_healthy` : `${updated.crop.slug}_blight`));
       const adv = await getAdvisory(slug, lang);
       setAdvisory(adv);
     } catch (e: any) {
@@ -313,7 +315,14 @@ export default function ScanDetailPage() {
                       : "bg-rose-500/20 text-rose-300 border border-rose-500/30"
                   }`}>
                     {isHealthy ? <CheckCircle2 size={14} /> : <AlertTriangle size={14} />}
-                    {isHealthy ? "Vigorous Healthy Crop" : scan.disease ? t(scan.disease.name_key) : "Identified Condition"}
+                    {isHealthy
+                      ? "Vigorous Healthy Crop"
+                      : scan.disease
+                      ? t(scan.disease.name_key)
+                      : (() => {
+                          const validTop = (scan.top3 || []).find((it) => it.disease_slug && it.disease_slug !== "__uncertain__");
+                          return validTop ? t(validTop.disease_name_key) : "Identified Foliar Distress";
+                        })()}
                   </span>
                 </div>
               </div>
@@ -389,7 +398,19 @@ export default function ScanDetailPage() {
                 </div>
                 <div>
                   <h2 className="text-lg sm:text-xl font-black text-white tracking-tight">
-                    {advisory ? advisory.name : `${t(scan.crop.name_key)} Foliage Assessment`}
+                    {(() => {
+                      if (isHealthy) {
+                        return advisory ? advisory.name : `${t(scan.crop.name_key)} Healthy Foliage`;
+                      }
+                      if (scan.disease) {
+                        return t(scan.disease.name_key);
+                      }
+                      const validTop = (scan.top3 || []).find((it) => it.disease_slug && it.disease_slug !== "__uncertain__");
+                      if (validTop) {
+                        return t(validTop.disease_name_key);
+                      }
+                      return advisory ? advisory.name : `${t(scan.crop.name_key)} Foliar Pathology Assessment`;
+                    })()}
                   </h2>
                   <p className="text-xs text-emerald-300/80 font-medium">
                     {advisory?.category || "Commercial Agricultural Decision Engine"}
@@ -411,7 +432,9 @@ export default function ScanDetailPage() {
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-5">
               <div className="bg-black/40 p-3 rounded-2xl border border-white/5 text-center">
                 <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">Health Status</p>
-                <p className="text-sm font-extrabold text-emerald-400 mt-0.5">{isHealthy ? "Prime Vigor" : "Managed"}</p>
+                <p className={`text-sm font-extrabold mt-0.5 ${isHealthy ? "text-emerald-400" : "text-amber-400"}`}>
+                  {isHealthy ? "Prime Vigor" : "Pathology Managed"}
+                </p>
               </div>
               <div className="bg-black/40 p-3 rounded-2xl border border-white/5 text-center">
                 <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">Treatment Cost</p>

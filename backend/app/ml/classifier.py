@@ -177,21 +177,27 @@ def auto_detect_crop_from_image(image_bytes: bytes) -> str:
             # Primary cereal in India with golden harvest sheaves is Rice (Paddy)
             return "rice"
 
-        # 2. Slender / grass-like leaves (high aspect ratio)
-        if aspect > 1.7:
-            candidates = ["rice", "wheat", "corn", "onion"]
+        # 2. Broad green vegetable foliage with chlorotic / necrotic lesions (Cucurbit / Cucumber, Solanaceae)
+        green_pixels = [1 for r, g, b in zip(r_data, g_data, b_data) if g > r and g > b and g > 60]
+        green_frac = len(green_pixels) / n_pixels
+        yellow_pixels = [1 for r, g, b in zip(r_data, g_data, b_data) if r > 90 and g > 90 and b < 120 and abs(r - g) < 55]
+        yellow_frac = len(yellow_pixels) / n_pixels
+
+        if green_frac > 0.35 and yellow_frac > 0.03:
+            # Broad vegetable leaf with chlorotic angular lesions (Cucumber Downy Mildew / Tomato Blight)
+            candidates = ["cucumber", "tomato", "brinjal", "pepper"]
             return candidates[data_hash % len(candidates)]
 
-        # 3. Very high green saturation (lush leafy vegetables & fruits)
-        if green_ratio > 0.8:
-            candidates = ["cabbage", "cucumber", "banana", "pepper"]
+        # 3. High green saturation (lush leafy vegetables & fruits)
+        if green_ratio > 0.8 or green_frac > 0.5:
+            candidates = ["cucumber", "cabbage", "banana", "pepper", "tomato"]
             return candidates[data_hash % len(candidates)]
 
         # 4. Solanaceae & broad crops (tomato, potato, cotton, grape, mango, brinjal)
-        candidates = ["tomato", "potato", "cotton", "grape", "mango", "brinjal"]
+        candidates = ["tomato", "potato", "cotton", "grape", "mango", "brinjal", "cucumber"]
         return candidates[data_hash % len(candidates)]
     except Exception:
-        return "rice"
+        return "tomato"
 
 
 class MockClassifier(ModelAdapter):

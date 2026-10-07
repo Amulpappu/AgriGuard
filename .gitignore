@@ -60,6 +60,7 @@ AgriGuard.apk
 test_agriguard.db
 uploads/
 backend/uploads/
+!frontend/public/uploads/
 test_uploads/
 export_*.csv
 
