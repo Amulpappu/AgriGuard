@@ -188,6 +188,48 @@ def main():
         dur = (time.time() - t0) * 1000
         record("Supabase Cloud REST API", False, dur, str(e))
 
+    # 10. Bio-Risk Pre-Symptomatic Infection Window API
+    t0 = time.time()
+    try:
+        r = httpx.get(f"{BACKEND_URL}/sensors/bio-risk", timeout=5.0)
+        dur = (time.time() - t0) * 1000
+        if r.status_code == 200:
+            d = r.json()
+            record("Bio-Risk Pre-Symptomatic Engine", True, dur, f"Risk={d.get('risk_percentage')}%, Level={d.get('risk_level')}, VPD={d.get('vpd', {}).get('vpd_kpa')} kPa")
+        else:
+            record("Bio-Risk Pre-Symptomatic Engine", False, dur, f"Status {r.status_code}: {r.text}")
+    except Exception as e:
+        dur = (time.time() - t0) * 1000
+        record("Bio-Risk Pre-Symptomatic Engine", False, dur, str(e))
+
+    # 11. Village Grid Bio-Radar Spore Dispersion API
+    t0 = time.time()
+    try:
+        r = httpx.get(f"{BACKEND_URL}/sensors/bioradar", timeout=5.0)
+        dur = (time.time() - t0) * 1000
+        if r.status_code == 200:
+            d = r.json()
+            record("Village Bio-Radar Spore Plume API", True, dur, f"Cluster={d.get('cluster_name')}, Nodes monitored={d.get('nodes_monitored')}, High risk={d.get('nodes_at_high_risk')}")
+        else:
+            record("Village Bio-Radar Spore Plume API", False, dur, f"Status {r.status_code}: {r.text}")
+    except Exception as e:
+        dur = (time.time() - t0) * 1000
+        record("Village Bio-Radar Spore Plume API", False, dur, str(e))
+
+    # 12. Mandi PHI & ROI Economic Lock Engine
+    t0 = time.time()
+    try:
+        r = httpx.get(f"{BACKEND_URL}/sensors/mandi-roi?crop_slug=tomato&days_to_harvest=6&mandi_price_per_kg=28", timeout=5.0)
+        dur = (time.time() - t0) * 1000
+        if r.status_code == 200:
+            d = r.json()
+            record("Mandi PHI & Treat-vs-Harvest ROI", True, dur, f"Strategy={d.get('recommended_strategy')}, MRL Lock={d.get('has_mrl_safety_lock')}, Profit Diff=+INR {d.get('farmer_profit_difference_inr')}")
+        else:
+            record("Mandi PHI & Treat-vs-Harvest ROI", False, dur, f"Status {r.status_code}: {r.text}")
+    except Exception as e:
+        dur = (time.time() - t0) * 1000
+        record("Mandi PHI & Treat-vs-Harvest ROI", False, dur, str(e))
+
     print("==================================================================")
     all_passed = all(x["passed"] for x in results)
     pass_count = sum(1 for x in results if x["passed"])

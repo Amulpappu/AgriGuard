@@ -7,6 +7,7 @@ import { Wifi, Droplets, Thermometer, Wind, Info, Activity, RefreshCw } from "lu
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
 } from "recharts";
+import { BioShieldRadar } from "@/components/BioShieldRadar";
 
 function ReadingCard({
   icon: Icon, label, value, unit, color, badge,
@@ -76,6 +77,9 @@ export default function FieldPage() {
           <RefreshCw size={13} className={loading ? "animate-spin" : ""} /> Refresh
         </button>
       </div>
+
+      {/* Bio-Shield 360° Epidemic Radar & Mandi Economics */}
+      <BioShieldRadar />
 
       {loading && !data ? (
         <div className="space-y-4">

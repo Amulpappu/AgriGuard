@@ -1,6 +1,7 @@
 """
 Shared dependency: resolve current user from Bearer token.
 """
+from typing import Optional
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -10,6 +11,7 @@ from app.core.security import decode_token
 from app.models.models import User
 
 bearer_scheme = HTTPBearer()
+bearer_optional = HTTPBearer(auto_error=False)
 
 
 async def get_current_user(
@@ -31,3 +33,17 @@ async def get_current_user(
             detail="User not found",
         )
     return user
+
+
+async def get_optional_user(
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(bearer_optional),
+    db: AsyncSession = Depends(get_db),
+) -> Optional[User]:
+    if not credentials:
+        return None
+    payload = decode_token(credentials.credentials)
+    if not payload:
+        return None
+    user_id: str = payload.get("sub", "")
+    result = await db.execute(select(User).where(User.id == user_id))
+    return result.scalar_one_or_none()

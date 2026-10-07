@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { getCrops, createScan, downscaleImage, CropOut } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { Camera, Upload, Loader2, ChevronRight, AlertCircle, Sun, Focus, ShieldCheck, Sparkles } from "lucide-react";
+import { MultispectralShader } from "@/components/MultispectralShader";
 
 const ERROR_KEYS: Record<string, string> = {
   invalid_file: "scan.error_invalid_file",
@@ -181,16 +182,17 @@ export default function ScanPage() {
               />
 
               {preview ? (
-                <div className="relative rounded-xl overflow-hidden aspect-[4/3] bg-gray-900 border border-white/10">
-                  <img src={preview} alt="Preview" className="w-full h-full object-cover" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
-                  <button
-                    type="button"
-                    onClick={() => { setPreview(null); setFile(null); fileRef.current?.click(); }}
-                    className="absolute bottom-3 right-3 bg-black/80 hover:bg-black text-white text-xs font-semibold px-4 py-2 rounded-xl transition-all shadow-lg backdrop-blur-sm"
-                  >
-                    {t("scan.retake")}
-                  </button>
+                <div className="space-y-3">
+                  <MultispectralShader imageSrc={preview} />
+                  <div className="flex justify-end">
+                    <button
+                      type="button"
+                      onClick={() => { setPreview(null); setFile(null); fileRef.current?.click(); }}
+                      className="bg-black/80 hover:bg-black text-white text-xs font-semibold px-4 py-2 rounded-xl transition-all shadow border border-white/10"
+                    >
+                      {t("scan.retake")}
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <button

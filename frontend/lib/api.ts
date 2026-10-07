@@ -517,3 +517,129 @@ export async function downscaleImage(file: File, maxPx = 1280): Promise<File> {
     img.src = url;
   });
 }
+
+// ─── Bio-Shield 360° Epiphytology & Mandi ROI Client ─────────────────────────
+
+export interface BioRiskOut {
+  timestamp: string;
+  vpd: {
+    svp_kpa: number;
+    avp_kpa: number;
+    vpd_kpa: number;
+    dew_point_c: number;
+    dew_depression_c: number;
+  };
+  wet_hours_estimated: number;
+  dsv_index: number;
+  risk_percentage: number;
+  risk_level: string;
+  hours_to_germination: number;
+  urgency: string;
+  action_summary: string;
+  prophylactic_bio_action: string;
+  economic_benefits: {
+    bio_treatment_cost_inr: number;
+    chemical_fungicide_cost_inr: number;
+    net_savings_per_acre_inr: number;
+    toxic_chemical_runoff_saved_kg: number;
+  };
+  theme_alignment: {
+    samriddh_annadata: string;
+    swachh_bharat: string;
+  };
+}
+
+export interface BioRadarOut {
+  cluster_name: string;
+  wind_vector: {
+    speed_kmh: number;
+    direction_deg: number;
+    cardinal: string;
+  };
+  source_epicenter_risk_pct: number;
+  nodes_monitored: number;
+  nodes_at_high_risk: number;
+  cluster_nodes: Array<{
+    id: string;
+    farmer: string;
+    bearing: number;
+    distance_m: number;
+    crop: string;
+    in_plume_zone: boolean;
+    projected_risk_pct: number;
+    threat_status: string;
+    community_alert: string;
+  }>;
+  community_action: string;
+}
+
+export interface MandiROIOut {
+  crop: string;
+  days_to_harvest: number;
+  mandi_price_per_kg_inr: number;
+  expected_yield_kg: number;
+  chemical_phi_days_required: number;
+  has_mrl_safety_lock: boolean;
+  recommended_strategy: string;
+  advisory_summary: string;
+  scenarios: {
+    chemical_spray: {
+      input_cost_inr: number;
+      expected_revenue_inr: number;
+      net_profit_inr: number;
+      mrl_status: string;
+      notes: string;
+    };
+    bio_shield_prophylactic: {
+      input_cost_inr: number;
+      expected_revenue_inr: number;
+      net_profit_inr: number;
+      mrl_status: string;
+      notes: string;
+    };
+    early_clean_harvest: {
+      input_cost_inr: number;
+      expected_revenue_inr: number;
+      net_profit_inr: number;
+      mrl_status: string;
+      notes: string;
+    };
+  };
+  farmer_profit_difference_inr: number;
+}
+
+export async function getBioRisk(temp_c?: number, humidity?: number, soil_moisture?: number): Promise<BioRiskOut> {
+  const params = new URLSearchParams();
+  if (temp_c != null) params.append("temp_c", temp_c.toString());
+  if (humidity != null) params.append("humidity", humidity.toString());
+  if (soil_moisture != null) params.append("soil_moisture", soil_moisture.toString());
+  const query = params.toString() ? `?${params.toString()}` : "";
+  const res = await fetch(`${getApiPrefix()}/sensors/bio-risk${query}`);
+  if (!res.ok) throw new Error("Failed to fetch bio-risk telemetry");
+  return res.json();
+}
+
+export async function getBioRadar(wind_speed = 14.5, wind_direction = 230.0): Promise<BioRadarOut> {
+  const res = await fetch(`${getApiPrefix()}/sensors/bioradar?wind_speed=${wind_speed}&wind_direction=${wind_direction}`);
+  if (!res.ok) throw new Error("Failed to fetch village bio-radar");
+  return res.json();
+}
+
+export async function getMandiROI(
+  crop_slug = "tomato",
+  days_to_harvest = 7,
+  mandi_price_per_kg = 24.0,
+  yield_kg = 1200.0,
+  field_acres = 1.0
+): Promise<MandiROIOut> {
+  const params = new URLSearchParams({
+    crop_slug,
+    days_to_harvest: days_to_harvest.toString(),
+    mandi_price_per_kg: mandi_price_per_kg.toString(),
+    yield_kg: yield_kg.toString(),
+    field_acres: field_acres.toString(),
+  });
+  const res = await fetch(`${getApiPrefix()}/sensors/mandi-roi?${params.toString()}`);
+  if (!res.ok) throw new Error("Failed to fetch Mandi ROI calculation");
+  return res.json();
+}
