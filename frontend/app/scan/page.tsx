@@ -54,8 +54,14 @@ export default function ScanPage() {
     try {
       const cropId = selectedCrop ? selectedCrop.id : "auto";
       const result = await createScan(cropId, file);
+      if (typeof window !== "undefined" && preview) {
+        try {
+          sessionStorage.setItem(`scan_img_${result.id}`, preview);
+        } catch {}
+      }
       router.push(`/scan/${result.id}`);
     } catch (err: any) {
+      console.error("Scan error:", err);
       const key = ERROR_KEYS[err?.code] || "scan.error_generic";
       setError(err?.message || t(key));
       setAnalyzing(false);

@@ -42,7 +42,11 @@ export default function ScanDetailPage() {
   const { t } = useI18n();
   const lang = useLang();
   const router = useRouter();
-  const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
+  const API_BASE =
+    typeof window !== "undefined" &&
+    (window.location.hostname.includes("vercel.app") || window.location.hostname !== "localhost")
+      ? ""
+      : (process.env.NEXT_PUBLIC_API_URL && !process.env.NEXT_PUBLIC_API_URL.includes("localhost") ? process.env.NEXT_PUBLIC_API_URL : "");
 
   const [scan, setScan] = useState<ScanOut | null>(null);
   const [advisory, setAdvisory] = useState<AdvisoryOut | null>(null);
@@ -240,7 +244,12 @@ export default function ScanDetailPage() {
           {/* Leaf Photo Card */}
           <div className="glass rounded-3xl overflow-hidden aspect-[4/3] bg-black border border-white/10 relative shadow-2xl group">
             <img
-              src={`${API_BASE}${scan.image_url}`}
+              src={
+                (typeof window !== "undefined" && sessionStorage.getItem(`scan_img_${scan.id}`)) ||
+                (scan.image_url.startsWith("http") || scan.image_url.startsWith("data:")
+                  ? scan.image_url
+                  : `${API_BASE}${scan.image_url}`)
+              }
               alt="Scan specimen"
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
             />
