@@ -542,13 +542,7 @@ export async function createScan(cropId: string | null | undefined, imageFile: F
     created_at: new Date().toISOString(),
   };
 
-  try {
-    await supabase.from("scans").insert(scanRecord);
-  } catch (err) {
-    console.warn("Failed to persist scan to Supabase cloud, continuing with memory report:", err);
-  }
-
-  return {
+  const scanOutResult: ScanOut = {
     id: newScanId,
     crop: matchedCrop,
     status: isHealthy ? "healthy" : "potentially_diseased",
@@ -570,6 +564,24 @@ export async function createScan(cropId: string | null | undefined, imageFile: F
     created_at: scanRecord.created_at,
     crop_auto_detected: scanRecord.crop_auto_detected,
   };
+
+  // Cache scan result immediately in sessionStorage for instant 0ms access
+  if (typeof window !== "undefined") {
+    try {
+      sessionStorage.setItem(`scan_data_${newScanId}`, JSON.stringify(scanOutResult));
+    } catch {}
+  }
+
+  try {
+    const { error: insErr } = await supabase.from("scans").insert(scanRecord);
+    if (insErr) {
+      console.warn("Failed to persist scan to Supabase cloud:", insErr);
+    }
+  } catch (err) {
+    console.warn("Failed to persist scan to Supabase cloud, continuing with memory report:", err);
+  }
+
+  return scanOutResult;
 }
 
 export async function getScans(params?: {
@@ -634,31 +646,65 @@ export async function getScans(params?: {
 }
 
 export async function getScan(id: string): Promise<ScanOut> {
-  if (!isPureCloudMode()) {
+  // 1. Check client session storage for instant 0ms retrieval
+  if (typeof window !== "undefined") {
     try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 2000);
-      const res = await fetch(`${getApiPrefix()}/scans/${id}`, { headers: authHeaders(), signal: controller.signal });
-      clearTimeout(timeoutId);
-      if (res.ok) return await res.json();
+      const cached = sessionStorage.getItem(`scan_data_${id}`);
+      if (cached) {
+        const parsed = JSON.parse(cached) as ScanOut;
+        if (parsed && parsed.id === id) {
+          return parsed;
+        }
+      }
     } catch {}
   }
 
-  // Supabase Cloud live fallback
-  const { data: s } = await supabase
+  // 2. Try serverless endpoint (/api/v1/scans/[id])
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 2500);
+    const res = await fetch(`/api/v1/scans/${id}`, {
+      headers: authHeaders(),
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+    if (res.ok) {
+      const scanData = (await res.json()) as ScanOut;
+      if (typeof window !== "undefined") {
+        try {
+          sessionStorage.setItem(`scan_data_${id}`, JSON.stringify(scanData));
+        } catch {}
+      }
+      return scanData;
+    }
+  } catch {}
+
+  // 3. Direct Supabase Cloud live fallback with retry
+  let { data: s } = await supabase
     .from("scans")
     .select("*, crop:crops(*), disease:diseases(*)")
     .eq("id", id)
     .maybeSingle();
 
+  if (!s) {
+    // Retry once after 500ms in case record is propagating
+    await new Promise((r) => setTimeout(r, 500));
+    const retry = await supabase
+      .from("scans")
+      .select("*, crop:crops(*), disease:diseases(*)")
+      .eq("id", id)
+      .maybeSingle();
+    if (retry.data) s = retry.data;
+  }
+
   if (s) {
     const crop = s.crop || {
       id: s.crop_id || "crop-default",
-      slug: "crop",
-      name_key: "crop.tomato",
-      icon_emoji: "🌱",
+      slug: "cucumber",
+      name_key: "crop.cucumber",
+      icon_emoji: "🥒",
     };
-    return {
+    const scanData: ScanOut = {
       id: s.id,
       crop: {
         id: crop.id,
@@ -688,7 +734,26 @@ export async function getScan(id: string): Promise<ScanOut> {
       crop_auto_detected: Boolean(s.crop_auto_detected),
       condition_type: s.condition_type,
     };
+
+    if (typeof window !== "undefined") {
+      try {
+        sessionStorage.setItem(`scan_data_${id}`, JSON.stringify(scanData));
+      } catch {}
+    }
+
+    return scanData;
   }
+
+  // 4. Final check of session storage before throwing
+  if (typeof window !== "undefined") {
+    try {
+      const cached = sessionStorage.getItem(`scan_data_${id}`);
+      if (cached) {
+        return JSON.parse(cached) as ScanOut;
+      }
+    } catch {}
+  }
+
   throw new Error("Scan not found.");
 }
 

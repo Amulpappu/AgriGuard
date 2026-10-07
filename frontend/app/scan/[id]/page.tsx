@@ -83,7 +83,25 @@ export default function ScanDetailPage() {
           setAdvisory(adv);
         } catch {}
       })
-      .catch(() => setError("Scan not found."))
+      .catch(async () => {
+        if (typeof window !== "undefined") {
+          try {
+            const cached = sessionStorage.getItem(`scan_data_${id}`);
+            if (cached) {
+              const s = JSON.parse(cached) as ScanOut;
+              setScan(s);
+              const validTop = (s.top3 || []).find((it) => it.disease_slug && it.disease_slug !== "__uncertain__");
+              const slug = s.disease?.slug || (validTop && s.status !== "healthy" ? validTop.disease_slug : (s.status === "healthy" ? `${s.crop.slug}_healthy` : `${s.crop.slug}_blight`));
+              try {
+                const adv = await getAdvisory(slug, lang);
+                setAdvisory(adv);
+              } catch {}
+              return;
+            }
+          } catch {}
+        }
+        setError("Scan not found.");
+      })
       .finally(() => setLoading(false));
   }, [id, lang]);
 
