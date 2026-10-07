@@ -4,19 +4,26 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
-import { Leaf, LayoutDashboard, Camera, History, GitCompareArrows, Wifi, LogOut, Globe, Database } from "lucide-react";
+import { Leaf, LayoutDashboard, Camera, History, GitCompareArrows, Wifi, LogOut, Globe, Database, Shield } from "lucide-react";
 
-const NAV_ITEMS = [
+interface NavItem {
+  href: string;
+  icon: any;
+  key: string;
+  adminOnly?: boolean;
+}
+
+const NAV_ITEMS: NavItem[] = [
   { href: "/dashboard", icon: LayoutDashboard, key: "nav.dashboard" },
   { href: "/scan",      icon: Camera,          key: "nav.scan" },
   { href: "/history",   icon: History,          key: "nav.history" },
   { href: "/compare",   icon: GitCompareArrows, key: "nav.compare" },
   { href: "/field",     icon: Wifi,             key: "nav.field" },
-  { href: "/admin",     icon: Database,         key: "nav.database" },
+  { href: "/admin",     icon: Database,         key: "nav.database", adminOnly: true },
 ];
 
 export default function NavBar() {
-  const { logout, fullName } = useAuth();
+  const { logout, fullName, isLohith } = useAuth();
   const { t, lang, setLang } = useI18n();
   const pathname = usePathname();
   const router = useRouter();
@@ -25,6 +32,14 @@ export default function NavBar() {
     logout();
     router.push("/");
   }
+
+  // Filter items: Database access is strictly reserved for Lohith
+  const visibleNavItems = NAV_ITEMS.filter((item) => {
+    if (item.adminOnly) {
+      return isLohith;
+    }
+    return true;
+  });
 
   return (
     <>
@@ -38,20 +53,25 @@ export default function NavBar() {
         </Link>
 
         <nav className="flex items-center gap-1">
-          {NAV_ITEMS.map(({ href, icon: Icon, key }) => {
+          {visibleNavItems.map(({ href, icon: Icon, key, adminOnly }) => {
             const active = pathname.startsWith(href);
             return (
               <Link
                 key={href}
                 href={href}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                   active
-                    ? "bg-green-500/15 text-green-400 border border-green-500/30"
+                    ? "bg-green-500/15 text-green-400 border border-green-500/30 shadow-sm"
                     : "text-gray-400 hover:text-gray-100 hover:bg-white/5"
                 }`}
               >
-                <Icon size={14} />
+                <Icon size={14} className={adminOnly ? "text-amber-400" : ""} />
                 {t(key)}
+                {adminOnly && (
+                  <span className="ml-1 text-[9px] px-1 py-0.2 bg-amber-500/20 text-amber-300 rounded border border-amber-500/30 font-semibold tracking-wider">
+                    LOHITH
+                  </span>
+                )}
               </Link>
             );
           })}
@@ -65,10 +85,15 @@ export default function NavBar() {
             <Globe size={13} />
             {lang === "en" ? "தமிழ்" : "EN"}
           </button>
-          {fullName && <span className="text-xs text-gray-500 hidden md:block">{fullName}</span>}
+          {fullName && (
+            <div className="flex items-center gap-1.5 text-xs text-gray-400 hidden md:flex">
+              {isLohith && <Shield size={11} className="text-amber-400" />}
+              <span>{fullName}</span>
+            </div>
+          )}
           <button
             onClick={handleLogout}
-            className="text-gray-500 hover:text-red-400 p-1.5 rounded-lg hover:bg-red-500/10"
+            className="text-gray-500 hover:text-red-400 p-1.5 rounded-lg hover:bg-red-500/10 transition-colors"
             title={t("nav.logout")}
           >
             <LogOut size={15} />
@@ -78,7 +103,7 @@ export default function NavBar() {
 
       {/* Bottom nav (mobile) */}
       <nav className="sm:hidden fixed bottom-0 inset-x-0 z-50 glass border-t border-white/5 flex items-center justify-around py-2 px-2 safe-bottom">
-        {NAV_ITEMS.map(({ href, icon: Icon, key }) => {
+        {visibleNavItems.map(({ href, icon: Icon, key }) => {
           const active = pathname.startsWith(href);
           return (
             <Link

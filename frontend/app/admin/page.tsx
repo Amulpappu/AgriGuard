@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
+import { useAuth } from "@/lib/auth";
 import { 
   Database, Users, HardDrive, Image as ImageIcon, Activity, 
-  ShieldCheck, RefreshCw, KeyRound, UserPlus, Trash2, 
+  ShieldCheck, ShieldAlert, Lock, RefreshCw, KeyRound, UserPlus, Trash2, 
   Download, Sparkles, CheckCircle2, AlertCircle, FileSpreadsheet, Server,
   Table, Terminal, Cloud, Play, Search, ArrowRight, ExternalLink, Copy
 } from "lucide-react";
@@ -44,7 +46,26 @@ interface TableMeta {
   columns: string[];
 }
 
+async function adminFetch(url: string, options: RequestInit = {}) {
+  const token = typeof window !== "undefined" ? localStorage.getItem("agriguard_token") : null;
+  const passkey = typeof window !== "undefined" ? sessionStorage.getItem("lohith_admin_key") : null;
+  const headers = new Headers(options.headers || {});
+  
+  if (token) {
+    headers.set("Authorization", `Bearer ${token}`);
+  } else if (passkey) {
+    headers.set("Authorization", `Bearer ${passkey}`);
+  }
+  
+  return fetch(url, { ...options, headers });
+}
+
 export default function AdminDatabasePage() {
+  const { isLohith, fullName, email, unlockLohith, lockLohith } = useAuth();
+  const [passkeyInput, setPasskeyInput] = useState("");
+  const [unlockError, setUnlockError] = useState("");
+  const [unlocking, setUnlocking] = useState(false);
+
   const [activeTab, setActiveTab] = useState<"overview" | "tables" | "sql" | "supabase">("overview");
   const [stats, setStats] = useState<DbStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -81,11 +102,33 @@ export default function AdminDatabasePage() {
   const [deleteEmail, setDeleteEmail] = useState<string | null>(null);
   const [wipeUploads, setWipeUploads] = useState(false);
 
+  async function handleUnlockPasskey(e: React.FormEvent) {
+    e.preventDefault();
+    if (!passkeyInput.trim()) return;
+    setUnlocking(true);
+    setUnlockError("");
+    try {
+      const ok = await unlockLohith(passkeyInput.trim());
+      if (ok) {
+        setPasskeyInput("");
+        fetchStats();
+        fetchTablesList();
+        fetchProvider();
+      } else {
+        setUnlockError("Access Denied: Incorrect passkey or credentials. Database access is strictly reserved for Lohith.");
+      }
+    } catch (_) {
+      setUnlockError("Could not connect to authentication verification service.");
+    } finally {
+      setUnlocking(false);
+    }
+  }
+
   async function fetchStats() {
     setLoading(true);
     try {
-      const res = await fetch("/api/v1/admin/db/stats");
-      if (!res.ok) throw new Error("Failed to load database stats");
+      const res = await adminFetch("/api/v1/admin/db/stats");
+      if (!res.ok) throw new Error("Failed to load database stats. Access restricted to Lohith.");
       const data = await res.json();
       setStats(data);
     } catch (e: any) {
@@ -97,7 +140,7 @@ export default function AdminDatabasePage() {
 
   async function fetchTablesList() {
     try {
-      const res = await fetch("/api/v1/admin/db/tables");
+      const res = await adminFetch("/api/v1/admin/db/tables");
       if (res.ok) {
         const data = await res.json();
         setTablesList(data.tables || []);
@@ -111,7 +154,7 @@ export default function AdminDatabasePage() {
   async function fetchTableContent(tableName: string, search: string = "") {
     setTableLoading(true);
     try {
-      const res = await fetch(`/api/v1/admin/db/tables/${tableName}?search=${encodeURIComponent(search)}&limit=50`);
+      const res = await adminFetch(`/api/v1/admin/db/tables/${tableName}?search=${encodeURIComponent(search)}&limit=50`);
       if (res.ok) {
         const data = await res.json();
         setTableData(data);
@@ -124,7 +167,7 @@ export default function AdminDatabasePage() {
 
   async function fetchProvider() {
     try {
-      const res = await fetch("/api/v1/admin/db/provider");
+      const res = await adminFetch("/api/v1/admin/db/provider");
       if (res.ok) {
         const data = await res.json();
         setProviderInfo(data);
@@ -133,22 +176,24 @@ export default function AdminDatabasePage() {
   }
 
   useEffect(() => {
-    fetchStats();
-    fetchTablesList();
-    fetchProvider();
-  }, []);
+    if (isLohith) {
+      fetchStats();
+      fetchTablesList();
+      fetchProvider();
+    }
+  }, [isLohith]);
 
   useEffect(() => {
-    if (activeTab === "tables" && selectedTable) {
+    if (activeTab === "tables" && selectedTable && isLohith) {
       fetchTableContent(selectedTable, tableSearch);
     }
-  }, [activeTab, selectedTable]);
+  }, [activeTab, selectedTable, isLohith]);
 
   async function handleRunSql() {
     setSqlLoading(true);
     setSqlResult(null);
     try {
-      const res = await fetch("/api/v1/admin/db/sql", {
+      const res = await adminFetch("/api/v1/admin/db/sql", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ query: sqlQuery }),
@@ -165,7 +210,7 @@ export default function AdminDatabasePage() {
   async function handleLoadSupabaseExport() {
     setOperating(true);
     try {
-      const res = await fetch("/api/v1/admin/db/supabase-export");
+      const res = await adminFetch("/api/v1/admin/db/supabase-export");
       const data = await res.json();
       if (res.ok) {
         setSupabaseSql(data.sql);
@@ -180,7 +225,7 @@ export default function AdminDatabasePage() {
     setOperating(true);
     setActionMsg(null);
     try {
-      const res = await fetch("/api/v1/admin/db/backup", { method: "POST" });
+      const res = await adminFetch("/api/v1/admin/db/backup", { method: "POST" });
       const data = await res.json();
       if (res.ok) {
         setActionMsg({ type: "success", text: `Database backup created: ${data.backup_path}` });
@@ -198,7 +243,7 @@ export default function AdminDatabasePage() {
     setOperating(true);
     setActionMsg(null);
     try {
-      const res = await fetch("/api/v1/admin/db/vacuum", { method: "POST" });
+      const res = await adminFetch("/api/v1/admin/db/vacuum", { method: "POST" });
       const data = await res.json();
       if (res.ok) {
         setActionMsg({ type: "success", text: "Database vacuum & defragmentation completed successfully!" });
@@ -217,7 +262,7 @@ export default function AdminDatabasePage() {
     e.preventDefault();
     setOperating(true);
     try {
-      const res = await fetch("/api/v1/admin/db/users", {
+      const res = await adminFetch("/api/v1/admin/db/users", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: newUserEmail, full_name: newUserName, password: newUserPassword }),
@@ -245,7 +290,7 @@ export default function AdminDatabasePage() {
     setOperating(true);
     setActionMsg(null);
     try {
-      const res = await fetch("/api/v1/admin/db/switch-provider", {
+      const res = await adminFetch("/api/v1/admin/db/switch-provider", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -274,7 +319,7 @@ export default function AdminDatabasePage() {
     if (!resetEmail) return;
     setOperating(true);
     try {
-      const res = await fetch("/api/v1/admin/db/reset-password", {
+      const res = await adminFetch("/api/v1/admin/db/reset-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: resetEmail, new_password: newPassword }),
@@ -298,7 +343,7 @@ export default function AdminDatabasePage() {
     if (!deleteEmail) return;
     setOperating(true);
     try {
-      const res = await fetch(`/api/v1/admin/db/users/${encodeURIComponent(deleteEmail)}?wipe_data=${wipeUploads}`, {
+      const res = await adminFetch(`/api/v1/admin/db/users/${encodeURIComponent(deleteEmail)}?wipe_data=${wipeUploads}`, {
         method: "DELETE",
       });
       const data = await res.json();
@@ -317,6 +362,84 @@ export default function AdminDatabasePage() {
     }
   }
 
+  // ─── ACCESS CONTROL GATE: RESTRICTED TO LOHITH ONLY ────────────────────────
+  if (!isLohith) {
+    return (
+      <div className="max-w-xl mx-auto px-4 py-16">
+        <div className="glass p-8 rounded-3xl border border-red-500/20 shadow-2xl bg-gradient-to-b from-slate-900/90 via-slate-900/95 to-black text-center space-y-6">
+          <div className="mx-auto w-16 h-16 rounded-2xl bg-red-500/10 border border-red-500/30 flex items-center justify-center text-red-400 shadow-lg shadow-red-950/40">
+            <ShieldAlert size={32} />
+          </div>
+
+          <div className="space-y-2">
+            <span className="inline-block text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-red-500/10 text-red-300 border border-red-500/20">
+              Access Restricted · Administrator Clearance Required
+            </span>
+            <h1 className="text-2xl font-bold text-white tracking-tight">
+              AgriGuard Central Database
+            </h1>
+            <p className="text-xs text-gray-400 max-w-md mx-auto leading-relaxed">
+              Database access has been revoked for all users. Direct table inspection, raw SQL queries, user record audits, and cloud database migrations are restricted strictly to <span className="text-white font-medium">Lohith</span>.
+            </p>
+          </div>
+
+          {/* Current session info */}
+          <div className="glass p-3.5 rounded-xl border border-white/5 text-xs text-gray-400 flex items-center justify-between">
+            <span className="text-gray-400">Current User:</span>
+            <span className="font-semibold text-gray-200">
+              {fullName || "Demo Farmer / Guest"} {email ? `(${email})` : ""}
+            </span>
+            <span className="px-2 py-0.5 rounded text-[10px] bg-red-500/20 text-red-300 font-semibold border border-red-500/30">
+              No DB Access
+            </span>
+          </div>
+
+          {/* Unlock Section */}
+          <form onSubmit={handleUnlockPasskey} className="space-y-3 pt-2 text-left">
+            <label className="block text-xs font-medium text-gray-300">
+              Enter Lohith Passkey or Password to Unlock Database:
+            </label>
+            <div className="flex gap-2">
+              <input
+                type="password"
+                value={passkeyInput}
+                onChange={(e) => setPasskeyInput(e.target.value)}
+                placeholder="Lohith passkey..."
+                className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500/50"
+              />
+              <button
+                type="submit"
+                disabled={unlocking || !passkeyInput.trim()}
+                className="px-4 py-2.5 rounded-xl text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white disabled:opacity-50 transition shadow-lg shadow-emerald-900/40 flex items-center gap-1.5"
+              >
+                {unlocking ? "Verifying..." : "Unlock Access"}
+              </button>
+            </div>
+            {unlockError && (
+              <p className="text-xs text-red-400 font-medium">{unlockError}</p>
+            )}
+          </form>
+
+          <div className="pt-2 border-t border-white/5 flex items-center justify-between text-xs">
+            <Link
+              href="/dashboard"
+              className="text-gray-400 hover:text-white transition inline-flex items-center gap-1"
+            >
+              ← Return to Farmer Dashboard
+            </Link>
+            <Link
+              href="/"
+              className="text-emerald-400 hover:text-emerald-300 transition"
+            >
+              Switch Account →
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+
   return (
     <div className="max-w-6xl mx-auto px-4 py-6 space-y-6">
       {/* Top Banner */}
@@ -327,15 +450,27 @@ export default function AdminDatabasePage() {
               <Database size={24} />
             </div>
             <div>
-              <h1 className="text-xl md:text-2xl font-bold text-white flex items-center gap-2">
+              <h1 className="text-xl md:text-2xl font-bold text-white flex items-center gap-2 flex-wrap">
                 Database Control Center
                 <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
                   {providerInfo?.engine || "SQLite 3 (Laptop Server)"}
                 </span>
+                <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center gap-1">
+                  <ShieldCheck size={12} />
+                  Lohith Clearance
+                </span>
               </h1>
-              <p className="text-xs text-gray-400 mt-0.5">
-                Full control over users, tables, custom queries, backups, and Supabase free cloud migration.
-              </p>
+              <div className="flex items-center gap-2 mt-0.5">
+                <p className="text-xs text-gray-400">
+                  Full control over users, tables, custom queries, backups, and cloud database.
+                </p>
+                <button
+                  onClick={lockLohith}
+                  className="text-[11px] text-amber-400/80 hover:text-red-400 underline underline-offset-2 ml-2 transition"
+                >
+                  (Lock DB)
+                </button>
+              </div>
             </div>
           </div>
         </div>

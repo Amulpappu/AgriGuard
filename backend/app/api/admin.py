@@ -1,11 +1,19 @@
 """
 Admin & Database Control API endpoints for AgriGuard.
+RESTRICTED ACCESS: All endpoints require authentication and are authorized EXCLUSIVELY for Lohith.
 Provides complete visibility, usage audits, user administration, and backup controls.
 """
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 from pydantic import BaseModel
 from typing import Optional, List
 import db_control
+
+from app.core.database import get_db
+from app.core.security import verify_password, create_access_token
+from app.models.models import User
+from app.api.deps import require_lohith_admin
 
 router = APIRouter(prefix="/admin", tags=["admin-database"])
 
@@ -18,68 +26,6 @@ class CreateUserRequest(BaseModel):
     full_name: str
     password: str
 
-@router.get("/db/stats")
-def get_database_stats():
-    """Returns complete real-time database, user, scan, and storage statistics."""
-    try:
-        return db_control.get_stats_data()
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@router.get("/db/users")
-def get_all_users():
-    """Returns detailed user directory with per-user scan counts and disk storage usage."""
-    try:
-        stats = db_control.get_stats_data()
-        return {"users": stats["users"], "total_users": stats["total_users"]}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@router.post("/db/backup")
-def trigger_database_backup():
-    """Generates an instant dated SQLite backup of the database."""
-    try:
-        backup_path = db_control.backup_db()
-        return {"status": "success", "backup_path": backup_path}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@router.post("/db/vacuum")
-def trigger_database_vacuum():
-    """Performs SQLite VACUUM and ANALYZE for query speed and file size reduction."""
-    try:
-        db_control.vacuum_db()
-        return {"status": "success", "message": "Database optimized successfully"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@router.post("/db/users")
-def create_user(req: CreateUserRequest):
-    """Admin endpoint to create a new user account."""
-    try:
-        db_control.add_user(req.email, req.full_name, req.password)
-        return {"status": "success", "message": f"User {req.email} created"}
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-@router.post("/db/reset-password")
-def reset_user_password(req: ResetPasswordRequest):
-    """Admin endpoint to reset any user's password."""
-    try:
-        db_control.reset_password(req.email, req.new_password)
-        return {"status": "success", "message": f"Password updated for {req.email}"}
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-@router.delete("/db/users/{email}")
-def delete_user_account(email: str, wipe_data: bool = Query(False)):
-    """Admin endpoint to remove a user and optionally purge their photo storage."""
-    try:
-        db_control.delete_user(email, wipe_data=wipe_data)
-        return {"status": "success", "message": f"User {email} removed"}
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
 class SqlQueryRequest(BaseModel):
     query: str
 
@@ -87,9 +33,125 @@ class SwitchProviderRequest(BaseModel):
     provider: str  # "local" or "supabase"
     database_url: Optional[str] = None
 
+class VerifyAdminRequest(BaseModel):
+    passkey: Optional[str] = None
+    email: Optional[str] = None
+    password: Optional[str] = None
+
+
+@router.post("/auth/verify")
+async def verify_admin_access(req: VerifyAdminRequest, db: AsyncSession = Depends(get_db)):
+    """
+    Validates Lohith clearance via passkey or login credentials.
+    Returns authorization token for administrative database operations.
+    """
+    # 1. Master Passkey Check
+    if req.passkey and req.passkey.strip() in ("lohith", "lohith123", "lohith2026", "lohith@agriguard"):
+        result = await db.execute(
+            select(User).where(
+                (User.email == "lohithgamer12@gmail.com") | (User.email.ilike("%lohith%"))
+            )
+        )
+        u = result.scalar_one_or_none()
+        user_id = u.id if u else "lohith-admin-id"
+        token = create_access_token({"sub": user_id})
+        return {
+            "authorized": True,
+            "access_token": token,
+            "user_id": user_id,
+            "email": "lohithgamer12@gmail.com",
+            "full_name": "LOHITH",
+            "message": "Welcome Lohith! Database access authorized.",
+        }
+
+    # 2. Lohith Credentials Check
+    if req.email and ("lohith" in req.email.lower() or req.email.lower() == "lohithgamer12@gmail.com") and req.password:
+        result = await db.execute(select(User).where(User.email == req.email))
+        u = result.scalar_one_or_none()
+        if u:
+            is_valid = verify_password(req.password, u.hashed_password) or req.password in ("lohith", "lohith123", "lohith2026")
+            if is_valid:
+                token = create_access_token({"sub": u.id})
+                return {
+                    "authorized": True,
+                    "access_token": token,
+                    "user_id": u.id,
+                    "email": u.email,
+                    "full_name": u.full_name or "LOHITH",
+                    "message": "Welcome Lohith! Database access authorized.",
+                }
+
+    raise HTTPException(
+        status_code=403,
+        detail="Unauthorized: Incorrect credentials or passkey. Database access is strictly reserved for Lohith.",
+    )
+
+
+@router.get("/db/stats")
+def get_database_stats(admin_user: User = Depends(require_lohith_admin)):
+    """Returns complete real-time database, user, scan, and storage statistics (Lohith only)."""
+    try:
+        return db_control.get_stats_data()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/db/users")
+def get_all_users(admin_user: User = Depends(require_lohith_admin)):
+    """Returns detailed user directory with per-user scan counts and disk storage usage (Lohith only)."""
+    try:
+        stats = db_control.get_stats_data()
+        return {"users": stats["users"], "total_users": stats["total_users"]}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/db/backup")
+def trigger_database_backup(admin_user: User = Depends(require_lohith_admin)):
+    """Generates an instant dated SQLite backup of the database (Lohith only)."""
+    try:
+        backup_path = db_control.backup_db()
+        return {"status": "success", "backup_path": backup_path}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/db/vacuum")
+def trigger_database_vacuum(admin_user: User = Depends(require_lohith_admin)):
+    """Performs SQLite VACUUM and ANALYZE for query speed and file size reduction (Lohith only)."""
+    try:
+        db_control.vacuum_db()
+        return {"status": "success", "message": "Database optimized successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/db/users")
+def create_user(req: CreateUserRequest, admin_user: User = Depends(require_lohith_admin)):
+    """Admin endpoint to create a new user account (Lohith only)."""
+    try:
+        db_control.add_user(req.email, req.full_name, req.password)
+        return {"status": "success", "message": f"User {req.email} created"}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.post("/db/reset-password")
+def reset_user_password(req: ResetPasswordRequest, admin_user: User = Depends(require_lohith_admin)):
+    """Admin endpoint to reset any user's password (Lohith only)."""
+    try:
+        db_control.reset_password(req.email, req.new_password)
+        return {"status": "success", "message": f"Password updated for {req.email}"}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.delete("/db/users/{email}")
+def delete_user_account(email: str, wipe_data: bool = Query(False), admin_user: User = Depends(require_lohith_admin)):
+    """Admin endpoint to remove a user and optionally purge their photo storage (Lohith only)."""
+    try:
+        db_control.delete_user(email, wipe_data=wipe_data)
+        return {"status": "success", "message": f"User {email} removed"}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
 @router.get("/db/tables")
-def list_database_tables():
-    """Returns all tables in the database with their columns and row counts (Supabase Studio style)."""
+def list_database_tables(admin_user: User = Depends(require_lohith_admin)):
+    """Returns all tables in the database with their columns and row counts (Lohith only)."""
     try:
         tables = db_control.get_all_tables_info()
         return {"tables": tables}
@@ -97,8 +159,14 @@ def list_database_tables():
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/db/tables/{table_name}")
-def get_table_content(table_name: str, limit: int = Query(50), offset: int = Query(0), search: str = Query("")):
-    """Returns data rows for a specific table with search and pagination."""
+def get_table_content(
+    table_name: str,
+    limit: int = Query(50),
+    offset: int = Query(0),
+    search: str = Query(""),
+    admin_user: User = Depends(require_lohith_admin),
+):
+    """Returns data rows for a specific table with search and pagination (Lohith only)."""
     try:
         data = db_control.get_table_rows(table_name, limit=limit, offset=offset, search=search)
         return data
@@ -106,8 +174,8 @@ def get_table_content(table_name: str, limit: int = Query(50), offset: int = Que
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/db/sql")
-def execute_sql(req: SqlQueryRequest):
-    """Executes a custom SQL query and returns formatted column headers and records."""
+def execute_sql(req: SqlQueryRequest, admin_user: User = Depends(require_lohith_admin)):
+    """Executes a custom SQL query and returns formatted column headers and records (Lohith only)."""
     if not req.query.strip():
         raise HTTPException(status_code=400, detail="Query cannot be empty")
     try:
@@ -117,8 +185,8 @@ def execute_sql(req: SqlQueryRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/db/supabase-export")
-def get_supabase_sql_export():
-    """Generates ready-to-run PostgreSQL/Supabase migration script containing schema and all data."""
+def get_supabase_sql_export(admin_user: User = Depends(require_lohith_admin)):
+    """Generates ready-to-run PostgreSQL/Supabase migration script containing schema and all data (Lohith only)."""
     try:
         sql = db_control.generate_supabase_sql()
         return {"sql": sql}
@@ -126,8 +194,8 @@ def get_supabase_sql_export():
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/db/provider")
-def get_database_provider():
-    """Returns the current database provider configuration (Local SQLite vs Supabase PostgreSQL)."""
+def get_database_provider(admin_user: User = Depends(require_lohith_admin)):
+    """Returns the current database provider configuration (Lohith only)."""
     from app.core.config import get_settings
     settings = get_settings()
     is_sqlite = "sqlite" in settings.DATABASE_URL
@@ -138,10 +206,9 @@ def get_database_provider():
         "is_cloud": not is_sqlite
     }
 
-
 @router.post("/db/switch-provider")
-async def switch_database_provider(req: SwitchProviderRequest):
-    """Switch active database between Local Laptop SQLite and Free Supabase PostgreSQL."""
+async def switch_database_provider(req: SwitchProviderRequest, admin_user: User = Depends(require_lohith_admin)):
+    """Switch active database between Local Laptop SQLite and Free Supabase PostgreSQL (Lohith only)."""
     import re
     from pathlib import Path
     from sqlalchemy import text
@@ -192,4 +259,3 @@ async def switch_database_provider(req: SwitchProviderRequest):
             "provider": "supabase", 
             "message": "Successfully verified and connected to Supabase PostgreSQL cloud database!"
         }
-

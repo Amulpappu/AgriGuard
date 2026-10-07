@@ -21,7 +21,9 @@ class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
     user_id: str
+    email: Optional[str] = None
     full_name: Optional[str] = None
+    is_lohith: bool = False
 
 
 # ─── Crop ────────────────────────────────────────────────────────────────────

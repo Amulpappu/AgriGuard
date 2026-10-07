@@ -24,7 +24,9 @@ export interface TokenResponse {
   access_token: string;
   token_type: string;
   user_id: string;
+  email?: string;
   full_name?: string;
+  is_lohith?: boolean;
 }
 
 export interface CropOut {
