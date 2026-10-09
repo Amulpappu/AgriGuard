@@ -818,7 +818,7 @@ export default function AdminDatabasePage() {
               </table>
             </div>
           ) : (
-            <div className="py-12 text-center text-gray-500 text-xs">No records found for table '{selectedTable}'.</div>
+            <div className="py-12 text-center text-gray-500 text-xs">No records found for table &apos;{selectedTable}&apos;.</div>
           )}
         </div>
       )}

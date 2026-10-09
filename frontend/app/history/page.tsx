@@ -35,7 +35,7 @@ export default function HistoryPage() {
     <div className="p-4 sm:p-6 lg:p-8 max-w-6xl mx-auto space-y-6 pb-12">
       <div className="pt-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">{t("history.title")}</h1>
+          <h1 className="font-display text-3xl sm:text-5xl font-semibold text-white tracking-tight leading-[1.05]">{t("history.title")}</h1>
           <p className="text-xs sm:text-sm text-gray-400 mt-1">Review past scans, treatment progression, and AI health assessments</p>
         </div>
         <div className="flex items-center gap-2">

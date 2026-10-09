@@ -73,17 +73,17 @@ export function BioShieldRadar() {
           <div className="space-y-1">
             <div className="flex items-center gap-2">
               <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[11px] font-bold tracking-wider uppercase font-mono">
-                AgriGuard 2.0 • Innovation Engine
+                Concept preview • Simulated data
               </span>
               <span className="px-2.5 py-0.5 rounded-full bg-teal-500/20 text-teal-300 border border-teal-500/30 text-[11px] font-bold">
-                Theme: Samriddh Annadata & Swachh Bharat
+                Not connected to real field data
               </span>
             </div>
             <h2 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight flex items-center gap-2 mt-1">
-              Bio-Shield 360° Epidemic Radar & Mandi Economics
+              Field Alerts Concept: Spread Radar & Harvest Planning
             </h2>
             <p className="text-xs sm:text-sm text-gray-300 max-w-2xl">
-              Pre-symptomatic spore germination forecasting (48h ahead), downwind village cluster bio-radar, and Pre-Harvest Interval (PHI) Maximum Residue Limit compliance calculator.
+              Illustrative preview of a planned feature. Numbers on this panel are simulated and must not be used for farming decisions.
             </p>
           </div>
           <button

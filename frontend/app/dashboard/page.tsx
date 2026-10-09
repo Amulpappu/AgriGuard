@@ -17,7 +17,7 @@ import {
 const CROP_COLORS: Record<string, string> = {
   tomato: "#f97316",
   potato: "#a78bfa",
-  pepper: "#34d399",
+  pepper: "#5CC2B4",
 };
 
 function StatCard({
@@ -31,7 +31,7 @@ function StatCard({
         <Icon size={22} className="text-gray-200" />
       </div>
       <div>
-        <p className="text-2xl sm:text-3xl font-bold text-white tracking-tight">{value}</p>
+        <p className="font-display text-3xl sm:text-4xl font-semibold text-white tracking-tight">{value}</p>
         <p className="text-xs text-gray-400 mt-0.5">{label}</p>
       </div>
     </div>
@@ -109,7 +109,7 @@ export default function DashboardPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-2">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">{t("dashboard.title")}</h1>
+            <h1 className="font-display text-3xl sm:text-5xl font-semibold text-white tracking-tight leading-[1.05]">{t("dashboard.title")}</h1>
             {fullName && (
               <span className="text-xs px-2.5 py-0.5 rounded-full bg-green-500/10 text-green-400 border border-green-500/20 font-medium">
                 🌱 {fullName}
@@ -129,7 +129,7 @@ export default function DashboardPage() {
           <Link
             href="/scan"
             id="quick-scan-btn"
-            className="flex items-center justify-center gap-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white text-xs sm:text-sm font-semibold px-5 py-2.5 rounded-xl shadow-lg shadow-green-500/20 hover:scale-[1.02] active:scale-95 transition-all"
+            className="flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-[#06201C] text-xs sm:text-sm font-semibold px-5 py-2.5 rounded-xl shadow-lg shadow-green-500/20 hover:scale-[1.02] active:scale-95 transition-all"
           >
             <Camera size={16} />
             {t("nav.scan")}
@@ -169,7 +169,7 @@ export default function DashboardPage() {
             <div className="glass rounded-2xl p-5 sm:p-6">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h2 className="text-base font-bold text-gray-200">{t("dashboard.chart_title")}</h2>
+                  <h2 className="font-display text-xl font-semibold text-gray-100">{t("dashboard.chart_title")}</h2>
                   <p className="text-xs text-gray-400 mt-0.5">Average leaf lesion damage percentage by crop</p>
                 </div>
                 <span className="text-[10px] uppercase tracking-wider font-semibold text-green-400 bg-green-500/10 px-2.5 py-1 rounded-full border border-green-500/20">
@@ -207,7 +207,7 @@ export default function DashboardPage() {
           {/* Recent Scans */}
           <div className="glass rounded-2xl overflow-hidden">
             <div className="px-5 py-4 border-b border-white/5 flex items-center justify-between">
-              <h2 className="text-base font-bold text-gray-200">{t("dashboard.recent_scans")}</h2>
+              <h2 className="font-display text-xl font-semibold text-gray-100">{t("dashboard.recent_scans")}</h2>
               <Link href="/history" className="text-xs font-semibold text-green-400 hover:text-green-300 flex items-center gap-1">
                 {t("common.view_details")} <ChevronRight size={14} />
               </Link>
@@ -272,7 +272,7 @@ export default function DashboardPage() {
         {/* Right Column (1 col wide on desktop): IoT Sensor Tile + Fast Actions */}
         <div className="space-y-6">
           {/* Real-time Field Conditions Tile */}
-          <div className="glass rounded-2xl p-5 border border-emerald-500/20 bg-gradient-to-b from-emerald-950/20 to-transparent">
+          <div className="glass rounded-2xl p-5 border border-emerald-500/20">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <Wifi size={16} className="text-emerald-400" />

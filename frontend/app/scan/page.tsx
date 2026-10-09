@@ -74,7 +74,7 @@ export default function ScanPage() {
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto space-y-6 pb-12">
       <div className="pt-2">
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">{t("scan.title")}</h1>
+        <h1 className="font-display text-3xl sm:text-5xl font-semibold text-white tracking-tight leading-[1.05]">{t("scan.title")}</h1>
         <p className="text-xs sm:text-sm text-gray-400 mt-1">{t("app.disclaimer")}</p>
       </div>
 
@@ -86,7 +86,7 @@ export default function ScanPage() {
             <div className="glass rounded-2xl p-5 space-y-3">
               <div className="flex items-center justify-between">
                 <p className="text-sm font-semibold text-gray-200">{t("scan.select_crop")}</p>
-                <span className="text-[11px] text-green-400 font-medium">14+ Crops & Veggies</span>
+                <span className="text-[11px] text-green-400 font-medium">Multi-Crop</span>
               </div>
 
               {/* Primary Option: AI Auto-Detect */}
@@ -238,7 +238,7 @@ export default function ScanPage() {
                 id="analyse-btn"
                 type="submit"
                 disabled={!file || analyzing}
-                className="w-full py-3.5 sm:py-4 rounded-xl bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed hover:from-green-400 hover:to-emerald-500 shadow-lg shadow-green-500/20 hover:scale-[1.01] active:scale-[0.99] transition-all text-sm"
+                className="w-full py-3.5 sm:py-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-[#06201C] font-bold flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed hover:from-green-400 hover:to-emerald-500 shadow-lg shadow-green-500/20 hover:scale-[1.01] active:scale-[0.99] transition-all text-sm"
               >
                 {analyzing ? (
                   <>

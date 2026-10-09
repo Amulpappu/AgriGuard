@@ -1,17 +1,18 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Hanken+Grotesk:wght@400;500;600;700&family=Noto+Sans+Tamil:wght@400;500;600;700&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Tamil:wght@400;500;600;700&display=swap');
+
 
 * {
   box-sizing: border-box;
 }
 
 body {
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: 'Hanken Grotesk', 'Noto Sans Tamil', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
-  background-color: #030712;
+  background-color: #14151D;
   color: #f9fafb;
 }
 
@@ -30,15 +31,15 @@ button, a, input, select {
 
 /* Glass morphism card */
 .glass {
-  background: rgba(15, 23, 42, 0.75);
+  background: rgba(29, 32, 48, 0.78);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(234, 232, 232, 0.12);
 }
 
 /* Gradient text */
 .gradient-text {
-  background: linear-gradient(135deg, #4ade80 0%, #22d3ee 100%);
+  background: linear-gradient(135deg, #84D3C8 0%, #3EA094 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -97,3 +98,59 @@ button, a, input, select {
   }
 }
 
+
+/* Display font + audio equalizer */
+.font-display { font-family: 'Fraunces', Georgia, 'Noto Sans Tamil', serif; font-weight: 400; letter-spacing: -0.02em; }
+h1, h2, h3 { font-family: 'Fraunces', Georgia, 'Noto Sans Tamil', serif; font-weight: 500; letter-spacing: -0.015em; }
+html[lang='ta'] h1, html[lang='ta'] h2, html[lang='ta'] h3 { font-family: 'Noto Sans Tamil', serif; font-weight: 600; }
+html[lang='ta'] body, html[lang='ta'] .font-display { font-family: 'Noto Sans Tamil', 'Inter', system-ui, sans-serif; }
+@keyframes eq { 0%,100% { height: 4px; } 50% { height: 16px; } }
+.eq-bar { height: 4px; animation: eq 0.8s ease-in-out infinite; }
+
+/* Outdoor (high-contrast light) mode */
+html.outdoor body { background: #F7F5EE; color: #14210F; }
+html.outdoor .glass { background: #FFFFFF; border: 1px solid rgba(20,33,15,0.18); backdrop-filter: none; }
+html.outdoor .text-white, html.outdoor .text-gray-100, html.outdoor .text-gray-200, html.outdoor .text-gray-300 { color: #14210F !important; }
+html.outdoor .text-gray-400, html.outdoor .text-gray-500 { color: #3D4A35 !important; }
+html.outdoor .text-emerald-300, html.outdoor .text-emerald-400, html.outdoor .text-green-400 { color: #14532D !important; }
+html.outdoor .text-amber-100, html.outdoor .text-amber-200, html.outdoor .text-amber-300 { color: #7A4B00 !important; }
+html.outdoor .bg-white\/5 { background: rgba(20,33,15,0.05) !important; }
+html.outdoor .border-white\/10, html.outdoor .border-white\/5 { border-color: rgba(20,33,15,0.18) !important; }
+html.outdoor .bg-gray-950 { background: #F7F5EE !important; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+}
+
+/* Premium landing */
+.pm-hero { min-height: 100svh; display: flex; align-items: flex-end; padding: 0 clamp(18px,4vw,48px) clamp(40px,8vh,90px); position: relative; z-index: 2; }
+.pm-story { height: 340svh; position: relative; z-index: 2; }
+.pm-stick { position: sticky; top: 0; height: 100svh; display: flex; align-items: center; padding: 0 clamp(18px,4vw,48px); }
+.pm-cap { max-width: 420px; position: relative; padding-left: 26px; border-left: 1px solid rgba(234,232,232,.18); min-height: 280px; }
+.pm-cap .bar { position: absolute; left: -1px; top: 0; width: 1px; background: #3EA094; height: calc(var(--story-p, 0) * 100%); }
+.pm-step { position: absolute; top: 0; transition: opacity .5s, transform .5s; }
+.pm-paper { position: relative; z-index: 2; background: #EAE8E8; color: #14151D; padding: clamp(70px,12vh,140px) clamp(18px,4vw,48px); }
+.pm-paper h2 { font-size: clamp(36px,5.5vw,84px); line-height: 1.05; max-width: 14ch; }
+.pm-nums { display: grid; grid-template-columns: repeat(auto-fit,minmax(200px,1fr)); margin-top: 56px; border-top: 1px solid rgba(20,21,29,.18); }
+.pm-nums b { display: block; font: 400 clamp(54px,7vw,104px)/1 Fraunces, serif; color: #1F6F65; }
+.pm-rail { display: flex; gap: 16px; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 14px; margin-top: 44px; }
+.pm-tile { flex: 0 0 min(78vw,340px); scroll-snap-align: start; border: 1px solid rgba(20,21,29,.18); border-radius: 28px; padding: 26px; min-height: 260px; }
+.pm-tile.soon { border-style: dashed; }
+@media (prefers-reduced-motion: reduce) { .pm-step { transition: none; } }
+
+/* ===== AgriGuard app design layer (matches the landing page) ===== */
+::selection { background: #3EA094; color: #06201C; }
+body { background-image: radial-gradient(ellipse 70% 40% at 80% -5%, rgba(62,160,148,0.10), transparent 70%); background-attachment: fixed; }
+.glass { background: rgba(29, 32, 48, 0.72); border: 1px solid rgba(234, 232, 232, 0.12); border-radius: 24px; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); box-shadow: none; }
+header.glass, nav.glass { border-radius: 0; background: rgba(20, 21, 29, 0.82); backdrop-filter: blur(14px); border-color: rgba(234, 232, 232, 0.10); }
+.glass:hover { border-color: rgba(234, 232, 232, 0.2); }
+header.glass:hover, nav.glass:hover { border-color: rgba(234, 232, 232, 0.10); }
+button:not(:disabled), a { -webkit-tap-highlight-color: transparent; }
+@keyframes ag-rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+div > .glass:not(header):not(nav), h1.font-display { animation: ag-rise 0.6s cubic-bezier(.2,.7,.2,1) both; }
+div > .glass:not(header):not(nav):nth-child(2) { animation-delay: .06s; } div > .glass:not(header):not(nav):nth-child(3) { animation-delay: .12s; } div > .glass:not(header):not(nav):nth-child(4) { animation-delay: .18s; }
+.badge-healthy, .badge-diseased { border-radius: 999px; }
+::-webkit-scrollbar { width: 10px; height: 10px; } ::-webkit-scrollbar-thumb { background: rgba(234,232,232,0.18); border-radius: 99px; } ::-webkit-scrollbar-track { background: transparent; }
+@media (prefers-reduced-motion: reduce) { div > .glass, h1.font-display { animation: none !important; } }
+html.outdoor body { background-image: none; }
+html.outdoor header.glass, html.outdoor nav.glass { background: rgba(247,245,238,0.92); }

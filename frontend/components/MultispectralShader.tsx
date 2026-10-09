@@ -157,7 +157,7 @@ export function MultispectralShader({ imageSrc, onAnalysisComplete }: Multispect
           </div>
           <div>
             <h3 className="text-sm font-bold text-white flex items-center gap-1.5">
-              Multispectral Chlorophyll Stress Shader
+              Photo colour filter (illustrative, not real NDVI)
               <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-mono">
                 EDGE-NGRDI
               </span>

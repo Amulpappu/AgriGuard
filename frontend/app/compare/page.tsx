@@ -67,7 +67,7 @@ export default function ComparePage() {
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto space-y-6 pb-12">
       <div className="pt-2">
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">{t("compare.title")}</h1>
+        <h1 className="font-display text-3xl sm:text-5xl font-semibold text-white tracking-tight leading-[1.05]">{t("compare.title")}</h1>
         <p className="text-xs sm:text-sm text-gray-400 mt-1">{t("history.compare_select")}</p>
       </div>
 
@@ -110,7 +110,7 @@ export default function ComparePage() {
           id="compare-btn"
           onClick={runCompare}
           disabled={!selA || !selB || selA === selB || loading}
-          className="w-full py-3.5 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-40 hover:from-blue-400 hover:to-indigo-500 transition-all shadow-lg shadow-blue-500/20"
+          className="w-full py-3.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-[#06201C] font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-40 hover:from-blue-400 hover:to-indigo-500 transition-all shadow-lg shadow-blue-500/20"
         >
           <GitCompareArrows size={17} />
           {loading ? t("common.loading") : "Run Progression Comparison"}

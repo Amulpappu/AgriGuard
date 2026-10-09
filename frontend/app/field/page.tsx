@@ -88,7 +88,7 @@ export default function FieldPage() {
     <div className="p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto space-y-6 pb-12">
       <div className="pt-2 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">{t("field.title")}</h1>
+          <h1 className="font-display text-3xl sm:text-5xl font-semibold text-white tracking-tight leading-[1.05]">{t("field.title")}</h1>
           <p className="text-xs sm:text-sm text-gray-400 mt-1">Live microclimate conditions from greenhouse & field ESP32 nodes</p>
         </div>
         <button
@@ -182,7 +182,7 @@ export default function FieldPage() {
 
           {/* Environmental Disease Risk Advisory Box */}
           {activeData.context_hint && (
-            <div className="glass rounded-2xl p-4 sm:p-5 border border-amber-500/30 bg-gradient-to-r from-amber-950/20 to-transparent flex items-start gap-3.5">
+            <div className="glass rounded-2xl p-4 sm:p-5 border border-amber-500/30 flex items-start gap-3.5">
               <Info size={20} className="text-amber-400 flex-shrink-0 mt-0.5" />
               <div>
                 <p className="text-xs font-bold text-amber-300 uppercase tracking-wider mb-1">{t("field.context_hint")}</p>
