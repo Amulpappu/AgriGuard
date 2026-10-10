@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getScans, compareScans, ScanListItem, CompareOut } from "@/lib/api";
+import { getScans, compareScans, resolveImageUrl, ScanListItem, CompareOut } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { GitCompareArrows, TrendingUp, TrendingDown, Minus, CheckCircle2, AlertTriangle, HelpCircle, Calendar, Sparkles } from "lucide-react";
 
@@ -13,7 +13,6 @@ export default function ComparePage() {
   const [result, setResult] = useState<CompareOut | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8001";
 
   useEffect(() => {
     getScans({ limit: 100 }).then((s) => {
@@ -163,7 +162,7 @@ export default function ComparePage() {
 
                   <div className="aspect-[4/3] bg-gray-900 overflow-hidden relative">
                     <img
-                      src={`${API_BASE}${scan.thumb_url || scan.image_url}`}
+                      src={resolveImageUrl(scan.thumb_url || scan.image_url)}
                       alt=""
                       className="w-full h-full object-cover"
                       onError={(e) => { (e.target as HTMLImageElement).style.opacity = "0.2"; }}

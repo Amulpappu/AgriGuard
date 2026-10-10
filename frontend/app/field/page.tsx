@@ -1,13 +1,27 @@
 "use client";
 
 import { getSensorLatest, getBioRisk, SensorLatestOut, BioRiskOut } from "@/lib/api";
+import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import { useCachedQuery } from "@/lib/useCachedQuery";
-import { Wifi, Droplets, Thermometer, Wind, Info, Activity, RefreshCw, ShieldAlert } from "lucide-react";
+import { Wifi, WifiOff, Droplets, Thermometer, Wind, Info, Activity, RefreshCw, ShieldAlert } from "lucide-react";
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
 } from "recharts";
 import { BioShieldRadar } from "@/components/BioShieldRadar";
+
+function formatTimeAgo(dateStr: string): string {
+  const ts = new Date(dateStr).getTime();
+  if (isNaN(ts)) return "recently";
+  const diffSec = Math.max(0, Math.floor((Date.now() - ts) / 1000));
+  if (diffSec < 60) return `${diffSec}s ago`;
+  const diffMin = Math.floor(diffSec / 60);
+  if (diffMin < 60) return `${diffMin}m ago`;
+  const diffHours = Math.floor(diffMin / 60);
+  if (diffHours < 24) return `${diffHours}h ago`;
+  const diffDays = Math.floor(diffHours / 24);
+  return `${diffDays}d ago`;
+}
 
 function ReadingCard({
   icon: Icon, label, value, unit, color, badge,
@@ -39,8 +53,12 @@ function ReadingCard({
 
 export default function FieldPage() {
   const { t } = useI18n();
-  // Live telemetry: cached reading renders instantly, refreshed every 15s in the background.
-  const sensorQ = useCachedQuery<SensorLatestOut>("sensor:latest", getSensorLatest, { refreshInterval: 15_000 });
+  const { userId, email } = useAuth();
+  const isDemo = (email || "").toLowerCase() === "demo@agriguard.in";
+
+  // Live telemetry: cached reading scoped by user, refreshed every 15s in the background.
+  const sensorKey = userId ? `sensor:latest:${userId}` : "sensor:latest";
+  const sensorQ = useCachedQuery<SensorLatestOut>(sensorKey, getSensorLatest, { refreshInterval: 15_000 });
   const data = sensorQ.data;
   const loading = sensorQ.isValidating;
   const fetchLatest = () => sensorQ.refresh();
@@ -64,8 +82,18 @@ export default function FieldPage() {
     context_hint: "Canopy humidity 78% with moderate dew duration. Spore incubation window active.",
   };
 
-  const activeData = data?.latest ? data : fallbackTelemetry;
+  const hasRealData = Boolean(data?.latest);
+  const activeData: SensorLatestOut = hasRealData
+    ? data!
+    : isDemo
+    ? fallbackTelemetry
+    : { series: [] };
   const live = activeData.latest;
+
+  const recordedDate = live?.recorded_at ? new Date(live.recorded_at) : null;
+  const recordedTs = recordedDate ? recordedDate.getTime() : null;
+  const isStale = recordedTs != null && !isNaN(recordedTs) && Date.now() - recordedTs > 30 * 60 * 1000;
+  const timeAgo = live?.recorded_at ? formatTimeAgo(live.recorded_at) : null;
 
   // Disease Severity Value (DSV) risk derived from the current microclimate reading.
   const riskKey = live ? `biorisk:${live.temp_c}:${live.humidity}:${live.soil_moisture}` : null;
@@ -104,12 +132,36 @@ export default function FieldPage() {
 
       {/* Status Banner */}
       <div className="flex items-center justify-between p-3 rounded-2xl glass border border-white/5 text-xs">
-        <div className="flex items-center gap-2 text-emerald-400 font-semibold">
-          <Wifi size={16} className="animate-pulse" />
-          <span>{data?.latest ? `Hardware IoT Node Connected: ${data.latest.device_id}` : "Gram Panchayat Agricultural Telemetry Station #1 (Active Stream)"}</span>
+        <div className={`flex items-center gap-2 font-semibold ${
+          hasRealData
+            ? isStale
+              ? "text-amber-400"
+              : "text-emerald-400"
+            : isDemo
+            ? "text-sky-400"
+            : "text-gray-400"
+        }`}>
+          {hasRealData && !isStale ? (
+            <Wifi size={16} className="animate-pulse" />
+          ) : (
+            <WifiOff size={16} />
+          )}
+          <span>
+            {hasRealData
+              ? isStale
+                ? `Last reading ${timeAgo} — node offline (${live?.device_id})`
+                : `Hardware IoT Node Connected: ${live?.device_id}`
+              : isDemo
+              ? "Gram Panchayat Agricultural Telemetry Station #1 (Demo Data)"
+              : "No sensor readings recorded — node offline"}
+          </span>
         </div>
         <span className="text-[11px] text-gray-400 font-mono">
-          Last Synced: {new Date(activeData.latest?.recorded_at || Date.now()).toLocaleTimeString()}
+          {hasRealData
+            ? `Recorded: ${recordedDate?.toLocaleDateString()} ${recordedDate?.toLocaleTimeString()}`
+            : isDemo
+            ? "Demo Data"
+            : "No Data"}
         </span>
       </div>
 
@@ -130,7 +182,7 @@ export default function FieldPage() {
               value={activeData.latest?.soil_moisture ?? undefined}
               unit="%"
               color="bg-blue-600"
-              badge="Root Zone"
+              badge={isDemo ? "Demo data" : isStale ? "Offline" : "Root Zone"}
             />
             <ReadingCard
               icon={Thermometer}
@@ -138,7 +190,7 @@ export default function FieldPage() {
               value={activeData.latest?.temp_c ?? undefined}
               unit="°C"
               color="bg-amber-600"
-              badge="Ambient"
+              badge={isDemo ? "Demo data" : isStale ? "Offline" : "Ambient"}
             />
             <ReadingCard
               icon={Wind}
@@ -146,7 +198,7 @@ export default function FieldPage() {
               value={activeData.latest?.humidity ?? undefined}
               unit="%"
               color="bg-cyan-600"
-              badge="Canopy"
+              badge={isDemo ? "Demo data" : isStale ? "Offline" : "Canopy"}
             />
           </div>
 
@@ -191,6 +243,10 @@ export default function FieldPage() {
                 </div>
                 <p className="text-xs text-gray-300 leading-relaxed">{risk.action_summary}</p>
               </>
+            ) : !live ? (
+              <div className="p-4 rounded-xl bg-white/5 text-center text-xs text-gray-400">
+                No active sensor readings to calculate DSV disease risk. Connect an ESP32 field telemetry station.
+              </div>
             ) : (
               <div className="skeleton h-24 rounded-xl" />
             )}
@@ -238,8 +294,10 @@ export default function FieldPage() {
           )}
 
           <div className="flex items-center justify-between text-xs text-gray-500 px-2">
-            <span>{t("field.last_updated")}: {new Date(activeData.latest?.recorded_at || Date.now()).toLocaleTimeString()}</span>
-            <span>Device: {live?.device_id ?? "Field node"} · auto-refresh 15s</span>
+            <span>
+              {t("field.last_updated")}: {hasRealData ? `${timeAgo} (${recordedDate?.toLocaleTimeString()})` : isDemo ? "Demo data" : "Offline"}
+            </span>
+            <span>Device: {live?.device_id ?? "Field node (offline)"} · auto-refresh 15s</span>
           </div>
         </>
       )}

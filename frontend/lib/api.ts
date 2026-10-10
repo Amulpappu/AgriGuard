@@ -5,24 +5,73 @@
 
 import type { Session } from "@supabase/supabase-js";
 import { supabase, ADMIN_EMAIL } from "@/lib/supabase";
+import { invalidateCached } from "@/lib/useCachedQuery";
 
-export function getApiBase(): string {
-  if (typeof window !== "undefined") {
-    // If running in browser on Vercel or any non-localhost host, use relative URL so localhost is never hit
-    if (window.location.hostname.includes("vercel.app") || window.location.hostname !== "localhost") {
-      return "";
-    }
-  }
-  if (process.env.NEXT_PUBLIC_API_URL && !process.env.NEXT_PUBLIC_API_URL.includes("localhost")) {
-    return process.env.NEXT_PUBLIC_API_URL;
-  }
-  if (typeof window !== "undefined") {
-    return "";
-  }
-  return "http://127.0.0.1:8001";
+/**
+ * Backend URL is only used when explicitly configured via env var.
+ * When not configured, the frontend operates in direct Supabase cloud mode,
+ * avoiding wasted round trips, 404s, and 500s.
+ */
+export function getBackendUrl(): string | null {
+  const url = process.env.NEXT_PUBLIC_BACKEND_URL || process.env.NEXT_PUBLIC_API_URL;
+  if (!url) return null;
+  const trimmed = url.trim().replace(/\/+$/, "");
+  return trimmed || null;
 }
 
-const getApiPrefix = () => `${getApiBase()}/api/v1`;
+export function getApiBase(): string {
+  const b = getBackendUrl();
+  return b || "";
+}
+
+/**
+ * Executes a request against the FastAPI backend only if a backend URL is configured.
+ * Automatically handles timeout and authorization headers.
+ * If backend URL is unset, or if request times out/fails, cleanly returns null.
+ */
+export async function tryBackend<T>(
+  path: string,
+  options: RequestInit = {},
+  timeoutMs = 2000
+): Promise<T | null> {
+  const base = getBackendUrl();
+  if (!base) return null;
+
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+    const url = path.startsWith("http://") || path.startsWith("https://")
+      ? path
+      : `${base}${path.startsWith("/") ? "" : "/"}${path}`;
+
+    const headers: Record<string, string> = {
+      ...authHeaders(),
+      ...((options.headers as Record<string, string>) || {}),
+    };
+
+    const res = await fetch(url, {
+      ...options,
+      headers,
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+    if (res.ok) {
+      return (await res.json()) as T;
+    }
+  } catch {
+    // Backend offline / timed out / errored -> fall back directly to Supabase
+  }
+  return null;
+}
+
+export function resolveImageUrl(url?: string | null): string {
+  if (!url) return "/agriguard_logo_4k.png";
+  if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("data:")) {
+    return url;
+  }
+  const base = getBackendUrl() || "http://localhost:8001";
+  return `${base}${url.startsWith("/") ? "" : "/"}${url}`;
+}
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -224,20 +273,16 @@ export async function register(email: string, password: string, fullName?: strin
 // ─── Crops ───────────────────────────────────────────────────────────────────
 
 export async function getCrops(): Promise<CropOut[]> {
-  if (!isPureCloudMode()) {
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 2000);
-      const res = await fetch(`${getApiPrefix()}/crops`, { headers: authHeaders(), signal: controller.signal });
-      clearTimeout(timeoutId);
-      if (res.ok) return await res.json();
-    } catch {}
-  }
+  const backendCrops = await tryBackend<CropOut[]>("/api/v1/crops", {}, 2000);
+  if (backendCrops && backendCrops.length > 0) return backendCrops;
 
-  // Fallback to live Supabase cloud catalog
-  const { data } = await supabase.from("crops").select("id, slug, name_key, icon_emoji").order("slug");
-  if (data && data.length > 0) return data as CropOut[];
-  return [];
+  // Supabase cloud catalog
+  const { data, error } = await supabase
+    .from("crops")
+    .select("id, slug, name_key, icon_emoji")
+    .order("slug");
+  if (error) throw new Error(error.message || "Failed to load crops catalog.");
+  return (data || []) as CropOut[];
 }
 
 // ─── Scans ───────────────────────────────────────────────────────────────────
@@ -302,34 +347,34 @@ async function analyzeImageColors(file: File): Promise<{ greenFrac: number; yell
 }
 
 export async function createScan(cropId: string | null | undefined, imageFile: File): Promise<ScanOut> {
-  // 1. If not running in pure cloud mode, attempt local backend proxy
-  if (!isPureCloudMode()) {
+  // 1. If backend configured, try FastAPI proxy first
+  if (getBackendUrl()) {
     try {
       const form = new FormData();
       form.append("crop_id", cropId && cropId !== "auto" ? cropId : "auto");
       form.append("image", imageFile);
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 2500);
-      const res = await fetch(`${getApiPrefix()}/scans`, {
-        method: "POST",
-        headers: authHeaders(),
-        body: form,
-        signal: controller.signal,
-      });
-      clearTimeout(timeoutId);
-      if (res.ok) return await res.json();
+      const backendScan = await tryBackend<ScanOut>("/api/v1/scans", { method: "POST", body: form }, 3500);
+      if (backendScan) {
+        invalidateCached("dashboard");
+        invalidateCached("scans");
+        return backendScan;
+      }
     } catch {}
   }
 
   // 2. Pure Cloud EdgeVision AI Engine
-  const { greenFrac, yellowFrac, brownFrac } = await analyzeImageColors(imageFile);
+  const scaledImage = await downscaleImage(imageFile, 1280);
+  const thumbImage = await downscaleImage(imageFile, 256);
+  const { greenFrac, yellowFrac, brownFrac } = await analyzeImageColors(scaledImage);
 
   // Fetch crops catalog from Supabase
   let crops: CropOut[] = [];
   try {
+    crops = await getCrops();
+  } catch {
     const { data } = await supabase.from("crops").select("id, slug, name_key, icon_emoji");
-    if (data && data.length > 0) crops = data as CropOut[];
-  } catch {}
+    if (data) crops = data as CropOut[];
+  }
 
   // Determine Crop
   let matchedCrop: CropOut | undefined;
@@ -338,13 +383,10 @@ export async function createScan(cropId: string | null | undefined, imageFile: F
   }
 
   if (!matchedCrop) {
-    // Auto-detect crop based on leaf morphology and chlorosis pattern
     let candidateSlug = "cucumber";
     if (greenFrac > 0.35 && yellowFrac > 0.03) {
-      // Broad vegetable leaf with chlorotic angular lesions (Cucumber / Tomato / Pepper)
       candidateSlug = "cucumber";
     } else if (yellowFrac > 0.35) {
-      // Golden harvest / cereal sheaves
       candidateSlug = "rice";
     } else if (greenFrac > 0.5) {
       candidateSlug = "cucumber";
@@ -392,7 +434,6 @@ export async function createScan(cropId: string | null | undefined, imageFile: F
     affectedPct = Math.min(85, Math.max(10, Math.round((yellowFrac + brownFrac) * 100 * 1.5)));
     severityLevel = affectedPct > 35 ? "high" : (affectedPct > 15 ? "moderate" : "low");
 
-    // Select most relevant pathological disease for this crop
     const nonHealthyDiseases = diseases.filter(d => !d.slug.includes("healthy"));
     matchedDisease = nonHealthyDiseases[0] || null;
 
@@ -417,7 +458,37 @@ export async function createScan(cropId: string | null | undefined, imageFile: F
   // Generate UUID
   const newScanId = typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `scan_${Date.now()}`;
 
-  // Cache full user image in sessionStorage so it displays immediately on the report page
+  // Read current user session from Supabase client
+  const { data: sessionData } = await supabase.auth.getSession();
+  const userId = sessionData.session?.user.id ?? null;
+  const folderUid = userId || "anonymous";
+
+  // Upload image and thumbnail to Supabase Storage bucket 'scan-images'
+  let imageUrl = `/uploads/scans/${newScanId}.jpg`;
+  let thumbUrl: string | undefined = undefined;
+
+  try {
+    const imgPath = `${folderUid}/${newScanId}.jpg`;
+    const thPath = `${folderUid}/${newScanId}_thumb.jpg`;
+
+    const [imgRes, thRes] = await Promise.all([
+      supabase.storage.from("scan-images").upload(imgPath, scaledImage, { contentType: "image/jpeg", upsert: true }),
+      supabase.storage.from("scan-images").upload(thPath, thumbImage, { contentType: "image/jpeg", upsert: true }),
+    ]);
+
+    if (!imgRes.error) {
+      const { data: u } = supabase.storage.from("scan-images").getPublicUrl(imgPath);
+      if (u?.publicUrl) imageUrl = u.publicUrl;
+    }
+    if (!thRes.error) {
+      const { data: tu } = supabase.storage.from("scan-images").getPublicUrl(thPath);
+      if (tu?.publicUrl) thumbUrl = tu.publicUrl;
+    }
+  } catch (storageErr) {
+    console.warn("Storage upload fallback:", storageErr);
+  }
+
+  // Cache full user image in sessionStorage for immediate local report rendering
   if (typeof window !== "undefined") {
     try {
       const reader = new FileReader();
@@ -426,19 +497,17 @@ export async function createScan(cropId: string | null | undefined, imageFile: F
           sessionStorage.setItem(`scan_img_${newScanId}`, reader.result as string);
         } catch {}
       };
-      reader.readAsDataURL(imageFile);
+      reader.readAsDataURL(scaledImage);
     } catch {}
   }
 
-  // Insert into Supabase Cloud scans table
-  // Scans are owned by the signed-in user; RLS only accepts inserts for auth.uid().
-  const { data: sessionData } = await supabase.auth.getSession();
   const scanRecord = {
     id: newScanId,
-    user_id: sessionData.session?.user.id ?? null,
+    user_id: userId,
     crop_id: matchedCrop.id,
     disease_id: matchedDisease?.id || null,
-    image_url: `/uploads/scans/${newScanId}.jpg`,
+    image_url: imageUrl,
+    thumb_url: thumbUrl || imageUrl,
     is_healthy: isHealthy,
     confidence: confidence,
     top3: top3Items,
@@ -451,6 +520,11 @@ export async function createScan(cropId: string | null | undefined, imageFile: F
     condition_type: "disease",
     created_at: new Date().toISOString(),
   };
+
+  const { error: insErr } = await supabase.from("scans").insert(scanRecord);
+  if (insErr) {
+    throw new Error(insErr.message || "Failed to persist scan to Supabase cloud.");
+  }
 
   const scanOutResult: ScanOut = {
     id: newScanId,
@@ -471,24 +545,23 @@ export async function createScan(cropId: string | null | undefined, imageFile: F
     },
     model_version: "EdgeVision-v2.0",
     image_url: scanRecord.image_url,
+    thumb_url: scanRecord.thumb_url,
     created_at: scanRecord.created_at,
     crop_auto_detected: scanRecord.crop_auto_detected,
   };
 
-  // Cache scan result immediately in sessionStorage for instant 0ms access
   if (typeof window !== "undefined") {
     try {
       sessionStorage.setItem(`scan_data_${newScanId}`, JSON.stringify(scanOutResult));
     } catch {}
   }
 
-  try {
-    const { error: insErr } = await supabase.from("scans").insert(scanRecord);
-    if (insErr) {
-      console.warn("Failed to persist scan to Supabase cloud:", insErr);
-    }
-  } catch (err) {
-    console.warn("Failed to persist scan to Supabase cloud, continuing with memory report:", err);
+  // Invalidate cached dashboard and scans so the new scan appears immediately
+  invalidateCached("dashboard");
+  invalidateCached("scans");
+  if (userId) {
+    invalidateCached(`${userId}:dashboard`);
+    invalidateCached(`${userId}:scans`);
   }
 
   return scanOutResult;
@@ -500,32 +573,57 @@ export async function getScans(params?: {
   to?: string;
   limit?: number;
 }): Promise<ScanListItem[]> {
-  if (!isPureCloudMode()) {
-    try {
-      const q = new URLSearchParams();
-      if (params?.crop) q.set("crop", params.crop);
-      if (params?.from) q.set("from", params.from);
-      if (params?.to) q.set("to", params.to);
-      if (params?.limit) q.set("limit", String(params.limit));
-      const res = await fetch(`${getApiPrefix()}/scans?${q}`, { headers: authHeaders() });
-      if (res.ok) return await res.json();
-    } catch {}
+  const q = new URLSearchParams();
+  if (params?.crop) q.set("crop", params.crop);
+  if (params?.from) q.set("from", params.from);
+  if (params?.to) q.set("to", params.to);
+  if (params?.limit) q.set("limit", String(params.limit));
+
+  const backendScans = await tryBackend<ScanListItem[]>(`/api/v1/scans?${q}`, {}, 2000);
+  if (backendScans) return backendScans;
+
+  const { data: sessionData } = await supabase.auth.getSession();
+  const session = sessionData.session;
+  const isAdmin = (session?.user?.email || "").toLowerCase() === ADMIN_EMAIL && session?.user?.app_metadata?.role === "admin";
+  const userId = session?.user?.id;
+
+  if (!isAdmin && !userId) {
+    return [];
   }
 
-  // Fallback to live Supabase cloud scans joined with crops and diseases
   let query = supabase
     .from("scans")
     .select(SCAN_LIST_SELECT)
-    .order("created_at", { ascending: false })
-    .limit(params?.limit || 20);
+    .order("created_at", { ascending: false });
+
+  // Filter scans by signed-in user if not admin
+  if (!isAdmin && userId) {
+    query = query.eq("user_id", userId);
+  }
+
+  // Filter by crop in the query BEFORE limit
+  if (params?.crop) {
+    const { data: cropRow, error: cropErr } = await supabase
+      .from("crops")
+      .select("id")
+      .eq("slug", params.crop)
+      .maybeSingle();
+
+    if (cropErr) throw new Error(cropErr.message || "Failed to resolve crop.");
+    if (!cropRow) return [];
+
+    query = query.eq("crop_id", cropRow.id);
+  }
+
   if (params?.from) query = query.gte("created_at", params.from);
   if (params?.to) query = query.lte("created_at", params.to);
+
+  query = query.limit(params?.limit || 20);
 
   const { data, error } = await query;
   if (error) throw new Error(error.message || "Failed to load scans.");
 
-  const rows = (data || []).map(mapScanRow);
-  return params?.crop ? rows.filter((r) => r.crop.slug === params.crop) : rows;
+  return (data || []).map(mapScanRow);
 }
 
 const SCAN_LIST_SELECT = "*, crop:crops(id, slug, name_key, icon_emoji), disease:diseases(id, slug, name_key)";
@@ -577,32 +675,25 @@ export async function getScan(id: string): Promise<ScanOut> {
     } catch {}
   }
 
-  // 2. Try serverless endpoint (/api/v1/scans/[id])
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 2500);
-    const res = await fetch(`/api/v1/scans/${id}`, {
-      headers: authHeaders(),
-      signal: controller.signal,
-    });
-    clearTimeout(timeoutId);
-    if (res.ok) {
-      const scanData = (await res.json()) as ScanOut;
-      if (typeof window !== "undefined") {
-        try {
-          sessionStorage.setItem(`scan_data_${id}`, JSON.stringify(scanData));
-        } catch {}
-      }
-      return scanData;
+  // 2. Try backend if configured
+  const backendScan = await tryBackend<ScanOut>(`/api/v1/scans/${id}`, {}, 2000);
+  if (backendScan) {
+    if (typeof window !== "undefined") {
+      try {
+        sessionStorage.setItem(`scan_data_${id}`, JSON.stringify(backendScan));
+      } catch {}
     }
-  } catch {}
+    return backendScan;
+  }
 
   // 3. Direct Supabase Cloud live fallback with retry
-  let { data: s } = await supabase
+  let { data: s, error } = await supabase
     .from("scans")
     .select("*, crop:crops(*), disease:diseases(*)")
     .eq("id", id)
     .maybeSingle();
+
+  if (error) throw new Error(error.message || "Failed to load scan.");
 
   if (!s) {
     // Retry once after 500ms in case record is propagating
@@ -612,6 +703,7 @@ export async function getScan(id: string): Promise<ScanOut> {
       .select("*, crop:crops(*), disease:diseases(*)")
       .eq("id", id)
       .maybeSingle();
+    if (retry.error) throw new Error(retry.error.message || "Failed to load scan.");
     if (retry.data) s = retry.data;
   }
 
@@ -676,24 +768,23 @@ export async function getScan(id: string): Promise<ScanOut> {
 }
 
 export async function reclassifyScan(id: string, cropSlug: string): Promise<ScanOut> {
-  if (!isPureCloudMode()) {
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 2000);
-      const res = await fetch(`${getApiPrefix()}/scans/${id}/reclassify?crop_slug=${encodeURIComponent(cropSlug)}`, {
-        method: "POST",
-        headers: authHeaders(),
-        signal: controller.signal,
-      });
-      clearTimeout(timeoutId);
-      if (res.ok) return await res.json();
-    } catch {}
+  const backendReclassified = await tryBackend<ScanOut>(
+    `/api/v1/scans/${id}/reclassify?crop_slug=${encodeURIComponent(cropSlug)}`,
+    { method: "POST" },
+    2000
+  );
+  if (backendReclassified) {
+    invalidateCached("dashboard");
+    invalidateCached("scans");
+    return backendReclassified;
   }
 
   // Cloud reclassification directly in Supabase
-  const { data: crop } = await supabase.from("crops").select("*").eq("slug", cropSlug).maybeSingle();
+  const { data: crop, error: cropErr } = await supabase.from("crops").select("*").eq("slug", cropSlug).maybeSingle();
+  if (cropErr) throw new Error(cropErr.message || "Failed to lookup crop.");
   if (crop) {
-    const { data: diseases } = await supabase.from("diseases").select("*").eq("crop_id", crop.id);
+    const { data: diseases, error: disErr } = await supabase.from("diseases").select("*").eq("crop_id", crop.id);
+    if (disErr) throw new Error(disErr.message || "Failed to lookup diseases.");
     const topD = diseases && diseases.length > 0 ? diseases[0] : null;
     const newTop3 = (diseases || []).slice(0, 3).map((d: any, idx: number) => ({
       disease_id: d.id,
@@ -702,49 +793,85 @@ export async function reclassifyScan(id: string, cropSlug: string): Promise<Scan
       confidence: idx === 0 ? 0.78 : (idx === 1 ? 0.15 : 0.07),
     }));
 
-    await supabase.from("scans").update({
+    const { error: updErr } = await supabase.from("scans").update({
       crop_id: crop.id,
       disease_id: topD?.id || null,
       status: "potentially_diseased",
       confidence: 0.78,
       top3: newTop3,
     }).eq("id", id);
+    if (updErr) throw new Error(updErr.message || "Failed to update scan reclassification.");
   }
+  invalidateCached("dashboard");
+  invalidateCached("scans");
   return getScan(id);
 }
 
 export async function compareScans(a: string, b: string): Promise<CompareOut> {
-  const res = await fetch(`${getApiPrefix()}/scans/compare?a=${a}&b=${b}`, {
-    headers: authHeaders(),
-  });
-  return handleResponse<CompareOut>(res);
+  const backendCompare = await tryBackend<CompareOut>(`/api/v1/scans/compare?a=${a}&b=${b}`, {}, 2000);
+  if (backendCompare) return backendCompare;
+
+  const [scanA, scanB] = await Promise.all([getScan(a), getScan(b)]);
+  const confDelta = Math.round((scanB.confidence - scanA.confidence) * 100) / 100;
+  const sevDelta = (scanB.severity.affected_pct ?? 0) - (scanA.severity.affected_pct ?? 0);
+  return {
+    scan_a: scanA,
+    scan_b: scanB,
+    severity_delta: sevDelta,
+    confidence_delta: confDelta,
+    status_change: scanA.status !== scanB.status,
+  };
 }
 
 // ─── Dashboard ───────────────────────────────────────────────────────────────
 
 export async function getDashboardSummary(): Promise<DashboardSummary> {
-  // Caching / stale-while-revalidate is handled by useCachedQuery in the page,
-  // so this always returns fresh data.
-  if (!isPureCloudMode()) {
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 800);
-      const res = await fetch(`${getApiPrefix()}/dashboard/summary`, { headers: authHeaders(), signal: controller.signal });
-      clearTimeout(timeoutId);
-      if (res.ok) return await res.json();
-    } catch {}
+  const backendSummary = await tryBackend<DashboardSummary>("/api/v1/dashboard/summary", {}, 1200);
+  if (backendSummary) return backendSummary;
+
+  const { data: sessionData } = await supabase.auth.getSession();
+  const session = sessionData.session;
+  const isAdmin = (session?.user?.email || "").toLowerCase() === ADMIN_EMAIL && session?.user?.app_metadata?.role === "admin";
+  const userId = session?.user?.id;
+
+  if (!isAdmin && !userId) {
+    return {
+      total_scans: 0,
+      healthy_count: 0,
+      affected_count: 0,
+      uncertain_count: 0,
+      recent_scans: [],
+      chart_data: [],
+    };
   }
 
-  // Direct Supabase: exact counts via HEAD queries + recent rows, all in parallel.
-  const countWhere = (col: string, val: string | boolean) =>
-    supabase.from("scans").select("id", { count: "exact", head: true }).eq(col, val);
+  const countWhere = (col: string, val: string | boolean) => {
+    let q = supabase.from("scans").select("id", { count: "exact", head: true }).eq(col, val);
+    if (!isAdmin && userId) q = q.eq("user_id", userId);
+    return q;
+  };
+
+  let totalQuery = supabase.from("scans").select("id", { count: "exact", head: true });
+  if (!isAdmin && userId) totalQuery = totalQuery.eq("user_id", userId);
+
+  let recentQuery = supabase
+    .from("scans")
+    .select(SCAN_LIST_SELECT)
+    .order("created_at", { ascending: false })
+    .limit(30);
+  if (!isAdmin && userId) recentQuery = recentQuery.eq("user_id", userId);
+
   const [totalRes, healthyRes, uncertainRes, recentRes] = await Promise.all([
-    supabase.from("scans").select("id", { count: "exact", head: true }),
+    totalQuery,
     countWhere("is_healthy", true),
     countWhere("status", "uncertain"),
-    supabase.from("scans").select(SCAN_LIST_SELECT).order("created_at", { ascending: false }).limit(30),
+    recentQuery,
   ]);
-  if (recentRes.error) throw new Error(recentRes.error.message || "Failed to load dashboard.");
+
+  if (totalRes.error) throw new Error(totalRes.error.message || "Failed to count total scans.");
+  if (healthyRes.error) throw new Error(healthyRes.error.message || "Failed to count healthy scans.");
+  if (uncertainRes.error) throw new Error(uncertainRes.error.message || "Failed to count uncertain scans.");
+  if (recentRes.error) throw new Error(recentRes.error.message || "Failed to load recent scans.");
 
   const rows = (recentRes.data || []).map(mapScanRow);
   const total = totalRes.count ?? rows.length;
@@ -773,18 +900,8 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
 // ─── Advisory ────────────────────────────────────────────────────────────────
 
 export async function getAdvisory(diseaseId: string, lang = "en"): Promise<AdvisoryOut> {
-  if (!isPureCloudMode()) {
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 2000);
-      const res = await fetch(`${getApiPrefix()}/advisory/${diseaseId}?lang=${lang}`, {
-        headers: authHeaders(),
-        signal: controller.signal,
-      });
-      clearTimeout(timeoutId);
-      if (res.ok) return await res.json();
-    } catch {}
-  }
+  const backendAdvisory = await tryBackend<AdvisoryOut>(`/api/v1/advisory/${diseaseId}?lang=${lang}`, {}, 2000);
+  if (backendAdvisory) return backendAdvisory;
 
   // Load from static bundle in public/advisory/
   try {
@@ -886,22 +1003,17 @@ export async function getAdvisory(diseaseId: string, lang = "en"): Promise<Advis
 // ─── Sensors ─────────────────────────────────────────────────────────────────
 
 export async function getSensorLatest(): Promise<SensorLatestOut> {
-  if (!isPureCloudMode()) {
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 2000);
-      const res = await fetch(`${getApiPrefix()}/sensors/latest`, { headers: authHeaders(), signal: controller.signal });
-      clearTimeout(timeoutId);
-      if (res.ok) return await res.json();
-    } catch {}
-  }
+  const backendSensor = await tryBackend<SensorLatestOut>("/api/v1/sensors/latest", {}, 2000);
+  if (backendSensor) return backendSensor;
 
-  // Fallback to Supabase live IoT cloud readings
-  const { data } = await supabase
+  // Supabase live IoT cloud readings
+  const { data, error } = await supabase
     .from("sensor_readings")
     .select("id, device_id, soil_moisture, temp_c, humidity, recorded_at")
     .order("recorded_at", { ascending: false })
     .limit(20);
+
+  if (error) throw new Error(error.message || "Failed to load sensor readings.");
 
   if (data && data.length > 0) {
     return {
@@ -1041,17 +1153,12 @@ export async function getBioRisk(temp_c?: number, humidity?: number, soil_moistu
   const h = humidity != null ? humidity : 78.4;
   const sm = soil_moisture != null ? soil_moisture : 62.5;
 
-  try {
-    const params = new URLSearchParams();
-    params.append("temp_c", t.toString());
-    params.append("humidity", h.toString());
-    params.append("soil_moisture", sm.toString());
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 1200);
-    const res = await fetch(`${getApiPrefix()}/sensors/bio-risk?${params.toString()}`, { signal: controller.signal });
-    clearTimeout(timeoutId);
-    if (res.ok) return await res.json();
-  } catch {}
+  const backendRisk = await tryBackend<BioRiskOut>(
+    `/api/v1/sensors/bio-risk?temp_c=${t}&humidity=${h}&soil_moisture=${sm}`,
+    {},
+    1500
+  );
+  if (backendRisk) return backendRisk;
 
   // Pure Edge Agronomic Model Fallback
   const svp = 0.61078 * Math.exp((17.27 * t) / (t + 237.3));
@@ -1092,13 +1199,12 @@ export async function getBioRisk(temp_c?: number, humidity?: number, soil_moistu
 }
 
 export async function getBioRadar(wind_speed = 14.5, wind_direction = 230.0): Promise<BioRadarOut> {
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 1200);
-    const res = await fetch(`${getApiPrefix()}/sensors/bioradar?wind_speed=${wind_speed}&wind_direction=${wind_direction}`, { signal: controller.signal });
-    clearTimeout(timeoutId);
-    if (res.ok) return await res.json();
-  } catch {}
+  const backendRadar = await tryBackend<BioRadarOut>(
+    `/api/v1/sensors/bioradar?wind_speed=${wind_speed}&wind_direction=${wind_direction}`,
+    {},
+    1500
+  );
+  if (backendRadar) return backendRadar;
 
   // Pure Edge Plume Dispersion Fallback
   return {
@@ -1168,20 +1274,15 @@ export async function getMandiROI(
   yield_kg = 1200.0,
   field_acres = 1.0
 ): Promise<MandiROIOut> {
-  try {
-    const params = new URLSearchParams({
-      crop_slug,
-      days_to_harvest: days_to_harvest.toString(),
-      mandi_price_per_kg: mandi_price_per_kg.toString(),
-      yield_kg: yield_kg.toString(),
-      field_acres: field_acres.toString(),
-    });
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 1200);
-    const res = await fetch(`${getApiPrefix()}/sensors/mandi-roi?${params.toString()}`, { signal: controller.signal });
-    clearTimeout(timeoutId);
-    if (res.ok) return await res.json();
-  } catch {}
+  const params = new URLSearchParams({
+    crop_slug,
+    days_to_harvest: days_to_harvest.toString(),
+    mandi_price_per_kg: mandi_price_per_kg.toString(),
+    yield_kg: yield_kg.toString(),
+    field_acres: field_acres.toString(),
+  });
+  const backendRoi = await tryBackend<MandiROIOut>(`/api/v1/sensors/mandi-roi?${params.toString()}`, {}, 1500);
+  if (backendRoi) return backendRoi;
 
   const hasMrlLock = days_to_harvest < 14;
   const chemCost = 2800 * field_acres;

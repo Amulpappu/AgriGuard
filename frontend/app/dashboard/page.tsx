@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { getDashboardSummary, getSensorLatest, DashboardSummary, SensorLatestOut } from "@/lib/api";
+import { getDashboardSummary, getSensorLatest, resolveImageUrl, DashboardSummary, SensorLatestOut } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import { useCachedQuery } from "@/lib/useCachedQuery";
@@ -44,11 +44,15 @@ function StatCard({
 
 export default function DashboardPage() {
   const { t } = useI18n();
-  const { fullName, logout } = useAuth();
+  const { fullName, userId, logout } = useAuth();
   const router = useRouter();
-  // Stale-while-revalidate: cached summary renders instantly, Supabase refreshes in the background.
-  const summary = useCachedQuery<DashboardSummary>("dashboard:summary", getDashboardSummary, { refreshInterval: 60_000 });
-  const sensorQ = useCachedQuery<SensorLatestOut>("sensor:latest", getSensorLatest, { refreshInterval: 30_000 });
+
+  // Cache keys scoped by userId prevent cross-user data leaks
+  const summaryKey = userId ? `${userId}:dashboard:summary` : null;
+  const sensorKey = userId ? `${userId}:sensor:latest` : "sensor:latest";
+
+  const summary = useCachedQuery<DashboardSummary>(summaryKey, getDashboardSummary, { refreshInterval: 60_000 });
+  const sensorQ = useCachedQuery<SensorLatestOut>(sensorKey, getSensorLatest, { refreshInterval: 30_000 });
   const data = summary.data;
   const sensor = sensorQ.data;
   const loading = summary.isLoading;
@@ -220,9 +224,9 @@ export default function DashboardPage() {
                       className="flex items-center gap-4 px-5 py-3.5 hover:bg-white/[0.04] transition-all"
                     >
                       <div className="w-12 h-12 rounded-xl overflow-hidden bg-gray-800 flex-shrink-0 border border-white/10">
-                        {scan.thumb_url ? (
+                        {scan.thumb_url || scan.image_url ? (
                           <img
-                            src={`${API_BASE}${scan.thumb_url}`}
+                            src={resolveImageUrl(scan.thumb_url || scan.image_url)}
                             alt=""
                             className="w-full h-full object-cover"
                             onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}

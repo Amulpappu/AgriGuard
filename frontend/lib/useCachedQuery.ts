@@ -39,15 +39,17 @@ function writeStored<T>(key: string, value: T) {
   } catch {}
 }
 
-/** Drop cached entries whose key starts with `prefix` (e.g. after creating a scan). */
-export function invalidateCached(prefix: string) {
+/** Drop cached entries whose key starts with `prefix` (or all entries when empty). */
+export function invalidateCached(prefix: string = "") {
   Array.from(memoryCache.keys()).forEach((k) => {
-    if (k.startsWith(prefix)) memoryCache.delete(k);
+    if (!prefix || k.startsWith(prefix)) memoryCache.delete(k);
   });
   try {
     for (let i = sessionStorage.length - 1; i >= 0; i--) {
       const k = sessionStorage.key(i);
-      if (k && k.startsWith(STORAGE_PREFIX + prefix)) sessionStorage.removeItem(k);
+      if (k && (!prefix ? k.startsWith(STORAGE_PREFIX) : k.startsWith(STORAGE_PREFIX + prefix))) {
+        sessionStorage.removeItem(k);
+      }
     }
   } catch {}
 }

@@ -2,20 +2,24 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { getScans, getCrops, ScanListItem, CropOut } from "@/lib/api";
+import { getScans, getCrops, resolveImageUrl, ScanListItem, CropOut } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
+import { useAuth } from "@/lib/auth";
 import { useCachedQuery } from "@/lib/useCachedQuery";
 import { CheckCircle2, AlertTriangle, HelpCircle, ChevronRight, Filter, RefreshCw } from "lucide-react";
 
 export default function HistoryPage() {
   const { t } = useI18n();
+  const { userId } = useAuth();
   const [filterCrop, setFilterCrop] = useState("all");
-  const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8001";
+
+  // User-scoped cache key prevents cross-user scan leaks
+  const scansKey = userId ? `${userId}:scans:${filterCrop}` : null;
 
   // Stale-while-revalidate: each filter's last result renders instantly while Supabase refreshes.
   const cropsQ = useCachedQuery<CropOut[]>("crops", getCrops);
   const scansQ = useCachedQuery<ScanListItem[]>(
-    `scans:${filterCrop}`,
+    scansKey,
     () => getScans({ crop: filterCrop === "all" ? undefined : filterCrop, limit: 100 }),
     { refreshInterval: 60_000 },
   );
@@ -107,9 +111,9 @@ export default function HistoryPage() {
             >
               <div className="flex items-start gap-3.5">
                 <div className="w-14 h-14 rounded-xl overflow-hidden bg-gray-800 flex-shrink-0 border border-white/10">
-                  {scan.thumb_url ? (
+                  {scan.thumb_url || scan.image_url ? (
                     <img
-                      src={`${API_BASE}${scan.thumb_url}`}
+                      src={resolveImageUrl(scan.thumb_url || scan.image_url)}
                       alt=""
                       className="w-full h-full object-cover"
                       onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}

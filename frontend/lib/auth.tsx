@@ -8,10 +8,11 @@
  */
 "use client";
 
-import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { login as apiLogin, register as apiRegister } from "@/lib/api";
 import { supabase, ADMIN_EMAIL } from "@/lib/supabase";
+import { invalidateCached } from "@/lib/useCachedQuery";
 
 interface AuthContext {
   token: string | null;
@@ -57,8 +58,15 @@ function checkLohithClearance(session: Session | null): boolean {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [ready, setReady] = useState(false);
+  const prevUserIdRef = useRef<string | null>(null);
 
   const applySession = useCallback((s: Session | null) => {
+    const newUserId = s?.user?.id ?? null;
+    if (prevUserIdRef.current !== null && prevUserIdRef.current !== newUserId) {
+      invalidateCached("");
+    }
+    prevUserIdRef.current = newUserId;
+
     if (s) localStorage.setItem(TOKEN_KEY, s.access_token);
     else localStorage.removeItem(TOKEN_KEY);
     setSession(s);
@@ -99,6 +107,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = useCallback(() => {
     sessionStorage.removeItem(ADMIN_PASSKEY_KEY);
     localStorage.removeItem(LEGACY_USER_KEY);
+    invalidateCached("");
     applySession(null);
     supabase.auth.signOut().catch(() => {});
   }, [applySession]);

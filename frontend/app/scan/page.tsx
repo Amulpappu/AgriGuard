@@ -4,6 +4,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { getCrops, createScan, downscaleImage, CropOut } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
+import { invalidateCached } from "@/lib/useCachedQuery";
 import { Camera, Upload, Loader2, ChevronRight, AlertCircle, Sun, Focus, ShieldCheck, Sparkles } from "lucide-react";
 import { MultispectralShader } from "@/components/MultispectralShader";
 
@@ -62,6 +63,8 @@ export default function ScanPage() {
           }
         } catch {}
       }
+      invalidateCached("dashboard");
+      invalidateCached("scans");
       router.push(`/scan/${result.id}`);
     } catch (err: any) {
       console.error("Scan error:", err);
