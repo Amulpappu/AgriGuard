@@ -241,7 +241,7 @@ function sessionToToken(session: Session, fallbackName?: string): TokenResponse 
     user_id: user.id,
     email,
     full_name: (user.user_metadata?.full_name as string | undefined) || fallbackName || email.split("@")[0],
-    is_lohith: email === ADMIN_EMAIL && user.app_metadata?.role === "admin",
+    is_lohith: email === ADMIN_EMAIL,
   };
 }
 
@@ -584,12 +584,8 @@ export async function getScans(params?: {
 
   const { data: sessionData } = await supabase.auth.getSession();
   const session = sessionData.session;
-  const isAdmin = (session?.user?.email || "").toLowerCase() === ADMIN_EMAIL && session?.user?.app_metadata?.role === "admin";
+  const isAdmin = (session?.user?.email || "").toLowerCase().trim() === ADMIN_EMAIL;
   const userId = session?.user?.id;
-
-  if (!isAdmin && !userId) {
-    return [];
-  }
 
   let query = supabase
     .from("scans")
@@ -831,19 +827,8 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
 
   const { data: sessionData } = await supabase.auth.getSession();
   const session = sessionData.session;
-  const isAdmin = (session?.user?.email || "").toLowerCase() === ADMIN_EMAIL && session?.user?.app_metadata?.role === "admin";
+  const isAdmin = (session?.user?.email || "").toLowerCase().trim() === ADMIN_EMAIL;
   const userId = session?.user?.id;
-
-  if (!isAdmin && !userId) {
-    return {
-      total_scans: 0,
-      healthy_count: 0,
-      affected_count: 0,
-      uncertain_count: 0,
-      recent_scans: [],
-      chart_data: [],
-    };
-  }
 
   const countWhere = (col: string, val: string | boolean) => {
     let q = supabase.from("scans").select("id", { count: "exact", head: true }).eq(col, val);
