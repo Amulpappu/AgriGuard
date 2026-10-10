@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { getSensorLatest, SensorLatestOut } from "@/lib/api";
+import { getSensorLatest, getBioRisk, SensorLatestOut, BioRiskOut } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
-import { Wifi, Droplets, Thermometer, Wind, Info, Activity, RefreshCw } from "lucide-react";
+import { useCachedQuery } from "@/lib/useCachedQuery";
+import { Wifi, Droplets, Thermometer, Wind, Info, Activity, RefreshCw, ShieldAlert } from "lucide-react";
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
 } from "recharts";
@@ -39,21 +39,11 @@ function ReadingCard({
 
 export default function FieldPage() {
   const { t } = useI18n();
-  const [data, setData] = useState<SensorLatestOut | null>(null);
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(true);
-
-  function fetchLatest() {
-    setLoading(true);
-    getSensorLatest()
-      .then(setData)
-      .catch(() => setError("no_device"))
-      .finally(() => setLoading(false));
-  }
-
-  useEffect(() => {
-    fetchLatest();
-  }, []);
+  // Live telemetry: cached reading renders instantly, refreshed every 15s in the background.
+  const sensorQ = useCachedQuery<SensorLatestOut>("sensor:latest", getSensorLatest, { refreshInterval: 15_000 });
+  const data = sensorQ.data;
+  const loading = sensorQ.isValidating;
+  const fetchLatest = () => sensorQ.refresh();
 
   const fallbackTelemetry: SensorLatestOut = {
     latest: {
@@ -75,6 +65,16 @@ export default function FieldPage() {
   };
 
   const activeData = data?.latest ? data : fallbackTelemetry;
+  const live = activeData.latest;
+
+  // Disease Severity Value (DSV) risk derived from the current microclimate reading.
+  const riskKey = live ? `biorisk:${live.temp_c}:${live.humidity}:${live.soil_moisture}` : null;
+  const riskQ = useCachedQuery<BioRiskOut>(riskKey, () =>
+    getBioRisk(live?.temp_c ?? undefined, live?.humidity ?? undefined, live?.soil_moisture ?? undefined),
+  );
+  const risk = riskQ.data;
+  const riskTone = !risk ? "text-gray-300" : risk.risk_percentage > 70 ? "text-rose-400" : risk.risk_percentage > 40 ? "text-amber-400" : "text-emerald-400";
+  const riskBar = !risk ? "bg-gray-500" : risk.risk_percentage > 70 ? "bg-rose-500" : risk.risk_percentage > 40 ? "bg-amber-500" : "bg-emerald-500";
 
   // Format series for chart
   const seriesChartData = (activeData.series || []).map((s) => ({
@@ -113,7 +113,7 @@ export default function FieldPage() {
         </span>
       </div>
 
-      {loading && !data ? (
+      {sensorQ.isLoading ? (
         <div className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {[...Array(3)].map((_, i) => <div key={i} className="skeleton h-28 rounded-2xl" />)}
@@ -148,6 +148,52 @@ export default function FieldPage() {
               color="bg-cyan-600"
               badge="Canopy"
             />
+          </div>
+
+          {/* DSV Disease-Risk Index */}
+          <div className="glass rounded-2xl p-5 sm:p-6 border border-white/5 space-y-4">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <ShieldAlert size={18} className={riskTone} />
+                <h3 className="text-sm font-bold text-white uppercase tracking-wider">DSV Disease-Risk Index</h3>
+              </div>
+              {risk && (
+                <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-white/5 border border-white/10 ${riskTone}`}>
+                  {risk.risk_level}
+                </span>
+              )}
+            </div>
+            {risk ? (
+              <>
+                <div>
+                  <div className="flex items-end justify-between mb-1.5">
+                    <p className={`text-4xl font-extrabold ${riskTone}`}>
+                      {risk.risk_percentage}<span className="text-base font-medium text-gray-400 ml-1">%</span>
+                    </p>
+                    <p className="text-xs text-gray-400">DSV {risk.dsv_index} / 4</p>
+                  </div>
+                  <div className="h-2 rounded-full bg-white/5 overflow-hidden">
+                    <div className={`h-full rounded-full transition-all duration-700 ${riskBar}`} style={{ width: `${risk.risk_percentage}%` }} />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
+                  {[
+                    ["VPD", `${risk.vpd.vpd_kpa} kPa`],
+                    ["Dew point", `${risk.vpd.dew_point_c}°C`],
+                    ["Leaf wetness", `${risk.wet_hours_estimated} h`],
+                    ["Germination", `~${risk.hours_to_germination} h`],
+                  ].map(([k, v]) => (
+                    <div key={k} className="bg-white/5 rounded-xl p-2.5">
+                      <p className="text-sm font-bold text-white">{v}</p>
+                      <p className="text-[10px] text-gray-400">{k}</p>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs text-gray-300 leading-relaxed">{risk.action_summary}</p>
+              </>
+            ) : (
+              <div className="skeleton h-24 rounded-xl" />
+            )}
           </div>
 
           {/* Environmental Trend 24h Chart */}
@@ -193,7 +239,7 @@ export default function FieldPage() {
 
           <div className="flex items-center justify-between text-xs text-gray-500 px-2">
             <span>{t("field.last_updated")}: {new Date(activeData.latest?.recorded_at || Date.now()).toLocaleTimeString()}</span>
-            <span>Device: ESP32-Greenhouse-Alpha (Active)</span>
+            <span>Device: {live?.device_id ?? "Field node"} · auto-refresh 15s</span>
           </div>
         </>
       )}

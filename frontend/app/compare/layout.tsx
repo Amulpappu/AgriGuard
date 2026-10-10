@@ -8,13 +8,14 @@ import { useI18n } from "@/lib/i18n";
 import { Leaf } from "lucide-react";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
-  const { isLoggedIn } = useAuth();
+  const { isLoggedIn, ready } = useAuth();
   const { t } = useI18n();
   const router = useRouter();
 
   useEffect(() => {
-    if (!isLoggedIn) router.replace("/");
-  }, [isLoggedIn, router]);
+    // Wait until the stored session is read, otherwise a reload bounces signed-in users.
+    if (ready && !isLoggedIn) router.replace("/");
+  }, [ready, isLoggedIn, router]);
 
   if (!isLoggedIn) return null;
 

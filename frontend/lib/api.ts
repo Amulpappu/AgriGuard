@@ -610,46 +610,54 @@ export async function getScans(params?: {
   }
 
   // Fallback to live Supabase cloud scans joined with crops and diseases
-  const { data } = await supabase
+  let query = supabase
     .from("scans")
-    .select("*, crop:crops(*), disease:diseases(*)")
+    .select(SCAN_LIST_SELECT)
     .order("created_at", { ascending: false })
     .limit(params?.limit || 20);
+  if (params?.from) query = query.gte("created_at", params.from);
+  if (params?.to) query = query.lte("created_at", params.to);
 
-  if (data) {
-    return data.map((s: any) => {
-      const crop = s.crop || {
-        id: s.crop_id || "crop-default",
-        slug: s.crop_slug || "crop",
-        name_key: `crop.${s.crop_slug || "tomato"}`,
-      };
-      return {
-        id: s.id,
-        crop: {
-          id: crop.id,
-          slug: crop.slug,
-          name_key: crop.name_key,
-          icon_emoji: crop.icon_emoji,
-        },
-        status: s.status || (s.is_healthy ? "healthy" : (s.low_confidence ? "uncertain" : "potentially_diseased")),
-        disease: s.disease ? {
-          id: s.disease.id,
-          slug: s.disease.slug,
-          name_key: s.disease.name_key,
-        } : undefined,
-        confidence: s.confidence || 0.85,
-        severity: {
-          level: s.severity || (s.is_healthy ? "none" : "moderate"),
-          affected_pct: s.severity_pct != null ? s.severity_pct : (s.is_healthy ? 0 : 25),
-          is_estimate: true,
-        },
-        created_at: s.created_at || new Date().toISOString(),
-        image_url: s.image_url || "/agriguard_logo_4k.png",
-        thumb_url: s.thumb_url,
-      };
-    });
-  }
-  return [];
+  const { data, error } = await query;
+  if (error) throw new Error(error.message || "Failed to load scans.");
+
+  const rows = (data || []).map(mapScanRow);
+  return params?.crop ? rows.filter((r) => r.crop.slug === params.crop) : rows;
+}
+
+const SCAN_LIST_SELECT = "*, crop:crops(id, slug, name_key, icon_emoji), disease:diseases(id, slug, name_key)";
+
+/** Normalises a Supabase `scans` row (joined with crop/disease) into a ScanListItem. */
+function mapScanRow(s: any): ScanListItem {
+  const crop = s.crop || {
+    id: s.crop_id || "crop-default",
+    slug: s.crop_slug || "crop",
+    name_key: `crop.${s.crop_slug || "tomato"}`,
+  };
+  return {
+    id: s.id,
+    crop: {
+      id: crop.id,
+      slug: crop.slug,
+      name_key: crop.name_key,
+      icon_emoji: crop.icon_emoji,
+    },
+    status: s.status || (s.is_healthy ? "healthy" : (s.low_confidence ? "uncertain" : "potentially_diseased")),
+    disease: s.disease ? {
+      id: s.disease.id,
+      slug: s.disease.slug,
+      name_key: s.disease.name_key,
+    } : undefined,
+    confidence: s.confidence || 0.85,
+    severity: {
+      level: s.severity || s.severity_level || (s.is_healthy ? "none" : "moderate"),
+      affected_pct: s.severity_pct ?? s.affected_pct ?? (s.is_healthy ? 0 : 25),
+      is_estimate: true,
+    },
+    created_at: s.created_at || new Date().toISOString(),
+    image_url: s.image_url || "/agriguard_logo_4k.png",
+    thumb_url: s.thumb_url,
+  };
 }
 
 export async function getScan(id: string): Promise<ScanOut> {
@@ -812,104 +820,50 @@ export async function compareScans(a: string, b: string): Promise<CompareOut> {
 // ─── Dashboard ───────────────────────────────────────────────────────────────
 
 export async function getDashboardSummary(): Promise<DashboardSummary> {
-  // 1. Instant session cache check for 0ms dashboard rendering
-  if (typeof window !== "undefined") {
-    try {
-      const cached = sessionStorage.getItem("dashboard_summary_cache");
-      if (cached) {
-        const parsed = JSON.parse(cached);
-        // Background refresh from Supabase
-        Promise.resolve(supabase.from("scans").select("*").order("created_at", { ascending: false }).limit(25)).then(({ data: freshScans }) => {
-          if (freshScans) {
-            const tot = freshScans.length;
-            const h = freshScans.filter((s: any) => s.is_healthy).length;
-            const freshSummary = {
-              total_scans: tot,
-              healthy_count: h,
-              affected_count: tot - h,
-              uncertain_count: 0,
-              recent_scans: freshScans.slice(0, 5).map((s: any) => ({
-                id: s.id,
-                crop: {
-                  id: s.crop_id || "crop-default",
-                  slug: s.crop_slug || "cucumber",
-                  name_key: `crop.${s.crop_slug || "cucumber"}`,
-                },
-                status: s.is_healthy ? "healthy" : "potentially_diseased",
-                confidence: s.confidence || 0.9,
-                severity: {
-                  level: s.severity || (s.is_healthy ? "none" : "moderate"),
-                  affected_pct: s.severity_pct || 0,
-                  is_estimate: true,
-                },
-                created_at: s.created_at || new Date().toISOString(),
-                image_url: s.image_url || "/agriguard_logo_4k.png",
-              })),
-              chart_data: freshScans.slice(0, 10).reverse().map((s: any) => ({
-                date: (s.created_at || new Date().toISOString()).slice(5, 10),
-                crop_slug: s.crop_slug || "cucumber",
-                affected_pct: s.severity_pct || (s.is_healthy ? 0 : 35),
-                status: s.is_healthy ? "healthy" : "affected",
-              })),
-            };
-            sessionStorage.setItem("dashboard_summary_cache", JSON.stringify(freshSummary));
-          }
-        }).catch(() => {});
-        return parsed;
-      }
-    } catch {}
-  }
-
+  // Caching / stale-while-revalidate is handled by useCachedQuery in the page,
+  // so this always returns fresh data.
   if (!isPureCloudMode()) {
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 800);
       const res = await fetch(`${getApiPrefix()}/dashboard/summary`, { headers: authHeaders(), signal: controller.signal });
       clearTimeout(timeoutId);
-      if (res.ok) {
-        const d = await res.json();
-        if (typeof window !== "undefined") {
-          try { sessionStorage.setItem("dashboard_summary_cache", JSON.stringify(d)); } catch {}
-        }
-        return d;
-      }
+      if (res.ok) return await res.json();
     } catch {}
   }
 
-  // Fallback: Compute summary from live Supabase cloud scans
-  const { data: scans } = await supabase.from("scans").select("*").order("created_at", { ascending: false }).limit(25);
-  const total = scans ? scans.length : 0;
-  const healthy = scans ? scans.filter((s: any) => s.is_healthy).length : 0;
-  const affected = total - healthy;
+  // Direct Supabase: exact counts via HEAD queries + recent rows, all in parallel.
+  const countWhere = (col: string, val: string | boolean) =>
+    supabase.from("scans").select("id", { count: "exact", head: true }).eq(col, val);
+  const [totalRes, healthyRes, uncertainRes, recentRes] = await Promise.all([
+    supabase.from("scans").select("id", { count: "exact", head: true }),
+    countWhere("is_healthy", true),
+    countWhere("status", "uncertain"),
+    supabase.from("scans").select(SCAN_LIST_SELECT).order("created_at", { ascending: false }).limit(30),
+  ]);
+  if (recentRes.error) throw new Error(recentRes.error.message || "Failed to load dashboard.");
+
+  const rows = (recentRes.data || []).map(mapScanRow);
+  const total = totalRes.count ?? rows.length;
+  const healthy = healthyRes.count ?? rows.filter((r) => r.status === "healthy").length;
+  const uncertain = uncertainRes.count ?? rows.filter((r) => r.status === "uncertain").length;
 
   return {
     total_scans: total,
     healthy_count: healthy,
-    affected_count: affected,
-    uncertain_count: 0,
-    recent_scans: scans ? scans.slice(0, 5).map((s: any) => ({
-      id: s.id,
-      crop: {
-        id: s.crop_id || "crop-default",
-        slug: s.crop_slug || "crop",
-        name_key: `crop.${s.crop_slug || "tomato"}`,
-      },
-      status: s.is_healthy ? "healthy" : "potentially_diseased",
-      confidence: s.confidence || 0.9,
-      severity: {
-        level: s.severity_level || (s.is_healthy ? "none" : "moderate"),
-        affected_pct: s.affected_pct || 0,
-        is_estimate: true,
-      },
-      created_at: s.created_at || new Date().toISOString(),
-      image_url: s.image_path || "/agriguard_logo_4k.png",
-    })) : [],
-    chart_data: scans ? scans.slice(0, 10).reverse().map((s: any) => ({
-      date: (s.created_at || new Date().toISOString()).slice(5, 10),
-      crop_slug: s.crop_slug || "crop",
-      affected_pct: s.affected_pct || (s.is_healthy ? 0 : 35),
-      status: s.is_healthy ? "healthy" : "affected",
-    })) : [],
+    affected_count: Math.max(0, total - healthy - uncertain),
+    uncertain_count: uncertain,
+    recent_scans: rows.slice(0, 5),
+    chart_data: rows
+      .filter((r) => r.status !== "uncertain")
+      .slice()
+      .reverse()
+      .map((r) => ({
+        date: r.created_at.slice(5, 10),
+        crop_slug: r.crop.slug,
+        affected_pct: r.severity.affected_pct ?? 0,
+        status: r.status === "healthy" ? "healthy" : "affected",
+      })),
   };
 }
 

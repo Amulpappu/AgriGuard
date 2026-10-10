@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -9,107 +9,86 @@ import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import {
   Camera,
-  ShieldCheck,
-  Award,
-  Sparkles,
-  ArrowRight,
   Globe,
   LogIn,
   UserPlus,
   Eye,
   EyeOff,
-  CheckCircle2,
-  TrendingUp,
-  Leaf,
-  Wifi,
-  Layers,
-  FileCheck,
-  DollarSign,
-  AlertTriangle,
   X,
   Play,
-  Share2,
+  Radar,
+  Calculator,
+  Languages,
+  Activity,
+  ArrowRight,
 } from "lucide-react";
 
+// Illustrative screening results for the specimen explorer (not live data).
 const SAMPLE_SPECIMENS = [
   {
     slug: "cucumber",
-    name: "Cucumber & Gourds",
     emoji: "🥒",
-    diagnosis: "Downy Mildew",
-    severity: "Moderate (34%)",
-    treatment: "Fermented sour buttermilk + Neem seed extract (NSKE 5%)",
-    status: "Pathology Managed",
-    confidence: "94%",
-    badgeColor: "bg-emerald-500/20 text-emerald-300 border-emerald-500/30",
+    disease: "cucumber_downy_mildew",
+    confidence: 94,
+    damage: 34,
+    pills: ["Angular yellow patches", "Grey underside growth", "Humid canopy"],
+    care: "Remove heavily affected leaves, improve airflow between vines and water at the base in the morning.",
   },
   {
     slug: "rice",
-    name: "Rice / Paddy",
     emoji: "🌾",
-    diagnosis: "Sheath Blight",
-    severity: "Low (14%)",
-    treatment: "Pseudomonas fluorescens foliar spray (5g/L) with morning dew",
-    status: "AI Screening",
-    confidence: "96%",
-    badgeColor: "bg-amber-500/20 text-amber-300 border-amber-500/30",
+    disease: "rice_blast",
+    confidence: 96,
+    damage: 14,
+    pills: ["Diamond-shaped lesions", "Grey centres", "Leaf blade"],
+    care: "Keep bunds clean, avoid excess late-season nitrogen and maintain steady field water.",
   },
   {
     slug: "tomato",
-    name: "Tomato & Chilli",
     emoji: "🍅",
-    diagnosis: "Early Blight",
-    severity: "Low (18%)",
-    treatment: "Trichoderma harzianum foliar spray + balanced micronutrient zinc",
-    status: "Early Catch",
-    confidence: "95%",
-    badgeColor: "bg-rose-500/20 text-rose-300 border-rose-500/30",
+    disease: "tomato_early_blight",
+    confidence: 95,
+    damage: 18,
+    pills: ["Concentric rings", "Lower leaves first", "Yellow halo"],
+    care: "Prune lower leaves touching the soil, mulch the bed and avoid wetting the foliage.",
   },
   {
     slug: "potato",
-    name: "Potato Crops",
     emoji: "🥔",
-    diagnosis: "Late Blight",
-    severity: "Controlled (22%)",
-    treatment: "Copper oxychloride prophylactic barrier with biological booster",
-    status: "Shield Active",
-    confidence: "93%",
-    badgeColor: "bg-purple-500/20 text-purple-300 border-purple-500/30",
+    disease: "potato_late_blight",
+    confidence: 93,
+    damage: 22,
+    pills: ["Water-soaked margins", "White sporulation", "Cool nights"],
+    care: "Scout neighbouring rows daily, remove infected haulms and avoid evening irrigation.",
   },
   {
     slug: "cotton",
-    name: "Cotton Plants",
     emoji: "🌿",
-    diagnosis: "Bacterial Blight",
-    severity: "Prophylactic",
-    treatment: "Agrimycin + copper hydroxide foliar spray at boll formation",
-    status: "AI Screening",
-    confidence: "97%",
-    badgeColor: "bg-cyan-500/20 text-cyan-300 border-cyan-500/30",
+    disease: "cotton_bacterial_blight",
+    confidence: 97,
+    damage: 9,
+    pills: ["Angular leaf spots", "Vein darkening", "Low spread"],
+    care: "Use clean seed, clear crop debris after harvest and avoid working in wet fields.",
   },
 ];
 
-const SUPPORTED_CROPS = [
-  { name: "Cucumber & Gourds", emoji: "🥒" },
-  { name: "Rice / Paddy", emoji: "🌾" },
-  { name: "Tomato", emoji: "🍅" },
-  { name: "Potato", emoji: "🥔" },
-  { name: "Chilli & Pepper", emoji: "🌶️" },
-  { name: "Cotton", emoji: "🌿" },
-  { name: "Wheat", emoji: "🌾" },
-  { name: "Corn / Maize", emoji: "🌽" },
-  { name: "Banana", emoji: "🍌" },
-  { name: "Mango", emoji: "🥭" },
-  { name: "Grapes", emoji: "🍇" },
-  { name: "Cabbage", emoji: "🥬" },
-  { name: "Brinjal", emoji: "🍆" },
-  { name: "Onion", emoji: "🧅" },
+// Other crops, plants & vegetables with screening profiles (keys in locales `crop.*`).
+const SUPPORTED_CROPS: Array<[string, string]> = [
+  ["wheat", "🌾"], ["corn", "🌽"], ["pepper", "🌶️"], ["brinjal", "🍆"], ["onion", "🧅"],
+  ["banana", "🍌"], ["mango", "🥭"], ["grape", "🍇"], ["cabbage", "🥬"],
+];
+
+const FEATURES = [
+  { icon: Radar, key: "f1" },
+  { icon: Calculator, key: "f2" },
+  { icon: Languages, key: "f3" },
+  { icon: Activity, key: "f4" },
 ];
 
 const LeafScene = dynamic(() => import("@/components/LeafScene"), { ssr: false });
 
 export default function LandingPage() {
-  const { login, register, isLoggedIn, fullName, logout } = useAuth();
+  const { login, register, isLoggedIn, logout } = useAuth();
   const { t, lang, setLang } = useI18n();
   const router = useRouter();
 
@@ -125,7 +104,7 @@ export default function LandingPage() {
 
   // Active specimen preview
   const [activeSpecimenIdx, setActiveSpecimenIdx] = useState(0);
-  const currentSpecimen = SAMPLE_SPECIMENS[activeSpecimenIdx];
+  const spec = SAMPLE_SPECIMENS[activeSpecimenIdx];
 
   function openAuth(mode: "login" | "register") {
     setAuthMode(mode);
@@ -173,21 +152,8 @@ export default function LandingPage() {
     }
   }
 
-  const [stepIdx, setStepIdx] = useState(0);
-  useEffect(() => {
-    const on = () => {
-      const p = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--story-p")) || 0;
-      setStepIdx(p < 0.34 ? 0 : p < 0.7 ? 1 : 2);
-    };
-    const id = setInterval(on, 120);
-    return () => clearInterval(id);
-  }, []);
-  const goScan = (e: React.MouseEvent) => { if (!isLoggedIn) { e.preventDefault(); openAuth("login"); } };
-  const steps = [
-    { t: t("landing.step1_t"), b: t("landing.step1_b") },
-    { t: t("landing.step2_t"), b: t("landing.step2_b") },
-    { t: t("landing.step3_t"), b: t("landing.step3_b") },
-  ];
+  const launchScan = () => (isLoggedIn ? router.push("/scan") : openAuth("login"));
+  const exploreTelemetry = () => (isLoggedIn ? router.push("/field") : openAuth("register"));
 
   const stepOf = (n: number) => t("lp.step_of").replace("{n}", String(n));
 
@@ -198,6 +164,7 @@ export default function LandingPage() {
       <nav className="lp-nav" aria-label="Main">
         <Link href="/" className="lp-mark"><span />AgriGuard</Link>
         <div className="lp-links">
+          <a href="#lp-specimens">{t("lp.nav_crops")}</a>
           <a href="#lp-story">{t("lp.nav_how")}</a>
           <a href="#lp-checks">{t("lp.nav_checks")}</a>
           <a href="#lp-faq">{t("lp.nav_faq")}</a>
@@ -212,33 +179,106 @@ export default function LandingPage() {
               <button className="lp-btn sm" onClick={logout}>{t("landing.sign_out")}</button>
             </>
           ) : (
-            <button className="lp-btn sm fill" onClick={() => openAuth("login")}>
-              <LogIn size={14} /> {t("landing.log_in")}
-            </button>
+            <>
+              <button className="lp-btn sm" onClick={() => openAuth("login")}>
+                <LogIn size={14} /> {t("landing.log_in")}
+              </button>
+              <button className="lp-btn sm fill" onClick={() => openAuth("register")}>
+                <UserPlus size={14} /> {t("lp.signup")}
+              </button>
+            </>
           )}
         </div>
       </nav>
 
       <section className="lp-hero" id="lp-top">
         <div>
+          <span className="lp-badge"><i />{t("lp.badge")}</span>
           <h1>{t("lp.h1")}</h1>
           <p>{t("lp.sub")}</p>
           <div className="lp-row">
-            <button
-              className="lp-btn fill"
-              onClick={() => (isLoggedIn ? router.push("/scan") : openAuth("login"))}
-            >
-              <Camera size={18} /> {t("lp.cta")}
+            <button className="lp-btn fill" onClick={launchScan}>
+              <Camera size={18} /> {t("lp.cta_scan")}
             </button>
-            {!isLoggedIn ? (
-              <button className="lp-btn" onClick={handleDemoFarmerLogin} disabled={authLoading}>
+            <button className="lp-btn" onClick={exploreTelemetry}>
+              <Activity size={18} /> {t("lp.cta_tel")}
+            </button>
+            {!isLoggedIn && (
+              <button className="lp-btn ghost" onClick={handleDemoFarmerLogin} disabled={authLoading}>
                 <Play size={16} /> {t("lp.demo")}
               </button>
-            ) : (
-              <a className="lp-btn" href="#lp-story">{t("lp.cta_how")}</a>
             )}
           </div>
+          <dl className="lp-metrics">
+            <div><dt>14</dt><dd>{t("lp.m1")}</dd></div>
+            <div><dt>34</dt><dd>{t("lp.m2")}</dd></div>
+            <div><dt>2</dt><dd>{t("lp.m3")}</dd></div>
+          </dl>
           {authError && !authModalOpen && <p style={{ color: "#fca5a5", margin: "12px 0 0", fontSize: 14 }}>{authError}</p>}
+        </div>
+      </section>
+
+      <section className="lp-paper" id="lp-specimens">
+        <h2>{t("lp.spec_h")}</h2>
+        <p className="lp-lead">{t("lp.spec_p")}</p>
+        <div className="lp-spec">
+          <div className="lp-chips" role="tablist" aria-label={t("lp.spec_h")}>
+            {SAMPLE_SPECIMENS.map((s, i) => (
+              <button
+                key={s.slug}
+                role="tab"
+                aria-selected={i === activeSpecimenIdx}
+                className={`lp-chip${i === activeSpecimenIdx ? " on" : ""}`}
+                onClick={() => setActiveSpecimenIdx(i)}
+              >
+                <span aria-hidden="true">{s.emoji}</span> {t(`crop.${s.slug}`)}
+                <b>{s.confidence}%</b>
+              </button>
+            ))}
+          </div>
+          <article className="lp-card" role="tabpanel" key={spec.slug}>
+            <div className="lp-card-top">
+              <span className="lp-emoji" aria-hidden="true">{spec.emoji}</span>
+              <div>
+                <small>{t(`crop.${spec.slug}`)} · {t("lp.spec_sample")}</small>
+                <h3>{t(`disease.${spec.disease}`)}</h3>
+              </div>
+            </div>
+            <div className="lp-meter">
+              <div><span>{t("lp.spec_conf")}</span><b>{spec.confidence}%</b></div>
+              <i><em style={{ width: `${spec.confidence}%` }} /></i>
+            </div>
+            <div className="lp-meter warn">
+              <div><span>{t("lp.spec_dmg")}</span><b>{spec.damage}%</b></div>
+              <i><em style={{ width: `${spec.damage}%` }} /></i>
+            </div>
+            <ul className="lp-pills">
+              {spec.pills.map((p) => <li key={p}>{p}</li>)}
+            </ul>
+            <p className="lp-care"><strong>{t("lp.spec_care")}:</strong> {spec.care}</p>
+            <button className="lp-btn fill sm" onClick={launchScan}>
+              {t("lp.cta_scan")} <ArrowRight size={14} />
+            </button>
+          </article>
+        </div>
+        <div className="lp-also">
+          <span>{t("lp.supported")}:</span>
+          {SUPPORTED_CROPS.map(([slug, emoji]) => (
+            <span key={slug} className="lp-pill-soft"><span aria-hidden="true">{emoji}</span> {t(`crop.${slug}`)}</span>
+          ))}
+        </div>
+      </section>
+
+      <section className="lp-paper nt" id="lp-features">
+        <h2>{t("lp.feat_h")}</h2>
+        <div className="lp-feat">
+          {FEATURES.map(({ icon: Icon, key }) => (
+            <div key={key}>
+              <span className="lp-ico"><Icon size={22} /></span>
+              <h3>{t(`lp.${key}h`)}</h3>
+              <p>{t(`lp.${key}p`)}</p>
+            </div>
+          ))}
         </div>
       </section>
 
@@ -290,10 +330,12 @@ export default function LandingPage() {
       <section className="lp-cta">
         <h2>{t("lp.end_h")}</h2>
         <div className="lp-row" style={{ marginTop: 34 }}>
-          <button className="lp-btn fill" onClick={() => (isLoggedIn ? router.push("/scan") : openAuth("login"))}>
-            <Camera size={18} /> {t("lp.cta")}
+          <button className="lp-btn fill" onClick={launchScan}>
+            <Camera size={18} /> {t("lp.cta_scan")}
           </button>
-          <a className="lp-btn" href="#lp-faq">{t("lp.end_b")}</a>
+          <button className="lp-btn" onClick={exploreTelemetry}>
+            <Activity size={18} /> {t("lp.cta_tel")}
+          </button>
         </div>
       </section>
 

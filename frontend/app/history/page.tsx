@@ -1,30 +1,27 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { getScans, getCrops, ScanListItem, CropOut } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
-import { CheckCircle2, AlertTriangle, HelpCircle, ChevronRight, Filter } from "lucide-react";
+import { useCachedQuery } from "@/lib/useCachedQuery";
+import { CheckCircle2, AlertTriangle, HelpCircle, ChevronRight, Filter, RefreshCw } from "lucide-react";
 
 export default function HistoryPage() {
   const { t } = useI18n();
-  const [scans, setScans] = useState<ScanListItem[]>([]);
-  const [crops, setCrops] = useState<CropOut[]>([]);
   const [filterCrop, setFilterCrop] = useState("all");
-  const [loading, setLoading] = useState(true);
   const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8001";
 
-  useEffect(() => {
-    getCrops().then(setCrops).catch(() => {});
-  }, []);
-
-  useEffect(() => {
-    setLoading(true);
-    getScans({ crop: filterCrop === "all" ? undefined : filterCrop, limit: 100 })
-      .then(setScans)
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, [filterCrop]);
+  // Stale-while-revalidate: each filter's last result renders instantly while Supabase refreshes.
+  const cropsQ = useCachedQuery<CropOut[]>("crops", getCrops);
+  const scansQ = useCachedQuery<ScanListItem[]>(
+    `scans:${filterCrop}`,
+    () => getScans({ crop: filterCrop === "all" ? undefined : filterCrop, limit: 100 }),
+    { refreshInterval: 60_000 },
+  );
+  const crops = cropsQ.data ?? [];
+  const scans = scansQ.data ?? [];
+  const loading = scansQ.isLoading;
 
   const statusIcon = (s: string) =>
     s === "healthy" ? <CheckCircle2 size={16} className="text-green-400" />
@@ -36,7 +33,7 @@ export default function HistoryPage() {
       <div className="pt-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <div>
           <h1 className="font-display text-3xl sm:text-5xl font-semibold text-white tracking-tight leading-[1.05]">{t("history.title")}</h1>
-          <p className="text-xs sm:text-sm text-gray-400 mt-1">Review past scans, treatment progression, and AI health assessments</p>
+          <p className="text-xs sm:text-sm text-gray-400 mt-1">Review past crop & plant scans, progression over time, and AI health assessments</p>
         </div>
         <div className="flex items-center gap-2">
           <span className="text-xs font-semibold px-3 py-1 bg-white/5 border border-white/10 rounded-full text-gray-300">
@@ -75,11 +72,25 @@ export default function HistoryPage() {
         ))}
       </div>
 
+      {scansQ.error ? (
+        <div className={`rounded-xl p-3 text-sm flex items-center justify-between gap-3 border ${
+          scansQ.data ? "bg-amber-900/20 border-amber-700/50 text-amber-200" : "bg-red-900/30 border-red-700 text-red-300"
+        }`}>
+          <span>{scansQ.data ? "Showing your last synced records — live refresh is temporarily unavailable." : "Could not reach the database. Check your connection and retry."}</span>
+          <button
+            onClick={() => scansQ.refresh()}
+            className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/15 transition"
+          >
+            <RefreshCw size={13} className={scansQ.isValidating ? "animate-spin" : ""} /> Retry
+          </button>
+        </div>
+      ) : null}
+
       {loading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {[...Array(6)].map((_, i) => <div key={i} className="skeleton h-32 rounded-2xl" />)}
         </div>
-      ) : scans.length === 0 ? (
+      ) : scans.length === 0 && !scansQ.error ? (
         <div className="glass rounded-2xl p-12 text-center max-w-md mx-auto space-y-3">
           <p className="text-gray-400 text-sm">{t("history.no_results")}</p>
           <Link href="/scan" className="inline-block text-xs font-semibold text-green-400 hover:underline">

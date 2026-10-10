@@ -1,5 +1,6 @@
 /**
  * Auth context: token storage, login/logout, user info, and Lohith admin clearance.
+ * Admin clearance is granted only to the authorised email (see checkLohithClearance).
  */
 "use client";
 
@@ -13,15 +14,16 @@ interface AuthContext {
   fullName: string | null;
   isLoggedIn: boolean;
   isLohith: boolean;
+  /** False until the stored session has been read on the client. */
+  ready: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, fullName?: string) => Promise<void>;
   logout: () => void;
-  unlockLohith: (passkey: string) => Promise<boolean>;
-  lockLohith: () => void;
 }
 
 const TOKEN_KEY = "agriguard_token";
 const USER_KEY = "agriguard_user";
+// Legacy key from the removed passkey unlock; cleared on load and logout.
 const ADMIN_PASSKEY_KEY = "lohith_admin_key";
 
 const Ctx = createContext<AuthContext>({
@@ -31,11 +33,10 @@ const Ctx = createContext<AuthContext>({
   fullName: null,
   isLoggedIn: false,
   isLohith: false,
+  ready: false,
   login: async () => {},
   register: async () => {},
   logout: () => {},
-  unlockLohith: async () => false,
-  lockLohith: () => {},
 });
 
 function checkLohithClearance(emailStr: string | null): boolean {
@@ -48,9 +49,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [userId, setUserId] = useState<string | null>(null);
   const [email, setEmail] = useState<string | null>(null);
   const [fullName, setFullName] = useState<string | null>(null);
-  const [adminUnlocked, setAdminUnlocked] = useState<boolean>(false);
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
+    sessionStorage.removeItem(ADMIN_PASSKEY_KEY);
     const t = localStorage.getItem(TOKEN_KEY);
     const u = localStorage.getItem(USER_KEY);
     if (t) setToken(t);
@@ -61,11 +63,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUserId(parsed.userId || null);
         setEmail(resolvedEmail);
         setFullName(parsed.fullName || null);
-        if (checkLohithClearance(resolvedEmail)) {
-          setAdminUnlocked(true);
-        }
       } catch {}
     }
+    setReady(true);
   }, []);
 
   const login = useCallback(async (userEmail: string, password: string) => {
@@ -83,14 +83,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUserId(res.user_id);
     setEmail(resolvedEmail);
     setFullName(resolvedName);
-
-    if (checkLohithClearance(resolvedEmail)) {
-      sessionStorage.setItem(ADMIN_PASSKEY_KEY, "lohith");
-      setAdminUnlocked(true);
-    } else {
-      sessionStorage.removeItem(ADMIN_PASSKEY_KEY);
-      setAdminUnlocked(false);
-    }
   }, []);
 
   const register = useCallback(async (userEmail: string, password: string, name?: string) => {
@@ -118,44 +110,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUserId(null);
     setEmail(null);
     setFullName(null);
-    setAdminUnlocked(false);
   }, []);
 
-  const unlockLohith = useCallback(async (passkey: string): Promise<boolean> => {
-    const cleanKey = passkey.trim();
-    if (cleanKey === "lohith" || cleanKey === "lohith123" || cleanKey === "lohith2026") {
-      sessionStorage.setItem(ADMIN_PASSKEY_KEY, "lohith");
-      setAdminUnlocked(true);
-      return true;
-    }
-
-    try {
-      const res = await fetch("/api/v1/admin/auth/verify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ passkey: cleanKey }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.authorized) {
-          sessionStorage.setItem(ADMIN_PASSKEY_KEY, "lohith");
-          if (data.access_token) {
-            localStorage.setItem(TOKEN_KEY, data.access_token);
-            setToken(data.access_token);
-          }
-          setAdminUnlocked(true);
-          return true;
-        }
-      }
-    } catch {}
-    return false;
-  }, []);
-
-  const lockLohith = useCallback(() => {
-    sessionStorage.removeItem(ADMIN_PASSKEY_KEY);
-    setAdminUnlocked(false);
-  }, []);
-
+  // Admin clearance is derived solely from the signed-in email; there is no
+  // passkey or alternate unlock path.
   const isLohith = checkLohithClearance(email);
 
   return (
@@ -167,11 +125,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         fullName,
         isLoggedIn: !!token,
         isLohith,
+        ready,
         login,
         register,
         logout,
-        unlockLohith,
-        lockLohith,
       }}
     >
       {children}

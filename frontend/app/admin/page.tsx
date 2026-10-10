@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth";
 import { 
   Database, Users, HardDrive, Image as ImageIcon, Activity, 
@@ -48,23 +49,18 @@ interface TableMeta {
 
 async function adminFetch(url: string, options: RequestInit = {}) {
   const token = typeof window !== "undefined" ? localStorage.getItem("agriguard_token") : null;
-  const passkey = typeof window !== "undefined" ? sessionStorage.getItem("lohith_admin_key") : null;
   const headers = new Headers(options.headers || {});
-  
+
   if (token) {
     headers.set("Authorization", `Bearer ${token}`);
-  } else if (passkey) {
-    headers.set("Authorization", `Bearer ${passkey}`);
   }
-  
+
   return fetch(url, { ...options, headers });
 }
 
 export default function AdminDatabasePage() {
-  const { isLohith, fullName, email, unlockLohith, lockLohith } = useAuth();
-  const [passkeyInput, setPasskeyInput] = useState("");
-  const [unlockError, setUnlockError] = useState("");
-  const [unlocking, setUnlocking] = useState(false);
+  const { isLohith, ready, fullName, email, logout } = useAuth();
+  const router = useRouter();
 
   const [activeTab, setActiveTab] = useState<"overview" | "tables" | "sql" | "supabase">("overview");
   const [stats, setStats] = useState<DbStats | null>(null);
@@ -101,28 +97,6 @@ export default function AdminDatabasePage() {
 
   const [deleteEmail, setDeleteEmail] = useState<string | null>(null);
   const [wipeUploads, setWipeUploads] = useState(false);
-
-  async function handleUnlockPasskey(e: React.FormEvent) {
-    e.preventDefault();
-    if (!passkeyInput.trim()) return;
-    setUnlocking(true);
-    setUnlockError("");
-    try {
-      const ok = await unlockLohith(passkeyInput.trim());
-      if (ok) {
-        setPasskeyInput("");
-        fetchStats();
-        fetchTablesList();
-        fetchProvider();
-      } else {
-        setUnlockError("Access Denied: Incorrect passkey or credentials. Database access is strictly reserved for Lohith.");
-      }
-    } catch (_) {
-      setUnlockError("Could not connect to authentication verification service.");
-    } finally {
-      setUnlocking(false);
-    }
-  }
 
   async function fetchStats() {
     setLoading(true);
@@ -363,6 +337,12 @@ export default function AdminDatabasePage() {
   }
 
   // ─── ACCESS CONTROL GATE: RESTRICTED TO LOHITH ONLY ────────────────────────
+  // Render nothing until the stored session is read, so neither the console
+  // nor the restricted screen flashes for the wrong user.
+  if (!ready) {
+    return <div className="max-w-xl mx-auto px-4 py-16"><div className="skeleton h-72 rounded-3xl" /></div>;
+  }
+
   if (!isLohith) {
     return (
       <div className="max-w-xl mx-auto px-4 py-16">
@@ -373,7 +353,7 @@ export default function AdminDatabasePage() {
 
           <div className="space-y-2">
             <span className="inline-block text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-red-500/10 text-red-300 border border-red-500/20">
-              Access Restricted · Administrator Clearance Required
+              Administrative Clearance Restricted
             </span>
             <h1 className="text-2xl font-bold text-white tracking-tight">
               AgriGuard Central Database
@@ -394,31 +374,9 @@ export default function AdminDatabasePage() {
             </span>
           </div>
 
-          {/* Unlock Section */}
-          <form onSubmit={handleUnlockPasskey} className="space-y-3 pt-2 text-left">
-            <label className="block text-xs font-medium text-gray-300">
-              Enter Lohith Passkey or Password to Unlock Database:
-            </label>
-            <div className="flex gap-2">
-              <input
-                type="password"
-                value={passkeyInput}
-                onChange={(e) => setPasskeyInput(e.target.value)}
-                placeholder="Lohith passkey..."
-                className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500/50"
-              />
-              <button
-                type="submit"
-                disabled={unlocking || !passkeyInput.trim()}
-                className="px-4 py-2.5 rounded-xl text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white disabled:opacity-50 transition shadow-lg shadow-emerald-900/40 flex items-center gap-1.5"
-              >
-                {unlocking ? "Verifying..." : "Unlock Access"}
-              </button>
-            </div>
-            {unlockError && (
-              <p className="text-xs text-red-400 font-medium">{unlockError}</p>
-            )}
-          </form>
+          <p className="text-xs text-gray-500 leading-relaxed">
+            Administrative clearance is bound to the authorised administrator account. Sign in with that account to continue.
+          </p>
 
           <div className="pt-2 border-t border-white/5 flex items-center justify-between text-xs">
             <Link
@@ -465,10 +423,10 @@ export default function AdminDatabasePage() {
                   Full control over users, tables, custom queries, backups, and cloud database.
                 </p>
                 <button
-                  onClick={lockLohith}
+                  onClick={() => { logout(); router.replace("/"); }}
                   className="text-[11px] text-amber-400/80 hover:text-red-400 underline underline-offset-2 ml-2 transition"
                 >
-                  (Lock DB)
+                  (Sign out)
                 </button>
               </div>
             </div>

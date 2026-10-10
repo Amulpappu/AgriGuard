@@ -1,14 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { getDashboardSummary, getSensorLatest, DashboardSummary, SensorLatestOut } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
+import { useCachedQuery } from "@/lib/useCachedQuery";
 import {
   Camera, CheckCircle2, AlertTriangle, HelpCircle, TrendingUp, ChevronRight,
-  GitCompareArrows, Droplets, Thermometer, Wind, Wifi, ArrowUpRight, LogOut, User as UserIcon
+  GitCompareArrows, Droplets, Thermometer, Wind, Wifi, ArrowUpRight, LogOut, RefreshCw
 } from "lucide-react";
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
@@ -18,7 +18,11 @@ const CROP_COLORS: Record<string, string> = {
   tomato: "#f97316",
   potato: "#a78bfa",
   pepper: "#5CC2B4",
+  cucumber: "#34d399",
+  rice: "#facc15",
+  cotton: "#60a5fa",
 };
+const FALLBACK_COLORS = ["#f472b6", "#22d3ee", "#a3e635", "#fb923c", "#c084fc"];
 
 function StatCard({
   label, value, icon: Icon, color,
@@ -42,36 +46,17 @@ export default function DashboardPage() {
   const { t } = useI18n();
   const { fullName, logout } = useAuth();
   const router = useRouter();
-  const [data, setData] = useState<DashboardSummary | null>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const cached = sessionStorage.getItem("dashboard_summary_cache");
-        if (cached) return JSON.parse(cached);
-      } catch {}
-    }
-    return null;
-  });
-  const [sensor, setSensor] = useState<SensorLatestOut | null>(null);
-  const [loading, setLoading] = useState(!data);
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    Promise.all([
-      getDashboardSummary().then((d) => {
-        setData(d);
-        if (typeof window !== "undefined") {
-          try {
-            sessionStorage.setItem("dashboard_summary_cache", JSON.stringify(d));
-          } catch {}
-        }
-      }),
-      getSensorLatest().then(setSensor).catch(() => {}),
-    ])
-      .catch(() => {
-        if (!data) setError("Failed to load dashboard.");
-      })
-      .finally(() => setLoading(false));
-  }, []);
+  // Stale-while-revalidate: cached summary renders instantly, Supabase refreshes in the background.
+  const summary = useCachedQuery<DashboardSummary>("dashboard:summary", getDashboardSummary, { refreshInterval: 60_000 });
+  const sensorQ = useCachedQuery<SensorLatestOut>("sensor:latest", getSensorLatest, { refreshInterval: 30_000 });
+  const data = summary.data;
+  const sensor = sensorQ.data;
+  const loading = summary.isLoading;
+  const error = summary.error
+    ? data
+      ? "Showing your last synced data — live refresh is temporarily unavailable."
+      : "Could not reach the database. Check your connection and retry."
+    : "";
 
   // Build chart data grouped by date+crop
   const chartData: any[] = [];
@@ -87,6 +72,7 @@ export default function DashboardPage() {
     }
     chartData.push(...Object.values(byDate).sort((a, b) => a.date.localeCompare(b.date)));
   }
+  const chartCrops = Array.from(new Set((data?.chart_data ?? []).map((r) => r.crop_slug))).slice(0, 6);
 
   const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8001";
 
@@ -149,7 +135,17 @@ export default function DashboardPage() {
       </div>
 
       {error && (
-        <div className="bg-red-900/30 border border-red-700 rounded-xl p-3 text-sm text-red-300">{error}</div>
+        <div className={`rounded-xl p-3 text-sm flex items-center justify-between gap-3 border ${
+          data ? "bg-amber-900/20 border-amber-700/50 text-amber-200" : "bg-red-900/30 border-red-700 text-red-300"
+        }`}>
+          <span>{error}</span>
+          <button
+            onClick={() => summary.refresh()}
+            className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/15 transition"
+          >
+            <RefreshCw size={13} className={summary.isValidating ? "animate-spin" : ""} /> Retry
+          </button>
+        </div>
       )}
 
       {/* 4 Stat Cards */}
@@ -170,9 +166,10 @@ export default function DashboardPage() {
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <h2 className="font-display text-xl font-semibold text-gray-100">{t("dashboard.chart_title")}</h2>
-                  <p className="text-xs text-gray-400 mt-0.5">Average leaf lesion damage percentage by crop</p>
+                  <p className="text-xs text-gray-400 mt-0.5">Average visible leaf damage by crop & plant</p>
                 </div>
-                <span className="text-[10px] uppercase tracking-wider font-semibold text-green-400 bg-green-500/10 px-2.5 py-1 rounded-full border border-green-500/20">
+                <span className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-semibold text-green-400 bg-green-500/10 px-2.5 py-1 rounded-full border border-green-500/20">
+                  <span className={`w-1.5 h-1.5 rounded-full bg-green-400 ${summary.isValidating ? "animate-pulse" : ""}`} />
                   Live Trend
                 </span>
               </div>
@@ -186,13 +183,13 @@ export default function DashboardPage() {
                     labelStyle={{ color: "#94a3b8" }}
                   />
                   <Legend wrapperStyle={{ fontSize: 12, paddingTop: 10 }} />
-                  {["tomato", "potato", "pepper"].map((crop) => (
+                  {chartCrops.map((crop, i) => (
                     <Line
                       key={crop}
                       type="monotone"
                       dataKey={crop}
                       name={t(`crop.${crop}`)}
-                      stroke={CROP_COLORS[crop]}
+                      stroke={CROP_COLORS[crop] ?? FALLBACK_COLORS[i % FALLBACK_COLORS.length]}
                       strokeWidth={2.5}
                       dot={{ r: 3.5 }}
                       activeDot={{ r: 6 }}
