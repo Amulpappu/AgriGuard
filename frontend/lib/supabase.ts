@@ -10,5 +10,19 @@ const supabaseAnonKey =
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
+/**
+ * Server-side client that acts as the caller: forwards their Supabase access
+ * token so Row Level Security policies evaluate against that user.
+ */
+export function supabaseForToken(accessToken: string | null) {
+  return createClient(supabaseUrl, supabaseAnonKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+    global: accessToken ? { headers: { Authorization: `Bearer ${accessToken}` } } : undefined,
+  });
+}
+
+/** Admin is the single authorised account, with server-assigned app_metadata.role = "admin". */
+export const ADMIN_EMAIL = "lohithgamer12@gmail.com";
+
 export const SUPABASE_PROJECT_REF = "todwosflbwzuizvedouy";
 export const SUPABASE_PROJECT_URL = "https://todwosflbwzuizvedouy.supabase.co";

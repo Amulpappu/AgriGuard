@@ -1,8 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { supabaseForToken } from "@/lib/supabase";
+
+function bearer(req: NextRequest): string | null {
+  const h = req.headers.get("authorization") || "";
+  return h.toLowerCase().startsWith("bearer ") ? h.slice(7).trim() || null : null;
+}
 
 export async function POST(req: NextRequest) {
   try {
+    // Act as the caller so RLS applies; scans are owned by auth.uid().
+    const supabase = supabaseForToken(bearer(req));
+    const { data: userData } = await supabase.auth.getUser();
+    if (!userData.user) {
+      return NextResponse.json({ detail: "Authentication required" }, { status: 401 });
+    }
     const formData = await req.formData();
     const cropId = formData.get("crop_id") as string | null;
     const imageFile = formData.get("image") as File | null;
@@ -43,6 +54,7 @@ export async function POST(req: NextRequest) {
 
     const scanRecord = {
       id: newScanId,
+      user_id: userData.user.id,
       crop_id: matchedCrop.id,
       disease_id: matchedDisease?.id || null,
       image_url: `/uploads/scans/${newScanId}.jpg`,
@@ -90,8 +102,9 @@ export async function POST(req: NextRequest) {
   }
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
+    const supabase = supabaseForToken(bearer(req));
     const { data: scans } = await supabase
       .from("scans")
       .select("*, crop:crops(*), disease:diseases(*)")

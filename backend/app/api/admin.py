@@ -4,14 +4,10 @@ RESTRICTED ACCESS: All endpoints require authentication and are authorized EXCLU
 Provides complete visibility, usage audits, user administration, and backup controls.
 """
 from fastapi import APIRouter, HTTPException, Query, Depends
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
 from pydantic import BaseModel
 from typing import Optional, List
 import db_control
 
-from app.core.database import get_db
-from app.core.security import verify_password, create_access_token
 from app.models.models import User
 from app.api.deps import require_lohith_admin
 
@@ -32,60 +28,6 @@ class SqlQueryRequest(BaseModel):
 class SwitchProviderRequest(BaseModel):
     provider: str  # "local" or "supabase"
     database_url: Optional[str] = None
-
-class VerifyAdminRequest(BaseModel):
-    passkey: Optional[str] = None
-    email: Optional[str] = None
-    password: Optional[str] = None
-
-
-@router.post("/auth/verify")
-async def verify_admin_access(req: VerifyAdminRequest, db: AsyncSession = Depends(get_db)):
-    """
-    Validates Lohith clearance via passkey or login credentials.
-    Returns authorization token for administrative database operations.
-    """
-    # 1. Master Passkey Check
-    if req.passkey and req.passkey.strip() in ("lohith", "lohith123", "lohith2026", "lohith@agriguard"):
-        result = await db.execute(
-            select(User).where(
-                (User.email == "lohithgamer12@gmail.com") | (User.email.ilike("%lohith%"))
-            )
-        )
-        u = result.scalar_one_or_none()
-        user_id = u.id if u else "lohith-admin-id"
-        token = create_access_token({"sub": user_id})
-        return {
-            "authorized": True,
-            "access_token": token,
-            "user_id": user_id,
-            "email": "lohithgamer12@gmail.com",
-            "full_name": "LOHITH",
-            "message": "Welcome Lohith! Database access authorized.",
-        }
-
-    # 2. Lohith Credentials Check
-    if req.email and ("lohith" in req.email.lower() or req.email.lower() == "lohithgamer12@gmail.com") and req.password:
-        result = await db.execute(select(User).where(User.email == req.email))
-        u = result.scalar_one_or_none()
-        if u:
-            is_valid = verify_password(req.password, u.hashed_password) or req.password in ("lohith", "lohith123", "lohith2026")
-            if is_valid:
-                token = create_access_token({"sub": u.id})
-                return {
-                    "authorized": True,
-                    "access_token": token,
-                    "user_id": u.id,
-                    "email": u.email,
-                    "full_name": u.full_name or "LOHITH",
-                    "message": "Welcome Lohith! Database access authorized.",
-                }
-
-    raise HTTPException(
-        status_code=403,
-        detail="Unauthorized: Incorrect credentials or passkey. Database access is strictly reserved for Lohith.",
-    )
-
 
 @router.get("/db/stats")
 def get_database_stats(admin_user: User = Depends(require_lohith_admin)):

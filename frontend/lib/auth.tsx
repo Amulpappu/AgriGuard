@@ -1,11 +1,17 @@
 /**
- * Auth context: token storage, login/logout, user info, and Lohith admin clearance.
- * Admin clearance is granted only to the authorised email (see checkLohithClearance).
+ * Auth context backed by Supabase Auth: session, login/logout, user info, and
+ * Lohith admin clearance.
+ *
+ * The session (and its signed JWT) comes from supabase.auth; nothing here is
+ * trusted by the server. Admin data is protected by RLS policies in Supabase and
+ * by require_lohith_admin in the FastAPI backend; `isLohith` only drives the UI.
  */
 "use client";
 
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
-import { login as apiLogin, register as apiRegister, TokenResponse } from "@/lib/api";
+import type { Session } from "@supabase/supabase-js";
+import { login as apiLogin, register as apiRegister } from "@/lib/api";
+import { supabase, ADMIN_EMAIL } from "@/lib/supabase";
 
 interface AuthContext {
   token: string | null;
@@ -21,9 +27,11 @@ interface AuthContext {
   logout: () => void;
 }
 
+// Mirror of the current access token for synchronous Authorization headers
+// (lib/api.ts authHeaders, admin page). Kept in step with the Supabase session.
 const TOKEN_KEY = "agriguard_token";
-const USER_KEY = "agriguard_user";
-// Legacy key from the removed passkey unlock; cleared on load and logout.
+// Legacy keys from the removed client-side auth; cleared on load and logout.
+const LEGACY_USER_KEY = "agriguard_user";
 const ADMIN_PASSKEY_KEY = "lohith_admin_key";
 
 const Ctx = createContext<AuthContext>({
@@ -39,92 +47,75 @@ const Ctx = createContext<AuthContext>({
   logout: () => {},
 });
 
-function checkLohithClearance(emailStr: string | null): boolean {
-  const e = (emailStr || "").toLowerCase().trim();
-  return e === "lohithgamer12@gmail.com" || e === "lohithgamer12@gmail";
+/** Admin needs both the authorised email and the server-assigned admin role. */
+function checkLohithClearance(session: Session | null): boolean {
+  const user = session?.user;
+  if (!user) return false;
+  return (user.email || "").toLowerCase() === ADMIN_EMAIL && user.app_metadata?.role === "admin";
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [token, setToken] = useState<string | null>(null);
-  const [userId, setUserId] = useState<string | null>(null);
-  const [email, setEmail] = useState<string | null>(null);
-  const [fullName, setFullName] = useState<string | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [ready, setReady] = useState(false);
+
+  const applySession = useCallback((s: Session | null) => {
+    if (s) localStorage.setItem(TOKEN_KEY, s.access_token);
+    else localStorage.removeItem(TOKEN_KEY);
+    setSession(s);
+  }, []);
 
   useEffect(() => {
     sessionStorage.removeItem(ADMIN_PASSKEY_KEY);
-    const t = localStorage.getItem(TOKEN_KEY);
-    const u = localStorage.getItem(USER_KEY);
-    if (t) setToken(t);
-    if (u) {
-      try {
-        const parsed = JSON.parse(u);
-        const resolvedEmail = parsed.email || null;
-        setUserId(parsed.userId || null);
-        setEmail(resolvedEmail);
-        setFullName(parsed.fullName || null);
-      } catch {}
-    }
-    setReady(true);
-  }, []);
+    localStorage.removeItem(LEGACY_USER_KEY);
+
+    let active = true;
+    supabase.auth.getSession().then(({ data }) => {
+      if (!active) return;
+      applySession(data.session);
+      setReady(true);
+    });
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => {
+      applySession(s);
+      setReady(true);
+    });
+    return () => {
+      active = false;
+      sub.subscription.unsubscribe();
+    };
+  }, [applySession]);
 
   const login = useCallback(async (userEmail: string, password: string) => {
-    const res: TokenResponse = await apiLogin(userEmail, password);
-    const resolvedEmail = res.email || userEmail;
-    const resolvedName = res.full_name || null;
-    
-    localStorage.setItem(TOKEN_KEY, res.access_token);
-    localStorage.setItem(
-      USER_KEY, 
-      JSON.stringify({ userId: res.user_id, fullName: resolvedName, email: resolvedEmail })
-    );
-    
-    setToken(res.access_token);
-    setUserId(res.user_id);
-    setEmail(resolvedEmail);
-    setFullName(resolvedName);
-  }, []);
+    await apiLogin(userEmail, password);
+    const { data } = await supabase.auth.getSession();
+    applySession(data.session);
+  }, [applySession]);
 
   const register = useCallback(async (userEmail: string, password: string, name?: string) => {
-    const res: TokenResponse = await apiRegister(userEmail, password, name);
-    const resolvedEmail = res.email || userEmail;
-    const resolvedName = res.full_name || name || null;
-
-    localStorage.setItem(TOKEN_KEY, res.access_token);
-    localStorage.setItem(
-      USER_KEY, 
-      JSON.stringify({ userId: res.user_id, fullName: resolvedName, email: resolvedEmail })
-    );
-
-    setToken(res.access_token);
-    setUserId(res.user_id);
-    setEmail(resolvedEmail);
-    setFullName(resolvedName);
-  }, []);
+    await apiRegister(userEmail, password, name);
+    const { data } = await supabase.auth.getSession();
+    applySession(data.session);
+  }, [applySession]);
 
   const logout = useCallback(() => {
-    localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(USER_KEY);
     sessionStorage.removeItem(ADMIN_PASSKEY_KEY);
-    setToken(null);
-    setUserId(null);
-    setEmail(null);
-    setFullName(null);
-  }, []);
+    localStorage.removeItem(LEGACY_USER_KEY);
+    applySession(null);
+    supabase.auth.signOut().catch(() => {});
+  }, [applySession]);
 
-  // Admin clearance is derived solely from the signed-in email; there is no
-  // passkey or alternate unlock path.
-  const isLohith = checkLohithClearance(email);
+  const user = session?.user ?? null;
+  const email = user?.email?.toLowerCase() ?? null;
+  const fullName = (user?.user_metadata?.full_name as string | undefined) || (email ? email.split("@")[0] : null);
 
   return (
     <Ctx.Provider
       value={{
-        token,
-        userId,
+        token: session?.access_token ?? null,
+        userId: user?.id ?? null,
         email,
         fullName,
-        isLoggedIn: !!token,
-        isLohith,
+        isLoggedIn: !!session,
+        isLohith: checkLohithClearance(session),
         ready,
         login,
         register,

@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { supabaseForToken } from "@/lib/supabase";
+
+function bearer(req: NextRequest): string | null {
+  const h = req.headers.get("authorization") || "";
+  return h.toLowerCase().startsWith("bearer ") ? h.slice(7).trim() || null : null;
+}
 
 export async function GET(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
@@ -11,6 +16,8 @@ export async function GET(
       return NextResponse.json({ detail: "Missing scan ID" }, { status: 400 });
     }
 
+    // Act as the caller so RLS limits reads to their own scans.
+    const supabase = supabaseForToken(bearer(req));
     const { data: s, error } = await supabase
       .from("scans")
       .select("*, crop:crops(*), disease:diseases(*)")

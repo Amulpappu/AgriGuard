@@ -6,6 +6,9 @@ from app.core.security import verify_password, get_password_hash, create_access_
 from app.models.models import User
 from app.schemas.schemas import LoginRequest, RegisterRequest, TokenResponse
 from app.api.deps import get_current_user
+from app.core.config import get_settings
+
+settings = get_settings()
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -27,9 +30,8 @@ async def register(body: RegisterRequest, db: AsyncSession = Depends(get_db)):
     db.add(user)
     await db.flush()
     token = create_access_token({"sub": user.id})
-    email_clean = (user.email or "").lower().strip()
-    name_clean = (user.full_name or "").lower().strip()
-    is_lohith = email_clean == "lohithgamer12@gmail.com" or "lohith" in email_clean or "lohith" in name_clean
+    # UI hint only; admin endpoints verify a Supabase admin session themselves.
+    is_lohith = (user.email or "").lower().strip() == settings.ADMIN_EMAIL
     return TokenResponse(
         access_token=token,
         user_id=user.id,
@@ -44,14 +46,7 @@ async def login(body: LoginRequest, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(User).where(User.email == body.email))
     user = result.scalar_one_or_none()
     
-    # Check credentials (allow passkey or password match)
-    is_valid = False
-    if user:
-        is_valid = verify_password(body.password, user.hashed_password)
-        if not is_valid:
-            email_clean = (user.email or "").lower().strip()
-            if ("lohith" in email_clean or email_clean == "lohithgamer12@gmail.com") and body.password in ("lohith123", "lohith", "lohith2026"):
-                is_valid = True
+    is_valid = bool(user) and verify_password(body.password, user.hashed_password)
 
     if not user or not is_valid:
         raise HTTPException(
@@ -59,9 +54,8 @@ async def login(body: LoginRequest, db: AsyncSession = Depends(get_db)):
             detail="Invalid email or password",
         )
     token = create_access_token({"sub": user.id})
-    email_clean = (user.email or "").lower().strip()
-    name_clean = (user.full_name or "").lower().strip()
-    is_lohith = email_clean == "lohithgamer12@gmail.com" or "lohith" in email_clean or "lohith" in name_clean
+    # UI hint only; admin endpoints verify a Supabase admin session themselves.
+    is_lohith = (user.email or "").lower().strip() == settings.ADMIN_EMAIL
     return TokenResponse(
         access_token=token,
         user_id=user.id,
@@ -73,9 +67,8 @@ async def login(body: LoginRequest, db: AsyncSession = Depends(get_db)):
 
 @router.get("/me")
 async def get_current_user_profile(user: User = Depends(get_current_user)):
-    email_clean = (user.email or "").lower().strip()
-    name_clean = (user.full_name or "").lower().strip()
-    is_lohith = email_clean == "lohithgamer12@gmail.com" or "lohith" in email_clean or "lohith" in name_clean
+    # UI hint only; admin endpoints verify a Supabase admin session themselves.
+    is_lohith = (user.email or "").lower().strip() == settings.ADMIN_EMAIL
     return {
         "id": user.id,
         "email": user.email,

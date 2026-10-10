@@ -3,7 +3,8 @@
  * All requests include Authorization header when token is available.
  */
 
-import { supabase } from "@/lib/supabase";
+import type { Session } from "@supabase/supabase-js";
+import { supabase, ADMIN_EMAIL } from "@/lib/supabase";
 
 export function getApiBase(): string {
   if (typeof window !== "undefined") {
@@ -181,144 +182,43 @@ const isPureCloudMode = () => {
 
 // ─── Auth ────────────────────────────────────────────────────────────────────
 
+/** Maps a Supabase Auth session to the TokenResponse shape the app uses. */
+function sessionToToken(session: Session, fallbackName?: string): TokenResponse {
+  const user = session.user;
+  const email = (user.email || "").toLowerCase();
+  return {
+    access_token: session.access_token,
+    token_type: "bearer",
+    user_id: user.id,
+    email,
+    full_name: (user.user_metadata?.full_name as string | undefined) || fallbackName || email.split("@")[0],
+    is_lohith: email === ADMIN_EMAIL && user.app_metadata?.role === "admin",
+  };
+}
+
 export async function login(email: string, password: string): Promise<TokenResponse> {
   const cleanEmail = email.trim().toLowerCase();
-  const isLohith = cleanEmail === "lohithgamer12@gmail.com" || cleanEmail === "lohithgamer12@gmail";
-
-  // Fast-track Instant Cloud Login for known credentials (0ms latency)
-  if (isLohith) {
-    return {
-      access_token: "sb_tok_dd23f951-ec3d-4bf3-a511-b30ef11d2c7d",
-      token_type: "bearer",
-      user_id: "dd23f951-ec3d-4bf3-a511-b30ef11d2c7d",
-      email: "lohithgamer12@gmail.com",
-      full_name: "LOHITH",
-      is_lohith: true,
-    };
+  const { data, error } = await supabase.auth.signInWithPassword({ email: cleanEmail, password });
+  if (error || !data.session) {
+    throw { code: "invalid_credentials", message: error?.message || "Invalid email or password." };
   }
-
-  if (cleanEmail === "demo@agriguard.in") {
-    return {
-      access_token: "sb_tok_11264654-2ade-4424-8cb7-6ca9dc397c77",
-      token_type: "bearer",
-      user_id: "11264654-2ade-4424-8cb7-6ca9dc397c77",
-      email: "demo@agriguard.in",
-      full_name: "Demo Farmer",
-      is_lohith: false,
-    };
-  }
-
-  // 1. Try local/tunnel backend proxy with short 800ms abort if not in pure cloud mode
-  if (!isPureCloudMode()) {
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 800);
-      const res = await fetch(`${getApiPrefix()}/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: cleanEmail, password }),
-        signal: controller.signal,
-      });
-      clearTimeout(timeoutId);
-      if (res.ok) {
-        return await res.json();
-      }
-      const err = await res.json().catch(() => null);
-      if (err?.detail) {
-        const msg = typeof err.detail === "string" ? err.detail : err.detail?.message;
-        throw { code: "invalid_credentials", message: msg || "Invalid credentials." };
-      }
-    } catch (err: any) {
-      if (err?.code === "invalid_credentials") throw err;
-    }
-  }
-
-  // 2. Direct Supabase Cloud Database verification
-  const { data, error } = await supabase
-    .from("users")
-    .select("id, email, full_name, is_active")
-    .ilike("email", cleanEmail)
-    .maybeSingle();
-
-  if (error) {
-    console.error("Supabase user query error:", error);
-    throw new Error(error.message || "Failed to query database.");
-  }
-
-  if (!data) {
-    throw new Error(`Account not found for ${cleanEmail}. Please click 'Sign Up' to create your account.`);
-  }
-
-  return {
-    access_token: `sb_tok_${data.id}`,
-    token_type: "bearer",
-    user_id: data.id,
-    email: data.email || cleanEmail,
-    full_name: data.full_name || cleanEmail.split("@")[0],
-    is_lohith: false,
-  };
+  return sessionToToken(data.session);
 }
 
 export async function register(email: string, password: string, fullName?: string): Promise<TokenResponse> {
   const cleanEmail = email.trim().toLowerCase();
-
-  // 1. Try local/tunnel backend proxy first if not pure cloud mode
-  if (!isPureCloudMode()) {
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 3500);
-      const res = await fetch(`${getApiPrefix()}/auth/register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: cleanEmail, password, full_name: fullName }),
-        signal: controller.signal,
-      });
-      clearTimeout(timeoutId);
-      if (res.ok) {
-        return await res.json();
-      }
-      const err = await res.json().catch(() => null);
-      if (err?.detail) {
-        const msg = typeof err.detail === "string" ? err.detail : err.detail?.message;
-        throw new Error(msg || "Registration failed.");
-      }
-    } catch (err: any) {
-      if (err?.message) throw err;
-      // Backend offline / proxy timeout -> seamless fallback to Supabase Cloud Database!
-    }
-  }
-
-  // 2. Check if user already exists in Supabase
-  const { data: existing } = await supabase
-    .from("users")
-    .select("id, email")
-    .eq("email", cleanEmail)
-    .maybeSingle();
-
-  if (existing) {
-    throw new Error("This email is already registered! Please click 'Already have an account? Sign in'.");
-  }
-
-  // 3. Insert new farmer directly into Supabase Cloud
-  const newUserId = typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `usr_${Date.now()}`;
-  const { error: insertErr } = await supabase.from("users").insert({
-    id: newUserId,
+  const name = fullName || cleanEmail.split("@")[0];
+  const { data, error } = await supabase.auth.signUp({
     email: cleanEmail,
-    hashed_password: "sha256$" + password,
-    full_name: fullName || cleanEmail.split("@")[0],
-    is_active: true,
+    password,
+    options: { data: { full_name: name } },
   });
-
-  if (insertErr) {
-    throw new Error(insertErr.message || "Failed to create account in database.");
+  if (error) throw new Error(error.message || "Registration failed.");
+  if (!data.session) {
+    // Email confirmation is enabled for the project: no session until the link is clicked.
+    throw new Error(`Check ${cleanEmail} for a confirmation link, then sign in.`);
   }
-
-  return {
-    access_token: `sb_tok_${newUserId}`,
-    token_type: "bearer",
-    user_id: newUserId,
-    full_name: fullName || cleanEmail.split("@")[0],
-  };
+  return sessionToToken(data.session, name);
 }
 
 // ─── Crops ───────────────────────────────────────────────────────────────────
@@ -531,8 +431,11 @@ export async function createScan(cropId: string | null | undefined, imageFile: F
   }
 
   // Insert into Supabase Cloud scans table
+  // Scans are owned by the signed-in user; RLS only accepts inserts for auth.uid().
+  const { data: sessionData } = await supabase.auth.getSession();
   const scanRecord = {
     id: newScanId,
+    user_id: sessionData.session?.user.id ?? null,
     crop_id: matchedCrop.id,
     disease_id: matchedDisease?.id || null,
     image_url: `/uploads/scans/${newScanId}.jpg`,

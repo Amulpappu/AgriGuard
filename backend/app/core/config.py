@@ -37,6 +37,14 @@ class Settings(BaseSettings):
 
     DEVICE_KEY_HASH: str = ""
 
+    # Supabase Auth: access tokens from the web app are verified against this
+    # project. The anon key is public (it ships in the frontend bundle).
+    SUPABASE_URL: str = "https://todwosflbwzuizvedouy.supabase.co"
+    SUPABASE_ANON_KEY: str = ""
+    # The only account allowed into /api/v1/admin/*. It must also carry
+    # app_metadata.role = "admin", which only the service role can set.
+    ADMIN_EMAIL: str = "lohithgamer12@gmail.com"
+
     @property
     def cors_origin_list(self) -> List[str]:
         return [o.strip() for o in self.CORS_ORIGINS.split(",") if o.strip()]
