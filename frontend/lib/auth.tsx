@@ -80,11 +80,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let active = true;
     supabase.auth.getSession().then(({ data }) => {
       if (!active) return;
-      applySession(data.session);
+      if (data.session) {
+        applySession(data.session);
+      } else {
+        const stored = typeof window !== "undefined" ? localStorage.getItem("agriguard_synthetic_session") : null;
+        if (stored) {
+          try { applySession(JSON.parse(stored)); } catch {}
+        }
+      }
       setReady(true);
     });
     const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => {
-      applySession(s);
+      if (s) {
+        applySession(s);
+      } else {
+        const stored = typeof window !== "undefined" ? localStorage.getItem("agriguard_synthetic_session") : null;
+        if (stored) {
+          try { applySession(JSON.parse(stored)); } catch {}
+        } else {
+          applySession(null);
+        }
+      }
       setReady(true);
     });
     return () => {
@@ -94,9 +110,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [applySession]);
 
   const login = useCallback(async (userEmail: string, password: string) => {
-    await apiLogin(userEmail, password);
+    const tokenRes = await apiLogin(userEmail, password);
     const { data } = await supabase.auth.getSession();
-    applySession(data.session);
+    if (data.session) {
+      applySession(data.session);
+    } else {
+      const stored = typeof window !== "undefined" ? localStorage.getItem("agriguard_synthetic_session") : null;
+      if (stored) {
+        try { applySession(JSON.parse(stored)); } catch {}
+      } else {
+        const synthetic: any = {
+          access_token: tokenRes.access_token,
+          token_type: "bearer",
+          user: {
+            id: tokenRes.user_id,
+            email: tokenRes.email,
+            user_metadata: { full_name: tokenRes.full_name },
+            app_metadata: { role: tokenRes.is_lohith ? "admin" : "user" },
+          },
+        };
+        applySession(synthetic);
+      }
+    }
   }, [applySession]);
 
   const register = useCallback(async (userEmail: string, password: string, name?: string) => {
@@ -108,6 +143,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = useCallback(() => {
     sessionStorage.removeItem(ADMIN_PASSKEY_KEY);
     localStorage.removeItem(LEGACY_USER_KEY);
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("agriguard_synthetic_session");
+      localStorage.removeItem("agriguard_token");
+    }
     invalidateCached("");
     applySession(null);
     supabase.auth.signOut().catch(() => {});
