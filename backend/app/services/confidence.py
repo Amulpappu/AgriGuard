@@ -26,6 +26,10 @@ def evaluate_confidence(probs: List[Dict[str, Any]]) -> Dict[str, Any]:
         return {"status": "uncertain", "low_confidence": True, "confidence": 0.0, "top3": []}
 
     top1 = probs[0]
+    if top1.get("disease_slug") == "__uncertain__":
+        # Model/screen explicitly declined to name anything (e.g. no leaf in the photo)
+        clean = [{"disease_slug": p["disease_slug"], "prob": p["prob"]} for p in probs[:3] if p.get("disease_slug") != "__uncertain__"]
+        return {"status": "uncertain", "low_confidence": True, "confidence": 0.0, "top1_slug": "__uncertain__", "top3": clean}
     top1_prob = min(top1["prob"], 0.99)
     top2_prob = probs[1]["prob"] if len(probs) > 1 else 0.0
     margin = top1_prob - top2_prob

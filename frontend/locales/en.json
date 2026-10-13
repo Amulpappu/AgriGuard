@@ -106,7 +106,11 @@
     "rice_bacterial_leaf_blight": "Bacterial Leaf Blight",
     "rice_tungro_virus": "Tungro Virus",
     "wheat_brown_rust": "Brown / Leaf Rust",
-    "brinjal_little_leaf_phytoplasma": "Little Leaf Phytoplasma"
+    "brinjal_little_leaf_phytoplasma": "Little Leaf Phytoplasma",
+    "corn_gray_leaf_spot": "Gray Leaf Spot",
+    "grape_esca": "Esca (Black Measles)",
+    "grape_leaf_blight": "Leaf Blight (Isariopsis Leaf Spot)",
+    "unknown_healthy": "No Visible Problem Found"
   },
   "persona": {
     "farmer_title": "Farmer / Commercial Grower",
@@ -189,7 +193,11 @@
     "general_action": "Keep the field clean, avoid wetting leaves, and monitor nearby plants.",
     "no_symptoms": "No specific symptoms listed.",
     "consult_kvk": "Agronomic screening advisory for field decision-support. Local agrarian extension practices and regional field officers may be referred to for personalized guidance.",
-    "footer_disclaimer": "AgriGuard is an AI-assisted screening tool for crops, plants & vegetables, not a guaranteed diagnosis. Agronomic screening advisory for field decision-support. Local agrarian extension practices and regional field officers may be referred to for personalized guidance."
+    "footer_disclaimer": "AgriGuard is an AI-assisted screening tool for crops, plants & vegetables, not a guaranteed diagnosis. Agronomic screening advisory for field decision-support. Local agrarian extension practices and regional field officers may be referred to for personalized guidance.",
+    "no_visible_problem": "No visible problem found",
+    "early_signs_prefix": "Early signs of",
+    "screen_only_note": "AgriGuard’s disease model does not cover this crop yet, so it only checked the leaf for spots and yellowing. This is not a diagnosis — if the plant looks unwell, ask your local agriculture officer or KVK.",
+    "early_signs_note": "Only a small part of the leaf is affected. Acting now — removing affected leaves and checking nearby plants — can stop it spreading."
   },
   "dashboard": {
     "title": "Dashboard",

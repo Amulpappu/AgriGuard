@@ -8,18 +8,20 @@ const nextConfig = {
   },
   async rewrites() {
     if (!backendUrl) {
-      return [];
+      return { beforeFiles: [] };
     }
-    return [
-      {
-        source: "/api/v1/:path*",
-        destination: `${backendUrl}/api/v1/:path*`,
-      },
-      {
-        source: "/uploads/:path*",
-        destination: `${backendUrl}/uploads/:path*`,
-      },
-    ];
+    return {
+      beforeFiles: [
+        {
+          source: "/api/v1/:path*",
+          destination: `${backendUrl}/api/v1/:path*`,
+        },
+        {
+          source: "/uploads/:path*",
+          destination: `${backendUrl}/uploads/:path*`,
+        },
+      ],
+    };
   },
   images: {
     remotePatterns: [

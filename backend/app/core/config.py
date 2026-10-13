@@ -22,9 +22,9 @@ class Settings(BaseSettings):
     ).replace("\\", "/")
     MAX_UPLOAD_MB: int = 8
 
-    MODEL_BACKEND: str = "mock"
-    MODEL_PATH: str = "app/ml/weights/model.pt"
-    MODEL_META_PATH: str = "app/ml/weights/model_meta.json"
+    MODEL_BACKEND: str = "onnx"  # "onnx" (real model) | "mock" (tests only)
+    MODEL_PATH: str = "app/ml/weights/agriguard-leaf-v1.onnx"
+    MODEL_META_PATH: str = "app/ml/weights/agriguard-leaf-v1.json"
 
     CONF_CONFIDENT: float = 0.80
     CONF_POSSIBLE: float = 0.55
@@ -37,12 +37,8 @@ class Settings(BaseSettings):
 
     DEVICE_KEY_HASH: str = ""
 
-    # Supabase Auth: access tokens from the web app are verified against this
-    # project. The anon key is public (it ships in the frontend bundle).
     SUPABASE_URL: str = "https://todwosflbwzuizvedouy.supabase.co"
     SUPABASE_ANON_KEY: str = ""
-    # The only account allowed into /api/v1/admin/*. It must also carry
-    # app_metadata.role = "admin", which only the service role can set.
     ADMIN_EMAIL: str = "lohithgamer12@gmail.com"
 
     @property

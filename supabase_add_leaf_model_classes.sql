@@ -1,0 +1,14 @@
+-- AgriGuard leaf model v1: crop + disease classes added for the real image model.
+-- Run once in the Supabase SQL editor. Safe to re-run (ON CONFLICT DO NOTHING).
+
+INSERT INTO crops (id, slug, name_key, icon_emoji) VALUES ('2f154573-5ded-4f56-899c-f0c6a8a0dbae', 'unknown', 'crop.unknown', '🌿') ON CONFLICT DO NOTHING;
+INSERT INTO diseases (id, slug, crop_id, name_key, class_label) SELECT '587ab1bf-822d-441c-822e-281133d1012f', 'tomato_bacterial_spot', id, 'disease.tomato_bacterial_spot', 'Tomato___Bacterial_spot' FROM crops WHERE slug = 'tomato' ON CONFLICT DO NOTHING;
+INSERT INTO diseases (id, slug, crop_id, name_key, class_label) SELECT '16f24510-2928-42d1-a0d9-19c4f0407e7e', 'tomato_septoria_leaf_spot', id, 'disease.tomato_septoria_leaf_spot', 'Tomato___Septoria_leaf_spot' FROM crops WHERE slug = 'tomato' ON CONFLICT DO NOTHING;
+INSERT INTO diseases (id, slug, crop_id, name_key, class_label) SELECT '29d52ab9-49e3-4df2-a8ab-91dd4e57e618', 'tomato_spider_mites', id, 'disease.tomato_spider_mites', 'Tomato___Spider_mites' FROM crops WHERE slug = 'tomato' ON CONFLICT DO NOTHING;
+INSERT INTO diseases (id, slug, crop_id, name_key, class_label) SELECT '4bfd6895-ad15-41c2-aa10-333390c2db4e', 'tomato_target_spot', id, 'disease.tomato_target_spot', 'Tomato___Target_Spot' FROM crops WHERE slug = 'tomato' ON CONFLICT DO NOTHING;
+INSERT INTO diseases (id, slug, crop_id, name_key, class_label) SELECT '2ea47edb-dba4-4427-bfb1-039eb5d6cccc', 'tomato_yellow_leaf_curl_virus', id, 'disease.tomato_yellow_leaf_curl_virus', 'Tomato___Yellow_Leaf_Curl_Virus' FROM crops WHERE slug = 'tomato' ON CONFLICT DO NOTHING;
+INSERT INTO diseases (id, slug, crop_id, name_key, class_label) SELECT '75c3317f-0cdf-42a1-ba95-5338afc2b8bf', 'tomato_mosaic_virus', id, 'disease.tomato_mosaic_virus', 'Tomato___Tomato_mosaic_virus' FROM crops WHERE slug = 'tomato' ON CONFLICT DO NOTHING;
+INSERT INTO diseases (id, slug, crop_id, name_key, class_label) SELECT '856ab6ed-d681-4e79-9350-41392d102dd6', 'corn_gray_leaf_spot', id, 'disease.corn_gray_leaf_spot', 'Corn___Gray_leaf_spot' FROM crops WHERE slug = 'corn' ON CONFLICT DO NOTHING;
+INSERT INTO diseases (id, slug, crop_id, name_key, class_label) SELECT '3ff1d759-7c20-4888-acb5-08b64b3c9aee', 'grape_esca', id, 'disease.grape_esca', 'Grape___Esca' FROM crops WHERE slug = 'grape' ON CONFLICT DO NOTHING;
+INSERT INTO diseases (id, slug, crop_id, name_key, class_label) SELECT 'd3c1b915-e3a6-4c59-a3aa-25e636d8acf2', 'grape_leaf_blight', id, 'disease.grape_leaf_blight', 'Grape___Leaf_blight' FROM crops WHERE slug = 'grape' ON CONFLICT DO NOTHING;
+INSERT INTO diseases (id, slug, crop_id, name_key, class_label) SELECT 'f4c3c2da-d461-41fd-b351-83f4c75030f6', 'unknown_healthy', id, 'disease.unknown_healthy', 'Unknown___healthy' FROM crops WHERE slug = 'unknown' ON CONFLICT DO NOTHING;

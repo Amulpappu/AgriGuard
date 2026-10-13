@@ -282,15 +282,24 @@ _adapter: ModelAdapter | None = None
 
 
 def get_model_adapter() -> ModelAdapter:
+    """
+    Default: the real ONNX leaf model (app/ml/onnx_classifier.py).
+    MockClassifier returns random weighted results and is kept ONLY for unit tests
+    (MODEL_BACKEND=mock). It must never be used for real scans.
+    """
     global _adapter
     if _adapter is None:
+        from pathlib import Path
         from app.core.config import get_settings
         settings = get_settings()
-        if settings.MODEL_BACKEND == "torch":
-            try:
-                _adapter = TorchClassifier(settings.MODEL_PATH, settings.MODEL_META_PATH)
-            except Exception:
-                _adapter = MockClassifier()
-        else:
+        if settings.MODEL_BACKEND == "mock":
             _adapter = MockClassifier()
+        else:
+            base = Path(__file__).resolve().parents[2]
+            model = Path(settings.MODEL_PATH)
+            meta = Path(settings.MODEL_META_PATH)
+            model = model if model.is_absolute() else base / model
+            meta = meta if meta.is_absolute() else base / meta
+            from app.ml.onnx_classifier import OnnxClassifier
+            _adapter = OnnxClassifier(str(model), str(meta))  # fail loudly if the model is missing
     return _adapter

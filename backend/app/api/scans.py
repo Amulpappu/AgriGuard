@@ -25,6 +25,7 @@ from app.services.storage import get_storage
 from app.services.advisory import get_advisory
 
 router = APIRouter(prefix="/scans", tags=["scans"])
+_settings = get_settings()
 
 
 async def _build_scan_out(scan: Scan, db: AsyncSession) -> ScanOut:
@@ -83,7 +84,7 @@ async def create_scan(
     result = await adapter.predict(raw, target_crop_slug)
     probs = result["probs"]
     model_version = result["model_version"]
-    detected_crop_slug = result.get("detected_crop_slug", "tomato")
+    detected_crop_slug = result.get("detected_crop_slug") or "unknown"
     auto_detected = result.get("auto_detected_crop", False) or (target_crop_slug is None)
     condition_type = result.get("condition_type", "disease")
 
@@ -101,6 +102,12 @@ async def create_scan(
     # 6. Severity estimate
     is_healthy_pred = conf_out["status"] == "healthy"
     sev = estimate_severity(pil_img, is_healthy_pred)
+    # Prefer the leaf-only screen (background ignored) when the model provides it
+    screen = result.get("leaf_screen") or {}
+    if not is_healthy_pred and screen.get("lesion_pct") is not None:
+        pct = round(float(screen["lesion_pct"]), 1)
+        level = "low" if pct < _settings.SEVERITY_LOW else ("moderate" if pct < _settings.SEVERITY_MODERATE else "high")
+        sev = {"level": level, "affected_pct": pct, "is_estimate": True}
 
     # 7. Resolve disease / condition entity
     disease_obj = None

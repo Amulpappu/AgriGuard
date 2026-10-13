@@ -28,6 +28,7 @@ CROPS_EXPANDED = [
     {"slug": "grape",     "name_key": "crop.grape",     "icon_emoji": "🍇"},
     {"slug": "cabbage",   "name_key": "crop.cabbage",   "icon_emoji": "🥬"},
     {"slug": "cucumber",  "name_key": "crop.cucumber",  "icon_emoji": "🥒"},
+    {"slug": "unknown",   "name_key": "crop.unknown",   "icon_emoji": "🌿"},
 ]
 
 DISEASES_EXPANDED = [
@@ -106,6 +107,17 @@ DISEASES_EXPANDED = [
     {"slug": "cucumber_healthy",          "name_key": "disease.cucumber_healthy",          "crop_slug": "cucumber","class_label": "Cucumber___healthy"},
     {"slug": "cucumber_downy_mildew",     "name_key": "disease.cucumber_downy_mildew",     "crop_slug": "cucumber","class_label": "Cucumber___Downy_Mildew"},
     {"slug": "cucumber_mosaic_virus",     "name_key": "disease.cucumber_mosaic_virus",     "crop_slug": "cucumber","class_label": "Cucumber___Mosaic_Virus"},
+    # Classes added with the real leaf model (agriguard-leaf-v1)
+    {"slug": "tomato_bacterial_spot",         "name_key": "disease.tomato_bacterial_spot",         "crop_slug": "tomato", "class_label": "Tomato___Bacterial_spot"},
+    {"slug": "tomato_septoria_leaf_spot",     "name_key": "disease.tomato_septoria_leaf_spot",     "crop_slug": "tomato", "class_label": "Tomato___Septoria_leaf_spot"},
+    {"slug": "tomato_spider_mites",           "name_key": "disease.tomato_spider_mites",           "crop_slug": "tomato", "class_label": "Tomato___Spider_mites"},
+    {"slug": "tomato_target_spot",            "name_key": "disease.tomato_target_spot",            "crop_slug": "tomato", "class_label": "Tomato___Target_Spot"},
+    {"slug": "tomato_yellow_leaf_curl_virus", "name_key": "disease.tomato_yellow_leaf_curl_virus", "crop_slug": "tomato", "class_label": "Tomato___Yellow_Leaf_Curl_Virus"},
+    {"slug": "tomato_mosaic_virus",           "name_key": "disease.tomato_mosaic_virus",           "crop_slug": "tomato", "class_label": "Tomato___Tomato_mosaic_virus"},
+    {"slug": "corn_gray_leaf_spot",           "name_key": "disease.corn_gray_leaf_spot",           "crop_slug": "corn",   "class_label": "Corn___Gray_leaf_spot"},
+    {"slug": "grape_esca",                    "name_key": "disease.grape_esca",                    "crop_slug": "grape",  "class_label": "Grape___Esca"},
+    {"slug": "grape_leaf_blight",             "name_key": "disease.grape_leaf_blight",             "crop_slug": "grape",  "class_label": "Grape___Leaf_blight"},
+    {"slug": "unknown_healthy",               "name_key": "disease.unknown_healthy",               "crop_slug": "unknown","class_label": "Unknown___healthy"},
 ]
 
 

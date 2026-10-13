@@ -21,7 +21,7 @@
       "Remove and destroy severely infected leaves as soon as symptoms appear",
       "Ensure balanced soil nutrition — avoid excess nitrogen",
       "Keep the field free of weeds that may harbour disease",
-      "Apply targeted bio-fungicide spray (Pseudomonas fluorescens 10g/L or Neem Kernel 5%) for active containment"
+      "Consult your local agriculture officer or Krishi Vigyan Kendra (KVK) for treatment"
     ],
     "seek_help_when": [
       "Lesions appear on more than 30% of the plant canopy",
@@ -30,18 +30,14 @@
     ],
     "severity_notes": {
       "low": "Monitor plants closely. Improve air circulation and remove affected leaves.",
-      "moderate": "Active infection spread. Apply bio-control spray and maintain dry root-zone aeration.",
-      "high": "High pathology threshold. Apply curative bio-formulation and prune heavily blighted foliage."
+      "moderate": "Disease is spreading. Consult your local KVK for guidance immediately.",
+      "high": "Severe infection detected. Seek advice from a qualified agriculture officer without delay."
     },
     "sources": [
       "TODO_VERIFY: ICAR-IARI Technical Bulletin on Tomato Diseases",
       "TODO_VERIFY: State Agriculture University extension materials"
     ],
-    "reviewed_by": "TODO_VERIFY: Subject Matter Specialist, Horticulture",
-    "category": "Commercial Foliar Pathology Prescription",
-    "organic_solution": "Spray fermented buttermilk (5%) + Neem seed kernel extract (5%) every 7 days until foliage restores vigor.",
-    "soil_and_water": "Irrigate strictly at root basin. Keep canopy dry to suppress spore germination.",
-    "disclaimer": "Prescription optimized for Grade-A crop vigor and residue-free export standards."
+    "reviewed_by": "TODO_VERIFY: Subject Matter Specialist, Horticulture"
   },
   "tomato_late_blight": {
     "name": "Tomato Late Blight",
@@ -63,7 +59,7 @@
     "management": [
       "Remove and bag all infected plant parts immediately — do not compost",
       "Destroy crop residue promptly after harvest",
-      "Apply targeted bio-fungicide spray (Pseudomonas fluorescens 10g/L or Neem Kernel 5%) for active containment"
+      "Consult your local agriculture officer or Krishi Vigyan Kendra (KVK) for treatment"
     ],
     "seek_help_when": [
       "Water-soaked lesions appear suddenly on multiple plants",
@@ -72,18 +68,14 @@
     ],
     "severity_notes": {
       "low": "Act quickly — late blight can escalate within 24 hours in humid weather.",
-      "moderate": "Active infection spread. Apply bio-control spray and maintain dry root-zone aeration.",
+      "moderate": "Contact your KVK or agriculture officer today.",
       "high": "Emergency — seek expert help immediately to prevent total crop loss."
     },
     "sources": [
       "TODO_VERIFY: ICAR guidelines on late blight management",
       "TODO_VERIFY: Krishi Vigyan Kendra extension advisory"
     ],
-    "reviewed_by": "TODO_VERIFY: Plant Pathologist",
-    "category": "Commercial Foliar Pathology Prescription",
-    "organic_solution": "Spray fermented buttermilk (5%) + Neem seed kernel extract (5%) every 7 days until foliage restores vigor.",
-    "soil_and_water": "Irrigate strictly at root basin. Keep canopy dry to suppress spore germination.",
-    "disclaimer": "Prescription optimized for Grade-A crop vigor and residue-free export standards."
+    "reviewed_by": "TODO_VERIFY: Plant Pathologist"
   },
   "tomato_leaf_mold": {
     "name": "Tomato Leaf Mold",
@@ -102,7 +94,7 @@
     "management": [
       "Prune and remove affected leaves",
       "Improve ventilation in the growing area",
-      "Apply targeted bio-fungicide spray (Pseudomonas fluorescens 10g/L or Neem Kernel 5%) for active containment"
+      "Consult your local agriculture officer or Krishi Vigyan Kendra (KVK) for treatment"
     ],
     "seek_help_when": [
       "Mold covers more than 50% of the leaf area on multiple plants",
@@ -110,17 +102,11 @@
     ],
     "severity_notes": {
       "low": "Improve air circulation and remove affected leaves.",
-      "moderate": "Active infection spread. Apply bio-control spray and maintain dry root-zone aeration.",
-      "high": "High pathology threshold. Apply curative bio-formulation and prune heavily blighted foliage."
+      "moderate": "Reduce humidity and consult your local KVK.",
+      "high": "Seek advice from a qualified agriculture officer."
     },
-    "sources": [
-      "TODO_VERIFY: ICAR extension bulletin on tomato diseases"
-    ],
-    "reviewed_by": "TODO_VERIFY",
-    "category": "Commercial Foliar Pathology Prescription",
-    "organic_solution": "Spray fermented buttermilk (5%) + Neem seed kernel extract (5%) every 7 days until foliage restores vigor.",
-    "soil_and_water": "Irrigate strictly at root basin. Keep canopy dry to suppress spore germination.",
-    "disclaimer": "Prescription optimized for Grade-A crop vigor and residue-free export standards."
+    "sources": ["TODO_VERIFY: ICAR extension bulletin on tomato diseases"],
+    "reviewed_by": "TODO_VERIFY"
   },
   "tomato_healthy": {
     "name": "Healthy Tomato",
@@ -134,18 +120,14 @@
     ],
     "management": [
       "Continue regular monitoring",
-      "Apply targeted bio-fungicide spray (Pseudomonas fluorescens 10g/L or Neem Kernel 5%) for active containment"
+      "Consult your local agriculture officer or Krishi Vigyan Kendra (KVK) for any concerns"
     ],
     "seek_help_when": [
       "You notice sudden wilting, yellowing, or unusual spots appearing on leaves"
     ],
     "severity_notes": {},
     "sources": [],
-    "reviewed_by": null,
-    "category": "Commercial Foliar Pathology Prescription",
-    "organic_solution": "Spray fermented buttermilk (5%) + Neem seed kernel extract (5%) every 7 days until foliage restores vigor.",
-    "soil_and_water": "Irrigate strictly at root basin. Keep canopy dry to suppress spore germination.",
-    "disclaimer": "Prescription optimized for Grade-A crop vigor and residue-free export standards."
+    "reviewed_by": null
   },
   "potato_early_blight": {
     "name": "Potato Early Blight",
@@ -164,7 +146,7 @@
     "management": [
       "Remove infected leaves promptly",
       "Maintain balanced soil nutrition",
-      "Apply targeted bio-fungicide spray (Pseudomonas fluorescens 10g/L or Neem Kernel 5%) for active containment"
+      "Consult your local agriculture officer or Krishi Vigyan Kendra (KVK) for treatment"
     ],
     "seek_help_when": [
       "More than 30% of leaves show lesions",
@@ -172,17 +154,11 @@
     ],
     "severity_notes": {
       "low": "Monitor closely and remove affected foliage.",
-      "moderate": "Active infection spread. Apply bio-control spray and maintain dry root-zone aeration.",
-      "high": "High pathology threshold. Apply curative bio-formulation and prune heavily blighted foliage."
+      "moderate": "Consult your local KVK immediately.",
+      "high": "Seek expert guidance from an agriculture officer."
     },
-    "sources": [
-      "TODO_VERIFY: ICAR potato production guidelines"
-    ],
-    "reviewed_by": "TODO_VERIFY",
-    "category": "Commercial Foliar Pathology Prescription",
-    "organic_solution": "Spray fermented buttermilk (5%) + Neem seed kernel extract (5%) every 7 days until foliage restores vigor.",
-    "soil_and_water": "Irrigate strictly at root basin. Keep canopy dry to suppress spore germination.",
-    "disclaimer": "Prescription optimized for Grade-A crop vigor and residue-free export standards."
+    "sources": ["TODO_VERIFY: ICAR potato production guidelines"],
+    "reviewed_by": "TODO_VERIFY"
   },
   "potato_late_blight": {
     "name": "Potato Late Blight",
@@ -201,7 +177,7 @@
     ],
     "management": [
       "Remove and destroy infected plants immediately — do not compost",
-      "Apply targeted bio-fungicide spray (Pseudomonas fluorescens 10g/L or Neem Kernel 5%) for active containment"
+      "Consult your local agriculture officer or Krishi Vigyan Kendra (KVK) for treatment"
     ],
     "seek_help_when": [
       "Water-soaked lesions appear suddenly across multiple rows",
@@ -209,17 +185,11 @@
     ],
     "severity_notes": {
       "low": "Act quickly — late blight progresses very fast in wet weather.",
-      "moderate": "Active infection spread. Apply bio-control spray and maintain dry root-zone aeration.",
+      "moderate": "Contact your KVK or agriculture officer today.",
       "high": "Emergency — seek expert help immediately."
     },
-    "sources": [
-      "TODO_VERIFY: ICAR-CPRI advisory on potato late blight"
-    ],
-    "reviewed_by": "TODO_VERIFY",
-    "category": "Commercial Foliar Pathology Prescription",
-    "organic_solution": "Spray fermented buttermilk (5%) + Neem seed kernel extract (5%) every 7 days until foliage restores vigor.",
-    "soil_and_water": "Irrigate strictly at root basin. Keep canopy dry to suppress spore germination.",
-    "disclaimer": "Prescription optimized for Grade-A crop vigor and residue-free export standards."
+    "sources": ["TODO_VERIFY: ICAR-CPRI advisory on potato late blight"],
+    "reviewed_by": "TODO_VERIFY"
   },
   "potato_healthy": {
     "name": "Healthy Potato",
@@ -232,18 +202,12 @@
     ],
     "management": [
       "Continue regular monitoring",
-      "Apply targeted bio-fungicide spray (Pseudomonas fluorescens 10g/L or Neem Kernel 5%) for active containment"
+      "Consult your local agriculture officer or Krishi Vigyan Kendra (KVK) for any concerns"
     ],
-    "seek_help_when": [
-      "You notice wilting, unusual spots, or yellowing of leaves"
-    ],
+    "seek_help_when": ["You notice wilting, unusual spots, or yellowing of leaves"],
     "severity_notes": {},
     "sources": [],
-    "reviewed_by": null,
-    "category": "Commercial Foliar Pathology Prescription",
-    "organic_solution": "Spray fermented buttermilk (5%) + Neem seed kernel extract (5%) every 7 days until foliage restores vigor.",
-    "soil_and_water": "Irrigate strictly at root basin. Keep canopy dry to suppress spore germination.",
-    "disclaimer": "Prescription optimized for Grade-A crop vigor and residue-free export standards."
+    "reviewed_by": null
   },
   "pepper_bacterial_spot": {
     "name": "Pepper Bacterial Spot",
@@ -264,7 +228,7 @@
     "management": [
       "Remove and destroy severely infected plant parts",
       "Improve air circulation through spacing and pruning",
-      "Apply targeted bio-fungicide spray (Pseudomonas fluorescens 10g/L or Neem Kernel 5%) for active containment"
+      "Consult your local agriculture officer or Krishi Vigyan Kendra (KVK) for treatment"
     ],
     "seek_help_when": [
       "Spots appear on fruit",
@@ -272,17 +236,11 @@
     ],
     "severity_notes": {
       "low": "Remove affected leaves and monitor closely.",
-      "moderate": "Active infection spread. Apply bio-control spray and maintain dry root-zone aeration.",
-      "high": "High pathology threshold. Apply curative bio-formulation and prune heavily blighted foliage."
+      "moderate": "Consult your local KVK for guidance.",
+      "high": "Seek advice from a qualified agriculture officer immediately."
     },
-    "sources": [
-      "TODO_VERIFY: ICAR advisory on pepper diseases"
-    ],
-    "reviewed_by": "TODO_VERIFY",
-    "category": "Commercial Foliar Pathology Prescription",
-    "organic_solution": "Spray fermented buttermilk (5%) + Neem seed kernel extract (5%) every 7 days until foliage restores vigor.",
-    "soil_and_water": "Irrigate strictly at root basin. Keep canopy dry to suppress spore germination.",
-    "disclaimer": "Prescription optimized for Grade-A crop vigor and residue-free export standards."
+    "sources": ["TODO_VERIFY: ICAR advisory on pepper diseases"],
+    "reviewed_by": "TODO_VERIFY"
   },
   "pepper_healthy": {
     "name": "Healthy Pepper",
@@ -295,57 +253,11 @@
     ],
     "management": [
       "Continue regular monitoring",
-      "Apply targeted bio-fungicide spray (Pseudomonas fluorescens 10g/L or Neem Kernel 5%) for active containment"
+      "Consult your local agriculture officer or Krishi Vigyan Kendra (KVK) for any concerns"
     ],
-    "seek_help_when": [
-      "You notice sudden wilting, spots, or discolouration"
-    ],
+    "seek_help_when": ["You notice sudden wilting, spots, or discolouration"],
     "severity_notes": {},
     "sources": [],
-    "reviewed_by": null,
-    "category": "Commercial Foliar Pathology Prescription",
-    "organic_solution": "Spray fermented buttermilk (5%) + Neem seed kernel extract (5%) every 7 days until foliage restores vigor.",
-    "soil_and_water": "Irrigate strictly at root basin. Keep canopy dry to suppress spore germination.",
-    "disclaimer": "Prescription optimized for Grade-A crop vigor and residue-free export standards."
-  },
-  "cucumber_downy_mildew": {
-    "name": "Cucumber Downy Mildew",
-    "category": "Cucurbit Foliar Pathology & Water Mold",
-    "summary": "Downy mildew caused by Pseudoperonospora cubensis is a fast-moving oomycete that attacks cucurbits. It presents as angular, bright yellow/chlorotic lesions restricted by leaf veins on the upper leaf surface, with purplish-gray sporulation beneath.",
-    "emergency_action": "Prune severely blighted lower leaves and safely discard away from the field. Apply bio-fungicide spray (Pseudomonas fluorescens 10g/L or copper hydroxide 2g/L) during evening hours.",
-    "organic_solution": "Spray fermented sour buttermilk (5%) + Neem seed kernel extract (NSKE 5%) every 5–7 days. Alternatively, apply Trichoderma harzianum foliar spray to outcompete oomycete zoospores.",
-    "soil_and_water": "Irrigate strictly via drip lines at ground level. Never use overhead sprinkler irrigation that keeps leaf surfaces wet for >2 hours. Maintain good canopy ventilation with trellis support.",
-    "symptoms": [
-      "Angular chlorotic (yellow) lesions delimited by leaf veins on the upper blade",
-      "Purplish-gray downy fungal sporulation on the underside under high humidity",
-      "Rapid scorching and necrosis of affected leaf patches (resembling frost burn)",
-      "Curling and premature death of older leaves, reducing cucumber fruit sizing"
-    ],
-    "prevention": [
-      "Grow tolerant or resistant cucurbit hybrid varieties with vigorous vine growth",
-      "Trellis vines to ensure vertical airflow and rapid dew drying",
-      "Widen row spacing to at least 1.5–1.8 meters for adequate air penetration",
-      "Rotate fields away from cucurbit crops (melon, squash, pumpkin) for at least 2 seasons"
-    ],
-    "management": [
-      "Prune and burn initial infected leaves before secondary zoospore sporulation",
-      "Apply targeted bio-fungicide spray (Pseudomonas fluorescens 10g/L or Trichoderma viride)",
-      "Maintain preventive botanical spray schedule during overcast or humid weather"
-    ],
-    "seek_help_when": [
-      "Angular yellow lesions expand to more than 20% of leaf area across multiple vines",
-      "Gray downy growth appears on leaf undersides following morning fog or rain"
-    ],
-    "severity_notes": {
-      "low": "Early foliar manifestation. Isolate affected leaves and apply protective bio-fungicide wash.",
-      "moderate": "Active infection spread. Apply bio-control spray and maintain dry root-zone aeration.",
-      "high": "High pathology threshold. Apply curative bio-formulation and prune heavily blighted foliage."
-    },
-    "sources": [
-      "ICAR-IIVR Commercial Cucurbit Disease Management Protocols",
-      "APMC Mandi Grade-A Export Standards"
-    ],
-    "reviewed_by": "Senior Vegetable Pathologist & APMC Quality Agronomist",
-    "disclaimer": "Prescription optimized for Grade-A foliar protection and export safety standards."
+    "reviewed_by": null
   }
 }

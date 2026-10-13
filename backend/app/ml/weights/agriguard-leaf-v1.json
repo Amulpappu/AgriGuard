@@ -1,0 +1,100 @@
+{
+ "version": "agriguard-leaf-v1",
+ "created": "2026-10-13",
+ "architecture": "MobileNetV2 (ImageNet, ONNX Model Zoo) + 256-unit MLP head",
+ "input": {
+  "name": "input",
+  "shape": [
+   1,
+   3,
+   224,
+   224
+  ],
+  "layout": "NCHW",
+  "resize_short_side": 256,
+  "center_crop": 224,
+  "mean": [
+   0.485,
+   0.456,
+   0.406
+  ],
+  "std": [
+   0.229,
+   0.224,
+   0.225
+  ]
+ },
+ "output": "logits (apply softmax)",
+ "classes": [
+  "corn_common_rust",
+  "corn_gray_leaf_spot",
+  "corn_healthy",
+  "corn_leaf_blight",
+  "grape_black_rot",
+  "grape_esca",
+  "grape_healthy",
+  "grape_leaf_blight",
+  "pepper_bacterial_spot",
+  "pepper_healthy",
+  "potato_early_blight",
+  "potato_healthy",
+  "potato_late_blight",
+  "tomato_bacterial_spot",
+  "tomato_early_blight",
+  "tomato_healthy",
+  "tomato_late_blight",
+  "tomato_leaf_mold",
+  "tomato_mosaic_virus",
+  "tomato_septoria_leaf_spot",
+  "tomato_spider_mites",
+  "tomato_target_spot",
+  "tomato_yellow_leaf_curl_virus",
+  "other_leaf"
+ ],
+ "crops": [
+  "corn",
+  "grape",
+  "pepper",
+  "potato",
+  "tomato"
+ ],
+ "metrics": {
+  "plantvillage_lab_holdout": {
+   "images": 2300,
+   "accuracy_crop_selected": 0.947
+  },
+  "plantdoc_field_test": {
+   "images": 148,
+   "accuracy_crop_selected": 0.615,
+   "healthy_leaves": {
+    "n": 28,
+    "reported_healthy": 24,
+    "reported_disease": 2,
+    "uncertain": 2
+   },
+   "diseased_leaves": {
+    "n": 120,
+    "reported_problem": 105,
+    "reported_healthy": 8,
+    "uncertain": 7
+   }
+  },
+  "note": "Field figures include AgriGuard's confidence policy and leaf-only health guard. Small field test set; re-measure on local photos before claiming accuracy."
+ },
+ "training_data": [
+  {
+   "name": "PlantVillage (spMohanty/PlantVillage-Dataset)",
+   "license": "CC BY-SA 3.0",
+   "use": "up to 400 lab images per class + augmentation"
+  },
+  {
+   "name": "PlantDoc (pratikkayal/PlantDoc-Dataset)",
+   "license": "CC BY 4.0",
+   "use": "field images, train split; test split held out"
+  }
+ ],
+ "backbone": {
+  "name": "MobileNetV2-12, ONNX Model Zoo",
+  "license": "Apache-2.0"
+ }
+}
