@@ -895,6 +895,41 @@ export async function createScan(cropId: string | null | undefined, imageFile: F
   return scanOutResult;
 }
 
+export const SCAN_LIST_SELECT = "*, crop:crops(id, slug, name_key, icon_emoji), disease:diseases(id, slug, name_key)";
+
+/** Normalises a Supabase `scans` row (joined with crop/disease) into a ScanListItem. */
+export function mapScanRow(s: any): ScanListItem {
+  const crop = s.crop || {
+    id: s.crop_id || "crop-default",
+    slug: s.crop_slug || "crop",
+    name_key: `crop.${s.crop_slug || "tomato"}`,
+  };
+  return {
+    id: s.id,
+    crop: {
+      id: crop.id,
+      slug: crop.slug || "crop",
+      name_key: crop.name_key || `crop.${crop.slug || "crop"}`,
+      icon_emoji: crop.icon_emoji,
+    },
+    status: s.status || (s.is_healthy ? "healthy" : (s.low_confidence ? "uncertain" : "potentially_diseased")),
+    disease: s.disease ? {
+      id: s.disease.id,
+      slug: s.disease.slug,
+      name_key: s.disease.name_key,
+    } : undefined,
+    confidence: s.confidence || 0.85,
+    severity: {
+      level: s.severity || s.severity_level || (s.is_healthy ? "none" : "moderate"),
+      affected_pct: s.severity_pct ?? s.affected_pct ?? (s.is_healthy ? 0 : 25),
+      is_estimate: true,
+    },
+    created_at: s.created_at || new Date().toISOString(),
+    image_url: s.image_url || "/agriguard_logo_4k.png",
+    thumb_url: s.thumb_url,
+  };
+}
+
 export async function getScans(params?: {
   crop?: string;
   from?: string;
@@ -951,41 +986,6 @@ export async function getScans(params?: {
   if (error) throw new Error(error.message || "Failed to load scans.");
 
   return (data || []).map(mapScanRow);
-}
-
-const SCAN_LIST_SELECT = "*, crop:crops(id, slug, name_key, icon_emoji), disease:diseases(id, slug, name_key)";
-
-/** Normalises a Supabase `scans` row (joined with crop/disease) into a ScanListItem. */
-function mapScanRow(s: any): ScanListItem {
-  const crop = s.crop || {
-    id: s.crop_id || "crop-default",
-    slug: s.crop_slug || "crop",
-    name_key: `crop.${s.crop_slug || "tomato"}`,
-  };
-  return {
-    id: s.id,
-    crop: {
-      id: crop.id,
-      slug: crop.slug,
-      name_key: crop.name_key,
-      icon_emoji: crop.icon_emoji,
-    },
-    status: s.status || (s.is_healthy ? "healthy" : (s.low_confidence ? "uncertain" : "potentially_diseased")),
-    disease: s.disease ? {
-      id: s.disease.id,
-      slug: s.disease.slug,
-      name_key: s.disease.name_key,
-    } : undefined,
-    confidence: s.confidence || 0.85,
-    severity: {
-      level: s.severity || s.severity_level || (s.is_healthy ? "none" : "moderate"),
-      affected_pct: s.severity_pct ?? s.affected_pct ?? (s.is_healthy ? 0 : 25),
-      is_estimate: true,
-    },
-    created_at: s.created_at || new Date().toISOString(),
-    image_url: s.image_url || "/agriguard_logo_4k.png",
-    thumb_url: s.thumb_url,
-  };
 }
 
 export async function getScan(id: string): Promise<ScanOut> {
@@ -1217,9 +1217,9 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
       .slice()
       .reverse()
       .map((r) => ({
-        date: r.created_at.slice(5, 10),
-        crop_slug: r.crop.slug,
-        affected_pct: r.severity.affected_pct ?? 0,
+        date: (r.created_at || new Date().toISOString()).slice(5, 10),
+        crop_slug: r.crop?.slug || "crop",
+        affected_pct: r.severity?.affected_pct ?? 0,
         status: r.status === "healthy" ? "healthy" : "affected",
       })),
   };
