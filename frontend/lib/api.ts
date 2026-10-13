@@ -275,6 +275,24 @@ export async function login(email: string, password: string): Promise<TokenRespo
       if (typeof window !== "undefined") localStorage.removeItem("agriguard_synthetic_session");
       return sessionToToken(data.session);
     }
+
+    // If unconfirmed or invalid credentials, attempt auto-confirm / migration via server
+    if (error) {
+      try {
+        const confRes = await fetch("/api/v1/auth/confirm", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: cleanEmail, password }),
+        });
+        if (confRes.ok) {
+          const retry = await supabase.auth.signInWithPassword({ email: cleanEmail, password });
+          if (!retry.error && retry.data?.session) {
+            if (typeof window !== "undefined") localStorage.removeItem("agriguard_synthetic_session");
+            return sessionToToken(retry.data.session);
+          }
+        }
+      } catch (_) {}
+    }
   } catch (_) {}
 
   // 2. Direct Supabase public.users verification (pre-migration fallback)
@@ -316,7 +334,27 @@ export async function register(email: string, password: string, fullName?: strin
   const cleanEmail = email.trim().toLowerCase();
   const name = fullName || cleanEmail.split("@")[0];
 
-  // 1. Try Supabase Auth native signUp
+  // 1. Try server auto-confirm registration (bypasses email rate limit & confirmation lockouts)
+  try {
+    const srvRes = await fetch("/api/v1/auth/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: cleanEmail, password, full_name: name }),
+    });
+
+    if (srvRes.ok) {
+      const { data: signData, error: signErr } = await supabase.auth.signInWithPassword({
+        email: cleanEmail,
+        password,
+      });
+      if (!signErr && signData?.session) {
+        if (typeof window !== "undefined") localStorage.removeItem("agriguard_synthetic_session");
+        return sessionToToken(signData.session, name);
+      }
+    }
+  } catch (_) {}
+
+  // 2. Try Supabase Auth native signUp
   try {
     const { data, error } = await supabase.auth.signUp({
       email: cleanEmail,
@@ -332,7 +370,7 @@ export async function register(email: string, password: string, fullName?: strin
     // If rate-limited or email send fails, smoothly fall through to direct user provisioning
   }
 
-  // 2. Direct database provisioning (bypasses Supabase Auth email rate-limit & confirmation lockouts)
+  // 3. Direct database provisioning (guarantees account creation even if network/auth APIs are constrained)
   const { data: existingUser } = await supabase
     .from("users")
     .select("id, email, full_name")
