@@ -7,7 +7,7 @@ const nextConfig = {
     NEXT_PUBLIC_SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRvZHdvc2ZsYnd6dWl6dmVkb3V5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTExMjYxNjUsImV4cCI6MjEwNjcwMjE2NX0.fDqNi4bHJo9DCByVmZyX_GbKtyvJzQdD_bttu057UKY",
   },
   async rewrites() {
-    if (!backendUrl) {
+    if (!backendUrl || (process.env.NODE_ENV === "production" && (backendUrl.includes("localhost") || backendUrl.includes("127.0.0.1")))) {
       return { beforeFiles: [] };
     }
     return {

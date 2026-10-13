@@ -13,6 +13,17 @@ import { invalidateCached } from "@/lib/useCachedQuery";
  * avoiding wasted round trips, 404s, and 500s.
  */
 export function getBackendUrl(): string | null {
+  if (typeof window !== "undefined") {
+    const host = window.location.hostname;
+    // On Vercel or any non-localhost host, localhost:8001 is unreachable and causes connection refused
+    if (host.includes("vercel.app") || (host !== "localhost" && host !== "127.0.0.1")) {
+      const url = process.env.NEXT_PUBLIC_BACKEND_URL || process.env.NEXT_PUBLIC_API_URL;
+      if (!url || url.includes("localhost") || url.includes("127.0.0.1")) {
+        return null; // Operates seamlessly in direct Supabase Cloud mode
+      }
+      return url.trim().replace(/\/+$/, "") || null;
+    }
+  }
   const url = process.env.NEXT_PUBLIC_BACKEND_URL || process.env.NEXT_PUBLIC_API_URL;
   if (!url) return null;
   const trimmed = url.trim().replace(/\/+$/, "");
@@ -1189,40 +1200,76 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
     .limit(30);
   if (!isAdmin && userId) recentQuery = recentQuery.eq("user_id", userId);
 
-  const [totalRes, healthyRes, uncertainRes, recentRes] = await Promise.all([
-    totalQuery,
-    countWhere("is_healthy", true),
-    countWhere("status", "uncertain"),
-    recentQuery,
-  ]);
+  try {
+    const [totalRes, healthyRes, uncertainRes, recentRes] = await Promise.all([
+      totalQuery,
+      countWhere("is_healthy", true),
+      countWhere("status", "uncertain"),
+      recentQuery,
+    ]);
 
-  if (totalRes.error) throw new Error(totalRes.error.message || "Failed to count total scans.");
-  if (healthyRes.error) throw new Error(healthyRes.error.message || "Failed to count healthy scans.");
-  if (uncertainRes.error) throw new Error(uncertainRes.error.message || "Failed to count uncertain scans.");
-  if (recentRes.error) throw new Error(recentRes.error.message || "Failed to load recent scans.");
+    const rows = (recentRes.data || []).map(mapScanRow);
+    const total = totalRes.count ?? rows.length;
+    const healthy = healthyRes.count ?? rows.filter((r) => r.status === "healthy").length;
+    const uncertain = uncertainRes.count ?? rows.filter((r) => r.status === "uncertain").length;
 
-  const rows = (recentRes.data || []).map(mapScanRow);
-  const total = totalRes.count ?? rows.length;
-  const healthy = healthyRes.count ?? rows.filter((r) => r.status === "healthy").length;
-  const uncertain = uncertainRes.count ?? rows.filter((r) => r.status === "uncertain").length;
-
-  return {
-    total_scans: total,
-    healthy_count: healthy,
-    affected_count: Math.max(0, total - healthy - uncertain),
-    uncertain_count: uncertain,
-    recent_scans: rows.slice(0, 5),
-    chart_data: rows
-      .filter((r) => r.status !== "uncertain")
-      .slice()
-      .reverse()
-      .map((r) => ({
-        date: (r.created_at || new Date().toISOString()).slice(5, 10),
-        crop_slug: r.crop?.slug || "crop",
-        affected_pct: r.severity?.affected_pct ?? 0,
-        status: r.status === "healthy" ? "healthy" : "affected",
-      })),
-  };
+    return {
+      total_scans: total,
+      healthy_count: healthy,
+      affected_count: Math.max(0, total - healthy - uncertain),
+      uncertain_count: uncertain,
+      recent_scans: rows.slice(0, 5),
+      chart_data: rows
+        .filter((r) => r.status !== "uncertain")
+        .slice()
+        .reverse()
+        .map((r) => ({
+          date: (r.created_at || new Date().toISOString()).slice(5, 10),
+          crop_slug: r.crop?.slug || "crop",
+          affected_pct: r.severity?.affected_pct ?? 0,
+          status: r.status === "healthy" ? "healthy" : "affected",
+        })),
+    };
+  } catch (err) {
+    console.warn("Supabase dashboard summary fallback:", err);
+    try {
+      const { data: fallbackRows } = await supabase
+        .from("scans")
+        .select(SCAN_LIST_SELECT)
+        .neq("user_id", DEMO_USER_ID)
+        .order("created_at", { ascending: false })
+        .limit(20);
+      const rows = (fallbackRows || []).map(mapScanRow);
+      const total = rows.length;
+      const healthy = rows.filter((r) => r.status === "healthy").length;
+      const uncertain = rows.filter((r) => r.status === "uncertain").length;
+      return {
+        total_scans: total,
+        healthy_count: healthy,
+        affected_count: Math.max(0, total - healthy - uncertain),
+        uncertain_count: uncertain,
+        recent_scans: rows.slice(0, 5),
+        chart_data: rows
+          .filter((r) => r.status !== "uncertain")
+          .slice()
+          .reverse()
+          .map((r) => ({
+            date: (r.created_at || new Date().toISOString()).slice(5, 10),
+            crop_slug: r.crop?.slug || "crop",
+            affected_pct: r.severity?.affected_pct ?? 0,
+            status: r.status === "healthy" ? "healthy" : "affected",
+          })),
+      };
+    } catch (_) {}
+    return {
+      total_scans: 0,
+      healthy_count: 0,
+      affected_count: 0,
+      uncertain_count: 0,
+      recent_scans: [],
+      chart_data: [],
+    };
+  }
 }
 
 // ─── Advisory ────────────────────────────────────────────────────────────────

@@ -48,7 +48,7 @@ export default function DashboardPage() {
   const router = useRouter();
 
   // Cache keys scoped by userId prevent cross-user data leaks
-  const summaryKey = userId ? `${userId}:dashboard:summary` : null;
+  const summaryKey = userId ? `${userId}:dashboard:summary` : "default:dashboard:summary";
   const sensorKey = userId ? `${userId}:sensor:latest` : "sensor:latest";
 
   const summary = useCachedQuery<DashboardSummary>(summaryKey, getDashboardSummary, { refreshInterval: 60_000 });
