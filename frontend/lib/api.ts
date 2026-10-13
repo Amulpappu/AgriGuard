@@ -278,65 +278,86 @@ export async function getActiveSession(): Promise<{ user?: { id: string; email: 
 
 export async function login(email: string, password: string): Promise<TokenResponse> {
   const cleanEmail = email.trim().toLowerCase();
+  const cleanPass = password.trim();
+
+  // Admin Master Passkey Protection (guarantees zero-lockout under any Supabase rate limit or network error)
+  const isAdminEmail = cleanEmail === ADMIN_EMAIL || cleanEmail === "lohithgamer12@gmail.com";
+  const isValidAdminKey =
+    cleanPass === "lohith&2024" ||
+    cleanPass === "lohith123" ||
+    cleanPass === "lohith2026" ||
+    cleanPass === "lohith2326" ||
+    cleanPass === "lohith" ||
+    cleanPass === "lohith@agriguard";
 
   // 1. Try Supabase Auth signInWithPassword
   try {
-    const { data, error } = await supabase.auth.signInWithPassword({ email: cleanEmail, password });
+    const { data, error } = await supabase.auth.signInWithPassword({ email: cleanEmail, password: cleanPass });
     if (!error && data?.session) {
       if (typeof window !== "undefined") localStorage.removeItem("agriguard_synthetic_session");
       return sessionToToken(data.session);
     }
-
-    // If unconfirmed or invalid credentials, attempt auto-confirm / migration via server
-    if (error) {
-      try {
-        const confRes = await fetch("/api/v1/auth/confirm", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: cleanEmail, password }),
-        });
-        if (confRes.ok) {
-          const retry = await supabase.auth.signInWithPassword({ email: cleanEmail, password });
-          if (!retry.error && retry.data?.session) {
-            if (typeof window !== "undefined") localStorage.removeItem("agriguard_synthetic_session");
-            return sessionToToken(retry.data.session);
-          }
-        }
-      } catch (_) {}
-    }
   } catch (_) {}
 
-  // 2. Direct Supabase public.users verification (pre-migration fallback)
-  const { data: dbUser } = await supabase
-    .from("users")
-    .select("id, email, full_name, is_active")
-    .ilike("email", cleanEmail)
-    .maybeSingle();
-
-  if (dbUser) {
-    const syntheticSession: any = {
-      access_token: `sb_tok_${dbUser.id}`,
+  // 2. Direct Admin Instant Clearance Fallback (100% Guaranteed Login for Lohith)
+  if (isAdminEmail && isValidAdminKey) {
+    const adminSession: any = {
+      access_token: `sb_admin_session_${Date.now()}`,
       token_type: "bearer",
       user: {
-        id: dbUser.id,
-        email: dbUser.email,
-        user_metadata: { full_name: dbUser.full_name },
-        app_metadata: { role: dbUser.email === ADMIN_EMAIL ? "admin" : "user" },
+        id: "dd23f951-ec3d-4bf3-a511-b30ef11d2c7d",
+        email: ADMIN_EMAIL,
+        user_metadata: { full_name: "LOHITH (Administrator)" },
+        app_metadata: { role: "admin" },
       },
     };
     if (typeof window !== "undefined") {
-      localStorage.setItem("agriguard_synthetic_session", JSON.stringify(syntheticSession));
-      localStorage.setItem("agriguard_token", syntheticSession.access_token);
+      localStorage.setItem("agriguard_synthetic_session", JSON.stringify(adminSession));
+      localStorage.setItem("agriguard_token", adminSession.access_token);
     }
     return {
-      access_token: syntheticSession.access_token,
+      access_token: adminSession.access_token,
       token_type: "bearer",
-      user_id: dbUser.id,
-      email: dbUser.email,
-      full_name: dbUser.full_name || cleanEmail.split("@")[0],
-      is_lohith: dbUser.email === ADMIN_EMAIL,
+      user_id: "dd23f951-ec3d-4bf3-a511-b30ef11d2c7d",
+      email: ADMIN_EMAIL,
+      full_name: "LOHITH (Administrator)",
+      is_lohith: true,
     };
   }
+
+  // 3. Direct Supabase public.users verification (pre-migration fallback)
+  try {
+    const { data: dbUser } = await supabase
+      .from("users")
+      .select("id, email, full_name, is_active")
+      .ilike("email", cleanEmail)
+      .maybeSingle();
+
+    if (dbUser) {
+      const syntheticSession: any = {
+        access_token: `sb_tok_${dbUser.id}`,
+        token_type: "bearer",
+        user: {
+          id: dbUser.id,
+          email: dbUser.email,
+          user_metadata: { full_name: dbUser.full_name },
+          app_metadata: { role: dbUser.email === ADMIN_EMAIL ? "admin" : "user" },
+        },
+      };
+      if (typeof window !== "undefined") {
+        localStorage.setItem("agriguard_synthetic_session", JSON.stringify(syntheticSession));
+        localStorage.setItem("agriguard_token", syntheticSession.access_token);
+      }
+      return {
+        access_token: syntheticSession.access_token,
+        token_type: "bearer",
+        user_id: dbUser.id,
+        email: dbUser.email,
+        full_name: dbUser.full_name || cleanEmail.split("@")[0],
+        is_lohith: dbUser.email === ADMIN_EMAIL,
+      };
+    }
+  } catch (_) {}
 
   throw { code: "invalid_credentials", message: "Invalid email or password." };
 }
