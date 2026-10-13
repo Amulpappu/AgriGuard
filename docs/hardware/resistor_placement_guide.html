@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>DHT22 10k Resistor Placement Guide</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body {
+      width: 1920px;
+      height: 1080px;
+      background: #080d1a;
+      color: #f8fafc;
+      overflow: hidden;
+      padding: 40px 60px;
+      display: flex;
+      flex-direction: column;
+      gap: 25px;
+    }
+    header { text-align: center; }
+    h1 { font-size: 36px; font-weight: 900; letter-spacing: 1px; color: #fff; margin-bottom: 6px; }
+    h1 span { color: #f59e0b; }
+    p.sub { font-size: 17px; color: #94a3b8; }
+
+    .main-grid {
+      display: grid;
+      grid-template-columns: 460px 1fr;
+      gap: 30px;
+      flex: 1;
+      height: 880px;
+    }
+
+    /* Left Card */
+    .card-left {
+      background: rgba(15, 23, 42, 0.95);
+      border: 1px solid #334155;
+      border-radius: 20px;
+      padding: 30px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      box-shadow: 0 25px 50px rgba(0,0,0,0.8);
+    }
+    .card-title {
+      font-size: 20px;
+      font-weight: 800;
+      color: #f59e0b;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #334155;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .step-box {
+      background: rgba(15, 23, 42, 0.6);
+      border-left: 6px solid;
+      border-radius: 12px;
+      padding: 16px 20px;
+    }
+    .step-1 { border-color: #ef4444; }
+    .step-2 { border-color: #facc15; }
+    .step-num { font-size: 13px; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+    .num-1 { color: #f87171; }
+    .num-2 { color: #fde047; }
+    .step-head { font-size: 17px; font-weight: 800; color: #fff; margin-bottom: 6px; }
+    .step-desc { font-size: 14.5px; color: #cbd5e1; line-height: 1.5; }
+
+    .info-box {
+      background: #0b1120;
+      border: 1px solid #334155;
+      border-radius: 14px;
+      padding: 18px 20px;
+      font-size: 14px;
+      line-height: 1.5;
+      color: #cbd5e1;
+    }
+    .info-box h3 { font-size: 15px; font-weight: 800; margin-bottom: 8px; color: #38bdf8; }
+    .spec-list { list-style: none; display: flex; flex-direction: column; gap: 8px; margin-top: 6px; }
+    .spec-list li { display: flex; align-items: center; gap: 8px; }
+    .spec-dot { width: 8px; height: 8px; border-radius: 50%; background: #f59e0b; }
+
+    /* Right Card: Visual Breadboard */
+    .card-right {
+      background: rgba(15, 23, 42, 0.95);
+      border: 1px solid #334155;
+      border-radius: 20px;
+      padding: 30px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      box-shadow: 0 25px 50px rgba(0,0,0,0.8);
+      position: relative;
+    }
+    .bb-title { font-size: 20px; font-weight: 800; color: #38bdf8; display: flex; justify-content: space-between; align-items: center; }
+
+    /* Visual Breadboard Graphic container */
+    .bb-container {
+      flex: 1;
+      background: #ffffff;
+      border-radius: 16px;
+      border: 3px solid #94a3b8;
+      box-shadow: inset 0 4px 10px rgba(0,0,0,0.1), 0 20px 40px rgba(0,0,0,0.6);
+      position: relative;
+      overflow: hidden;
+      padding: 30px;
+    }
+
+    /* Rails */
+    .rail-red {
+      height: 8px;
+      background: #ef4444;
+      border-radius: 4px;
+      position: relative;
+      margin-bottom: 15px;
+    }
+    .rail-red::after { content: "+ (3.3V POWER RAIL)"; position: absolute; right: 10px; top: -20px; color: #ef4444; font-size: 13px; font-weight: 900; }
+
+    .rail-blue {
+      height: 8px;
+      background: #3b82f6;
+      border-radius: 4px;
+      position: relative;
+      margin-bottom: 40px;
+    }
+    .rail-blue::after { content: "- (GROUND RAIL)"; position: absolute; right: 10px; top: -20px; color: #3b82f6; font-size: 13px; font-weight: 900; }
+
+    /* Breadboard Rows Grid */
+    .rows-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 30px;
+      margin-top: 20px;
+    }
+    .row-col {
+      background: #f1f5f9;
+      border: 2px dashed #cbd5e1;
+      border-radius: 14px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      position: relative;
+    }
+    .row-col.active-vcc { border-color: #ef4444; background: rgba(239,68,68,0.06); }
+    .row-col.active-data { border-color: #facc15; background: rgba(250,204,21,0.08); }
+    .row-col.active-gnd { border-color: #64748b; background: rgba(100,116,139,0.06); }
+    .row-header { font-size: 18px; font-weight: 900; color: #0f172a; text-transform: uppercase; }
+
+    .hole {
+      width: 20px;
+      height: 20px;
+      background: #475569;
+      border-radius: 50%;
+      border: 3px solid #cbd5e1;
+    }
+    .hole.plugged-red { background: #ef4444; border-color: #b91c1c; box-shadow: 0 0 10px #ef4444; }
+    .hole.plugged-yellow { background: #facc15; border-color: #ca8a04; box-shadow: 0 0 10px #facc15; }
+    .hole.plugged-orange { background: #ea580c; border-color: #c2410c; box-shadow: 0 0 10px #ea580c; }
+    .hole.plugged-black { background: #1e293b; border-color: #0f172a; }
+
+    .tag-pin {
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 900;
+      text-transform: uppercase;
+      text-align: center;
+      width: 100%;
+    }
+    .tp-vcc { background: #ef4444; color: #fff; }
+    .tp-data { background: #facc15; color: #000; }
+    .tp-nc { background: #94a3b8; color: #fff; }
+    .tp-gnd { background: #334155; color: #fff; }
+
+    /* The Resistor Bridge Graphic */
+    .resistor-bridge {
+      position: absolute;
+      top: 260px;
+      left: 140px;
+      width: 320px;
+      height: 80px;
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    /* Sensor Graphic at Bottom */
+    .dht22-box {
+      margin-top: 30px;
+      background: #f8fafc;
+      border: 3px solid #cbd5e1;
+      border-radius: 14px;
+      padding: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+    }
+    .dht22-pin-indicator {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 800;
+      color: #0f172a;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>DHT22 <span>10k&Omega; PULL-UP RESISTOR</span> DETAIL PLACEMENT</h1>
+    <p class="sub">Exact row-by-row breadboard connections between DHT22 Pin 1 (VCC) &amp; Pin 2 (DATA)</p>
+  </header>
+
+  <div class="main-grid">
+    <!-- Left Column: Step-by-Step Instructions -->
+    <div class="card-left">
+      <div class="card-title">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        Placement Checklist
+      </div>
+
+      <div class="step-box step-1">
+        <div class="step-num num-1">Step 1 &bull; Resistor Leg 1</div>
+        <div class="step-head">Plug into Breadboard Row 10</div>
+        <div class="step-desc">
+          Connects to the same row as <strong>DHT22 Pin 1 (VCC)</strong> and the <strong>3.3V Power Jumper Wire</strong>.
+        </div>
+      </div>
+
+      <div class="step-box step-2">
+        <div class="step-num num-2">Step 2 &bull; Resistor Leg 2</div>
+        <div class="step-head">Plug into Breadboard Row 11</div>
+        <div class="step-desc">
+          Connects to the same row as <strong>DHT22 Pin 2 (DATA)</strong> and the <strong>Yellow Wire going to ESP32 Pin D4</strong>.
+        </div>
+      </div>
+
+      <div class="info-box">
+        <h3>💡 Resistor Polarity &amp; Role</h3>
+        <ul class="spec-list">
+          <li><span class="spec-dot"></span> <strong>No Polarity:</strong> Resistors can be inserted in either direction.</li>
+          <li><span class="spec-dot"></span> <strong>Color Bands:</strong> Brown &bull; Black &bull; Orange &bull; Gold (10k&Omega;)</li>
+          <li><span class="spec-dot"></span> <strong>Purpose:</strong> Pulls 1-wire digital bus HIGH (3.3V) when idle so the ESP32 receives clean sensor pulses without timeouts.</li>
+        </ul>
+      </div>
+
+      <div class="info-box" style="border-color: rgba(16, 185, 129, 0.4); background: rgba(16, 185, 129, 0.08);">
+        <h3 style="color: #34d399;">⚠️ 4-Pin vs 3-Pin Sensor Check</h3>
+        <p style="font-size: 13.5px; color: #a7f3d0; line-height: 1.45;">
+          &bull; <strong>Bare 4-Pin DHT22:</strong> Requires this 10k&Omega; resistor.<br>
+          &bull; <strong>3-Pin Module (on mini PCB):</strong> Already has a built-in SMD resistor! No external resistor needed.
+        </p>
+      </div>
+    </div>
+
+    <!-- Right Column: Visual Breadboard Map -->
+    <div class="card-right">
+      <div class="bb-title">
+        <span>🔬 Physical Breadboard Wiring Layout</span>
+        <span style="font-size: 13px; color: #f59e0b; background: rgba(245,158,11,0.15); padding: 4px 10px; border-radius: 6px;">10k Resistor Bridges Row 10 &amp; Row 11</span>
+      </div>
+
+      <div class="bb-container">
+        <!-- Power Rails at Top -->
+        <div class="rail-red"></div>
+        <div class="rail-blue"></div>
+
+        <!-- Breadboard Rows 10 to 13 -->
+        <div class="rows-grid">
+          <!-- Column 1: Row 10 (VCC) -->
+          <div class="row-col active-vcc">
+            <div class="row-header" style="color: #ef4444;">ROW 10</div>
+            <div class="hole plugged-red" title="Red wire from 3.3V power rail"></div>
+            <div class="hole plugged-orange" title="Resistor Leg 1"></div>
+            <div class="hole"></div>
+            <div class="hole plugged-red" title="DHT22 Pin 1 (VCC)"></div>
+            <div class="tag-pin tp-vcc">DHT22 Pin 1 (VCC)<br><small>+ 3.3V Power</small></div>
+          </div>
+
+          <!-- Column 2: Row 11 (DATA) -->
+          <div class="row-col active-data">
+            <div class="row-header" style="color: #ca8a04;">ROW 11</div>
+            <div class="hole plugged-yellow" title="Yellow wire to ESP32 Pin D4"></div>
+            <div class="hole plugged-orange" title="Resistor Leg 2"></div>
+            <div class="hole"></div>
+            <div class="hole plugged-yellow" title="DHT22 Pin 2 (DATA)"></div>
+            <div class="tag-pin tp-data">DHT22 Pin 2 (DATA)<br><small>&rarr; Pin D4</small></div>
+          </div>
+
+          <!-- Column 3: Row 12 (NC) -->
+          <div class="row-col">
+            <div class="row-header" style="color: #64748b;">ROW 12</div>
+            <div class="hole"></div>
+            <div class="hole"></div>
+            <div class="hole"></div>
+            <div class="hole" style="background: #94a3b8;"></div>
+            <div class="tag-pin tp-nc">DHT22 Pin 3 (NC)<br><small>Empty / Unused</small></div>
+          </div>
+
+          <!-- Column 4: Row 13 (GND) -->
+          <div class="row-col active-gnd">
+            <div class="row-header" style="color: #334155;">ROW 13</div>
+            <div class="hole plugged-black" title="Black wire from Ground rail"></div>
+            <div class="hole"></div>
+            <div class="hole"></div>
+            <div class="hole plugged-black" title="DHT22 Pin 4 (GND)"></div>
+            <div class="tag-pin tp-gnd">DHT22 Pin 4 (GND)<br><small>&rarr; Ground (-)</small></div>
+          </div>
+        </div>
+
+        <!-- Visual Sensor Box at bottom -->
+        <div class="dht22-box">
+          <div style="font-size: 20px; font-weight: 900; color: #0f172a; text-align: left;">
+            DHT22 / AM2302 SENSOR
+            <div style="font-size: 13px; font-weight: 600; color: #64748b;">Facing front slotted grill, pins plugged into breadboard rows directly above:</div>
+          </div>
+          <div class="dht22-pin-indicator">
+            <div style="width: 14px; height: 14px; border-radius: 50%; background: #ef4444;"></div>
+            <span>Pin 1 (VCC)</span>
+          </div>
+          <div class="dht22-pin-indicator">
+            <div style="width: 14px; height: 14px; border-radius: 50%; background: #facc15;"></div>
+            <span>Pin 2 (DATA)</span>
+          </div>
+          <div class="dht22-pin-indicator">
+            <div style="width: 14px; height: 14px; border-radius: 50%; background: #94a3b8;"></div>
+            <span>Pin 3 (NC)</span>
+          </div>
+          <div class="dht22-pin-indicator">
+            <div style="width: 14px; height: 14px; border-radius: 50%; background: #334155;"></div>
+            <span>Pin 4 (GND)</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

@@ -23,7 +23,7 @@ on conflict (id) do update set
 -- 2. Storage RLS Policies
 -- Allow public read access for all scan images
 drop policy if exists "scan_images_public_read" on storage.objects;
-create policy "scan_images_public_read"
+create policy "scan_images_public_read"0
 on storage.objects for select
 to public
 using (bucket_id = 'scan-images');

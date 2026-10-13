@@ -96,8 +96,8 @@ export default function LandingPage() {
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
   const [authName, setAuthName] = useState("");
-  const [authEmail, setAuthEmail] = useState("demo@agriguard.in");
-  const [authPassword, setAuthPassword] = useState("Demo1234!");
+  const [authEmail, setAuthEmail] = useState("");
+  const [authPassword, setAuthPassword] = useState("");
   const [authLoading, setAuthLoading] = useState(false);
   const [authError, setAuthError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -109,13 +109,6 @@ export default function LandingPage() {
   function openAuth(mode: "login" | "register") {
     setAuthMode(mode);
     setAuthError("");
-    if (mode === "register") {
-      if (authEmail === "demo@agriguard.in") setAuthEmail("");
-      if (authPassword === "Demo1234!") setAuthPassword("");
-    } else {
-      if (!authEmail) setAuthEmail("demo@agriguard.in");
-      if (!authPassword) setAuthPassword("Demo1234!");
-    }
     setAuthModalOpen(true);
   }
 
@@ -134,19 +127,6 @@ export default function LandingPage() {
     } catch (err: any) {
       console.error("Auth error:", err);
       setAuthError(err?.message || (authMode === "register" ? "Account creation failed." : "Login failed. Please verify credentials."));
-    } finally {
-      setAuthLoading(false);
-    }
-  }
-
-  async function handleDemoFarmerLogin() {
-    setAuthLoading(true);
-    try {
-      await login("demo@agriguard.in", "Demo1234!");
-      setAuthModalOpen(false);
-      router.push("/dashboard");
-    } catch (err: any) {
-      setAuthError(err?.message || "Demo login failed");
     } finally {
       setAuthLoading(false);
     }
@@ -203,11 +183,6 @@ export default function LandingPage() {
             <button className="lp-btn" onClick={exploreTelemetry}>
               <Activity size={18} /> {t("lp.cta_tel")}
             </button>
-            {!isLoggedIn && (
-              <button className="lp-btn ghost" onClick={handleDemoFarmerLogin} disabled={authLoading}>
-                <Play size={16} /> {t("lp.demo")}
-              </button>
-            )}
           </div>
           <dl className="lp-metrics">
             <div><dt>14</dt><dd>{t("lp.m1")}</dd></div>
@@ -459,15 +434,8 @@ export default function LandingPage() {
               </button>
             </form>
 
-            {/* Quick Demo Options */}
-            <div className="pt-2 border-t border-white/10 text-center space-y-2">
-              <button
-                type="button"
-                onClick={handleDemoFarmerLogin}
-                className="text-xs text-emerald-400 hover:underline font-semibold"
-              >
-                Quick 1-Click Demo Login (demo@agriguard.in)
-              </button>
+            {/* Anonymous quick access */}
+            <div className="pt-2 border-t border-white/10 text-center">
               <p className="text-[11px] text-gray-500">
                 Or jump directly to{" "}
                 <Link href="/scan" className="text-gray-300 hover:text-emerald-400 underline" onClick={() => setAuthModalOpen(false)}>

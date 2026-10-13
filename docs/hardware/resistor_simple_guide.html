@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Ultra Simple Resistor Guide</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body {
+      width: 1200px;
+      height: 700px;
+      background: #0f172a;
+      color: #fff;
+      padding: 30px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    h1 { font-size: 32px; color: #f59e0b; text-align: center; }
+    p.sub { font-size: 18px; color: #94a3b8; text-align: center; }
+
+    .comparison {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      flex: 1;
+    }
+    .box {
+      background: #1e293b;
+      border-radius: 16px;
+      padding: 24px;
+      border: 2px solid #334155;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .box-green { border-color: #10b981; }
+    .box-orange { border-color: #f59e0b; }
+    .tag {
+      font-size: 14px;
+      font-weight: 900;
+      padding: 6px 12px;
+      border-radius: 6px;
+      display: inline-block;
+      width: fit-content;
+    }
+    .tag-green { background: #10b981; color: #000; }
+    .tag-orange { background: #f59e0b; color: #000; }
+    .title { font-size: 22px; font-weight: 800; }
+    .desc { font-size: 16px; color: #cbd5e1; line-height: 1.5; }
+
+    /* Visual circuit */
+    .circuit-box {
+      background: #0b1120;
+      border-radius: 12px;
+      padding: 20px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 14px;
+      font-family: monospace;
+      font-size: 18px;
+    }
+    .wire-line {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .badge {
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-weight: bold;
+      font-size: 15px;
+    }
+    .bg-red { background: #ef4444; color: #fff; }
+    .bg-yellow { background: #facc15; color: #000; }
+    .bg-orange { background: #ea580c; color: #fff; }
+    .connector {
+      width: 4px;
+      height: 30px;
+      background: #ea580c;
+      margin-left: 140px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Super Simple Resistor Guide (No Complicated Terms)</h1>
+    <p class="sub">Check which sensor you have in your hand first!</p>
+  </header>
+
+  <div class="comparison">
+    <!-- Case A: 3-Pin Sensor -->
+    <div class="box box-green">
+      <span class="tag tag-green">CASE 1 &mdash; MOST COMMON</span>
+      <div class="title" style="color: #34d399;">Do you have a 3-PIN Sensor?</div>
+      <div class="desc">
+        If your sensor is on a small circuit board with only <strong>3 pins</strong> (labeled <code>+</code>, <code>-</code>, <code>out</code>):
+      </div>
+      <div style="background: rgba(16,185,129,0.15); border: 2px dashed #10b981; border-radius: 12px; padding: 20px; text-align: center; margin-top: auto; margin-bottom: auto;">
+        <div style="font-size: 32px; font-weight: 900; color: #34d399; margin-bottom: 8px;">🎉 NO RESISTOR NEEDED!</div>
+        <div style="font-size: 16px; color: #a7f3d0;">
+          The resistor is already built into the sensor board.<br>
+          Just plug the 3 wires directly: <strong>VCC &rarr; 3.3V</strong>, <strong>GND &rarr; GND</strong>, <strong>DATA &rarr; Pin D4</strong>.
+        </div>
+      </div>
+    </div>
+
+    <!-- Case B: 4-Pin Sensor -->
+    <div class="box box-orange">
+      <span class="tag tag-orange">CASE 2 &mdash; BARE SENSOR</span>
+      <div class="title" style="color: #fb923c;">Do you have a 4-PIN Sensor?</div>
+      <div class="desc">
+        If your sensor is a white plastic box with <strong>4 bare metal legs</strong>, you need the resistor to connect between the <strong>VCC wire</strong> and the <strong>DATA wire</strong>:
+      </div>
+
+      <div class="circuit-box">
+        <div class="wire-line">
+          <span class="badge bg-red">RED WIRE (3.3V)</span>
+          <span>───────┬───────</span>
+          <span>DHT22 Pin 1 (VCC)</span>
+        </div>
+        <div class="connector"></div>
+        <div style="margin-left: 100px; display: flex; align-items: center; gap: 8px;">
+          <span class="badge bg-orange">10k RESISTOR (Bridge)</span>
+        </div>
+        <div class="connector"></div>
+        <div class="wire-line">
+          <span class="badge bg-yellow">YELLOW WIRE (Pin D4)</span>
+          <span>───┴───────</span>
+          <span>DHT22 Pin 2 (DATA)</span>
+        </div>
+      </div>
+
+      <div style="font-size: 14.5px; color: #fde047; background: rgba(234,179,8,0.1); padding: 10px 14px; border-radius: 8px;">
+        👉 In plain words: <strong>One leg of the resistor touches VCC (3.3V), and the other leg touches DATA (Pin D4).</strong>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

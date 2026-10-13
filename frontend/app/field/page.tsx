@@ -54,7 +54,6 @@ function ReadingCard({
 export default function FieldPage() {
   const { t } = useI18n();
   const { userId, email } = useAuth();
-  const isDemo = (email || "").toLowerCase() === "demo@agriguard.in";
 
   // Live telemetry: cached reading scoped by user, refreshed every 15s in the background.
   const sensorKey = userId ? `sensor:latest:${userId}` : "sensor:latest";
@@ -83,11 +82,7 @@ export default function FieldPage() {
   };
 
   const hasRealData = Boolean(data?.latest);
-  const activeData: SensorLatestOut = hasRealData
-    ? data!
-    : isDemo
-    ? fallbackTelemetry
-    : { series: [] };
+  const activeData: SensorLatestOut = hasRealData ? data! : { series: [] };
   const live = activeData.latest;
 
   const recordedDate = live?.recorded_at ? new Date(live.recorded_at) : null;
@@ -137,8 +132,6 @@ export default function FieldPage() {
             ? isStale
               ? "text-amber-400"
               : "text-emerald-400"
-            : isDemo
-            ? "text-sky-400"
             : "text-gray-400"
         }`}>
           {hasRealData && !isStale ? (
@@ -151,16 +144,12 @@ export default function FieldPage() {
               ? isStale
                 ? `Last reading ${timeAgo} — node offline (${live?.device_id})`
                 : `Hardware IoT Node Connected: ${live?.device_id}`
-              : isDemo
-              ? "Gram Panchayat Agricultural Telemetry Station #1 (Demo Data)"
               : "No sensor readings recorded — node offline"}
           </span>
         </div>
         <span className="text-[11px] text-gray-400 font-mono">
           {hasRealData
             ? `Recorded: ${recordedDate?.toLocaleDateString()} ${recordedDate?.toLocaleTimeString()}`
-            : isDemo
-            ? "Demo Data"
             : "No Data"}
         </span>
       </div>
@@ -182,7 +171,7 @@ export default function FieldPage() {
               value={activeData.latest?.soil_moisture ?? undefined}
               unit="%"
               color="bg-blue-600"
-              badge={isDemo ? "Demo data" : isStale ? "Offline" : "Root Zone"}
+              badge={isStale ? "Offline" : "Root Zone"}
             />
             <ReadingCard
               icon={Thermometer}
@@ -190,7 +179,7 @@ export default function FieldPage() {
               value={activeData.latest?.temp_c ?? undefined}
               unit="°C"
               color="bg-amber-600"
-              badge={isDemo ? "Demo data" : isStale ? "Offline" : "Ambient"}
+              badge={isStale ? "Offline" : "Ambient"}
             />
             <ReadingCard
               icon={Wind}
@@ -198,7 +187,7 @@ export default function FieldPage() {
               value={activeData.latest?.humidity ?? undefined}
               unit="%"
               color="bg-cyan-600"
-              badge={isDemo ? "Demo data" : isStale ? "Offline" : "Canopy"}
+              badge={isStale ? "Offline" : "Canopy"}
             />
           </div>
 
@@ -295,7 +284,7 @@ export default function FieldPage() {
 
           <div className="flex items-center justify-between text-xs text-gray-500 px-2">
             <span>
-              {t("field.last_updated")}: {hasRealData ? `${timeAgo} (${recordedDate?.toLocaleTimeString()})` : isDemo ? "Demo data" : "Offline"}
+              {t("field.last_updated")}: {hasRealData ? `${timeAgo} (${recordedDate?.toLocaleTimeString()})` : "Offline"}
             </span>
             <span>Device: {live?.device_id ?? "Field node (offline)"} · auto-refresh 15s</span>
           </div>

@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>AgriGuard IoT Wiring Schematic</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      width: 1920px;
+      height: 1080px;
+      background: #070d19;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      color: #f8fafc;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Background Grid */
+    .bg-grid {
+      position: absolute;
+      inset: 0;
+      background-image: 
+        radial-gradient(circle at 50% 50%, rgba(30, 58, 138, 0.22) 0%, transparent 75%),
+        linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px);
+      background-size: 100% 100%, 40px 40px, 40px 40px;
+    }
+
+    /* Header */
+    header {
+      position: absolute;
+      top: 32px;
+      left: 0;
+      width: 100%;
+      text-align: center;
+      z-index: 10;
+    }
+    h1 {
+      font-size: 36px;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      color: #ffffff;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+      text-shadow: 0 4px 24px rgba(0,0,0,0.9);
+    }
+    h1 span { color: #10b981; }
+    .subtitle {
+      font-size: 17px;
+      color: #94a3b8;
+      letter-spacing: 0.8px;
+    }
+
+    /* Left Info Card */
+    .pin-card {
+      position: absolute;
+      top: 135px;
+      left: 45px;
+      width: 440px;
+      background: rgba(15, 23, 42, 0.92);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(51, 65, 85, 0.9);
+      border-radius: 18px;
+      padding: 24px 26px;
+      box-shadow: 0 25px 50px rgba(0,0,0,0.7);
+      z-index: 20;
+    }
+    .card-title {
+      font-size: 19px;
+      font-weight: 800;
+      color: #38bdf8;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 18px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #334155;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .conn-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    .conn-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      font-size: 14px;
+      line-height: 1.45;
+      color: #e2e8f0;
+    }
+    .conn-dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      margin-top: 3px;
+      flex-shrink: 0;
+      box-shadow: 0 0 10px currentColor;
+    }
+    .dot-red { background: #ef4444; color: #ef4444; }
+    .dot-black { background: #64748b; color: #94a3b8; }
+    .dot-yellow { background: #facc15; color: #facc15; }
+    .dot-blue { background: #38bdf8; color: #38bdf8; }
+    .dot-orange { background: #fb923c; color: #fb923c; }
+
+    .tag-highlight {
+      font-weight: 800;
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-size: 12.5px;
+      display: inline-block;
+      margin-bottom: 2px;
+    }
+    .th-red { background: rgba(239, 68, 68, 0.25); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.4); }
+    .th-yellow { background: rgba(250, 204, 21, 0.25); color: #fef08a; border: 1px solid rgba(250, 204, 21, 0.4); }
+    .th-blue { background: rgba(56, 189, 248, 0.25); color: #bae6fd; border: 1px solid rgba(56, 189, 248, 0.4); }
+
+    .notice-box {
+      margin-top: 20px;
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.4);
+      border-radius: 10px;
+      padding: 12px 14px;
+      font-size: 13px;
+      color: #a7f3d0;
+      line-height: 1.45;
+    }
+    .notice-box strong { color: #34d399; }
+
+    /* SVG Canvas Area */
+    svg.schematic {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 1920px;
+      height: 1080px;
+      z-index: 15;
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-grid"></div>
+
+  <header>
+    <h1>AGRIGUARD <span>IoT FIELD SENSOR</span> WIRING DIAGRAM</h1>
+    <p class="subtitle">ESP32 DevKit V1 (30-Pin) &bull; DHT22 Temp/Humidity &bull; Capacitive Soil Moisture Sensor v1.2</p>
+  </header>
+
+  <!-- Left Sidebar Info Box -->
+  <div class="pin-card">
+    <div class="card-title">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+      Exact Wire-by-Wire Map
+    </div>
+    <ul class="conn-list">
+      <li class="conn-item">
+        <div class="conn-dot dot-red"></div>
+        <div>
+          <span class="tag-highlight th-red">🔴 3.3V POWER (RED)</span><br>
+          ESP32 <strong>3V3</strong> &rarr; Breadboard <strong>(+) Rail</strong> &rarr; Powers <strong>DHT22 VCC</strong> &amp; <strong>Soil VCC</strong>.
+        </div>
+      </li>
+      <li class="conn-item">
+        <div class="conn-dot dot-black"></div>
+        <div>
+          <strong>⚫ GROUND (BLACK / GRAY)</strong><br>
+          ESP32 <strong>GND</strong> &rarr; Breadboard <strong>(&minus;) Rail</strong> &rarr; <strong>DHT22 GND</strong> &amp; <strong>Soil GND</strong>.
+        </div>
+      </li>
+      <li class="conn-item">
+        <div class="conn-dot dot-yellow"></div>
+        <div>
+          <span class="tag-highlight th-yellow">🟡 GPIO 4 (PIN D4) &mdash; DHT22 DATA</span><br>
+          ESP32 <strong>Pin D4 (GPIO 4)</strong> connects to <strong>DHT22 Pin 2 (DATA)</strong>.
+        </div>
+      </li>
+      <li class="conn-item">
+        <div class="conn-dot dot-orange"></div>
+        <div>
+          <strong>🟤 10k&Omega; PULL-UP RESISTOR</strong><br>
+          Bridges between <strong>DHT22 DATA (Pin 2)</strong> and <strong>3.3V (+) Rail</strong> for bus stability.
+        </div>
+      </li>
+      <li class="conn-item">
+        <div class="conn-dot dot-blue"></div>
+        <div>
+          <span class="tag-highlight th-blue">🔵 GPIO 34 (PIN D34) &mdash; SOIL AOUT</span><br>
+          ESP32 <strong>Pin D34 (GPIO 34 / ADC1)</strong> connects to <strong>Soil Sensor AOUT</strong>.
+        </div>
+      </li>
+    </ul>
+
+    <div class="notice-box">
+      <strong>Pin Distinction Check:</strong><br>
+      &bull; <strong>D4</strong> (GPIO 4) = Top header pin for DHT22 (Yellow Wire)<br>
+      &bull; <strong>D34</strong> (GPIO 34) = Bottom header pin for Soil Probe (Blue Wire)
+    </div>
+  </div>
+
+  <!-- Detailed SVG Wiring Graphic -->
+  <svg class="schematic" viewBox="0 0 1920 1080" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <!-- Glow Filters -->
+      <filter id="glow-red" x="-30%" y="-30%" width="160%" height="160%">
+        <feDropShadow dx="0" dy="0" stdDeviation="5" flood-color="#ef4444" flood-opacity="0.9"/>
+      </filter>
+      <filter id="glow-yellow" x="-30%" y="-30%" width="160%" height="160%">
+        <feDropShadow dx="0" dy="0" stdDeviation="6" flood-color="#facc15" flood-opacity="0.95"/>
+      </filter>
+      <filter id="glow-blue" x="-30%" y="-30%" width="160%" height="160%">
+        <feDropShadow dx="0" dy="0" stdDeviation="6" flood-color="#38bdf8" flood-opacity="0.95"/>
+      </filter>
+      <filter id="glow-black" x="-30%" y="-30%" width="160%" height="160%">
+        <feDropShadow dx="0" dy="0" stdDeviation="3" flood-color="#94a3b8" flood-opacity="0.4"/>
+      </filter>
+
+      <!-- Gradients -->
+      <linearGradient id="bb-grad" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#ffffff"/>
+        <stop offset="100%" stop-color="#e2e8f0"/>
+      </linearGradient>
+      <linearGradient id="esp-grad" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#1e293b"/>
+        <stop offset="100%" stop-color="#090d16"/>
+      </linearGradient>
+      <linearGradient id="metal-grad" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#e2e8f0"/>
+        <stop offset="50%" stop-color="#cbd5e1"/>
+        <stop offset="100%" stop-color="#94a3b8"/>
+      </linearGradient>
+    </defs>
+
+    <!-- ========================================== -->
+    <!-- 1. BREADBOARD (X: 530 to 1170, Y: 180 to 930) -->
+    <!-- ========================================== -->
+    <g id="breadboard">
+      <rect x="530" y="190" width="640" height="740" rx="18" fill="url(#bb-grad)" stroke="#94a3b8" stroke-width="2.5" filter="drop-shadow(0 25px 40px rgba(0,0,0,0.6))"/>
+      
+      <!-- Top Power Rails -->
+      <line x1="550" y1="215" x2="1150" y2="215" stroke="#ef4444" stroke-width="3.5"/> <!-- Red + -->
+      <line x1="550" y1="240" x2="1150" y2="240" stroke="#3b82f6" stroke-width="3.5"/> <!-- Blue - -->
+      <text x="540" y="220" fill="#ef4444" font-size="18" font-weight="900">+</text>
+      <text x="541" y="245" fill="#3b82f6" font-size="20" font-weight="900">&minus;</text>
+      <text x="1156" y="220" fill="#ef4444" font-size="18" font-weight="900">+</text>
+      <text x="1157" y="245" fill="#3b82f6" font-size="20" font-weight="900">&minus;</text>
+
+      <!-- Center Divider Canal -->
+      <rect x="540" y="550" width="620" height="24" rx="4" fill="#cbd5e1"/>
+
+      <!-- Bottom Power Rails -->
+      <line x1="550" y1="880" x2="1150" y2="880" stroke="#3b82f6" stroke-width="3.5"/> <!-- Blue - -->
+      <line x1="550" y1="905" x2="1150" y2="905" stroke="#ef4444" stroke-width="3.5"/> <!-- Red + -->
+      <text x="541" y="885" fill="#3b82f6" font-size="20" font-weight="900">&minus;</text>
+      <text x="540" y="910" fill="#ef4444" font-size="18" font-weight="900">+</text>
+      <text x="1157" y="885" fill="#3b82f6" font-size="20" font-weight="900">&minus;</text>
+      <text x="1156" y="910" fill="#ef4444" font-size="18" font-weight="900">+</text>
+
+      <!-- Tie-point decorative matrix -->
+      <g fill="#94a3b8">
+        <circle cx="570" cy="215" r="3.5"/><circle cx="600" cy="215" r="3.5"/><circle cx="630" cy="215" r="3.5"/><circle cx="660" cy="215" r="3.5"/><circle cx="690" cy="215" r="3.5"/><circle cx="720" cy="215" r="3.5"/><circle cx="750" cy="215" r="3.5"/><circle cx="780" cy="215" r="3.5"/><circle cx="810" cy="215" r="3.5"/><circle cx="840" cy="215" r="3.5"/><circle cx="870" cy="215" r="3.5"/><circle cx="900" cy="215" r="3.5"/><circle cx="930" cy="215" r="3.5"/><circle cx="960" cy="215" r="3.5"/><circle cx="990" cy="215" r="3.5"/><circle cx="1020" cy="215" r="3.5"/><circle cx="1050" cy="215" r="3.5"/><circle cx="1080" cy="215" r="3.5"/><circle cx="1110" cy="215" r="3.5"/><circle cx="1130" cy="215" r="3.5"/>
+        <circle cx="570" cy="240" r="3.5"/><circle cx="600" cy="240" r="3.5"/><circle cx="630" cy="240" r="3.5"/><circle cx="660" cy="240" r="3.5"/><circle cx="690" cy="240" r="3.5"/><circle cx="720" cy="240" r="3.5"/><circle cx="750" cy="240" r="3.5"/><circle cx="780" cy="240" r="3.5"/><circle cx="810" cy="240" r="3.5"/><circle cx="840" cy="240" r="3.5"/><circle cx="870" cy="240" r="3.5"/><circle cx="900" cy="240" r="3.5"/><circle cx="930" cy="240" r="3.5"/><circle cx="960" cy="240" r="3.5"/><circle cx="990" cy="240" r="3.5"/><circle cx="1020" cy="240" r="3.5"/><circle cx="1050" cy="240" r="3.5"/><circle cx="1080" cy="240" r="3.5"/><circle cx="1110" cy="240" r="3.5"/><circle cx="1130" cy="240" r="3.5"/>
+        <circle cx="570" cy="880" r="3.5"/><circle cx="600" cy="880" r="3.5"/><circle cx="630" cy="880" r="3.5"/><circle cx="660" cy="880" r="3.5"/><circle cx="690" cy="880" r="3.5"/><circle cx="720" cy="880" r="3.5"/><circle cx="750" cy="880" r="3.5"/><circle cx="780" cy="880" r="3.5"/><circle cx="810" cy="880" r="3.5"/><circle cx="840" cy="880" r="3.5"/><circle cx="870" cy="880" r="3.5"/><circle cx="900" cy="880" r="3.5"/><circle cx="930" cy="880" r="3.5"/><circle cx="960" cy="880" r="3.5"/><circle cx="990" cy="880" r="3.5"/><circle cx="1020" cy="880" r="3.5"/><circle cx="1050" cy="880" r="3.5"/><circle cx="1080" cy="880" r="3.5"/><circle cx="1110" cy="880" r="3.5"/><circle cx="1130" cy="880" r="3.5"/>
+        <circle cx="570" cy="905" r="3.5"/><circle cx="600" cy="905" r="3.5"/><circle cx="630" cy="905" r="3.5"/><circle cx="660" cy="905" r="3.5"/><circle cx="690" cy="905" r="3.5"/><circle cx="720" cy="905" r="3.5"/><circle cx="750" cy="905" r="3.5"/><circle cx="780" cy="905" r="3.5"/><circle cx="810" cy="905" r="3.5"/><circle cx="840" cy="905" r="3.5"/><circle cx="870" cy="905" r="3.5"/><circle cx="900" cy="905" r="3.5"/><circle cx="930" cy="905" r="3.5"/><circle cx="960" cy="905" r="3.5"/><circle cx="990" cy="905" r="3.5"/><circle cx="1020" cy="905" r="3.5"/><circle cx="1050" cy="905" r="3.5"/><circle cx="1080" cy="905" r="3.5"/><circle cx="1110" cy="905" r="3.5"/><circle cx="1130" cy="905" r="3.5"/>
+      </g>
+    </g>
+
+    <!-- ========================================== -->
+    <!-- 2. ESP32 DEVKIT V1 MODULE (Centered)        -->
+    <!-- Width: 460, Height: 240, Center at X:850, Y:562 -->
+    <!-- ========================================== -->
+    <g id="esp32-module">
+      <!-- Board PCB -->
+      <rect x="620" y="442" width="460" height="240" rx="14" fill="url(#esp-grad)" stroke="#475569" stroke-width="2" filter="drop-shadow(0 15px 30px rgba(0,0,0,0.8))"/>
+      
+      <!-- Micro-USB Port on Left -->
+      <rect x="596" y="532" width="30" height="60" rx="4" fill="#94a3b8" stroke="#334155" stroke-width="2"/>
+      <rect x="604" y="544" width="16" height="36" rx="2" fill="#1e293b"/>
+      <text x="612" y="568" fill="#f8fafc" font-size="10" font-weight="900" text-anchor="middle" transform="rotate(-90 612 568)">USB</text>
+
+      <!-- Metal RF Shield (ESP-WROOM-32) -->
+      <rect x="850" y="472" width="160" height="180" rx="8" fill="url(#metal-grad)" stroke="#475569" stroke-width="2"/>
+      <circle cx="868" cy="490" r="4" fill="#64748b"/>
+      <text x="930" y="550" fill="#1e293b" font-size="16" font-weight="900" text-anchor="middle">ESP-WROOM-32</text>
+      <text x="930" y="572" fill="#334155" font-size="12" font-weight="700" text-anchor="middle">Wi-Fi &amp; Bluetooth</text>
+
+      <!-- Antenna Section (Right edge) -->
+      <rect x="1015" y="487" width="55" height="150" rx="4" fill="#090d16" stroke="#1e293b"/>
+      <path d="M1025 502 h25 v12 h-20 v12 h20 v12 h-20 v12 h20 v12 h-20 v12 h25" stroke="#f59e0b" stroke-width="2.5" fill="none"/>
+
+      <!-- Onboard Buttons & LEDs -->
+      <rect x="645" y="462" width="22" height="22" rx="4" fill="#475569"/><circle cx="656" cy="473" r="6" fill="#090d16"/><text x="656" y="497" fill="#94a3b8" font-size="9" font-weight="bold" text-anchor="middle">EN</text>
+      <rect x="645" y="640" width="22" height="22" rx="4" fill="#475569"/><circle cx="656" cy="651" r="6" fill="#090d16"/><text x="656" y="632" fill="#94a3b8" font-size="9" font-weight="bold" text-anchor="middle">BOOT</text>
+      <circle cx="700" cy="547" r="4" fill="#ef4444"/><text x="700" y="537" fill="#f87171" font-size="9" font-weight="bold" text-anchor="middle">PWR</text>
+      <circle cx="700" cy="577" r="4" fill="#38bdf8"/><text x="700" y="597" fill="#38bdf8" font-size="9" font-weight="bold" text-anchor="middle">D2</text>
+
+      <!-- Center Logo / Name -->
+      <text x="760" y="560" fill="#f8fafc" font-size="20" font-weight="900">ESP32 DevKit V1</text>
+      <text x="760" y="580" fill="#10b981" font-size="12" font-weight="700">30-PIN IoT BOARD</text>
+
+      <!-- ============================================== -->
+      <!-- TOP HEADER PINS (15 Pins)                      -->
+      <!-- X starts at 650, step = 28, Y = 442            -->
+      <!-- ============================================== -->
+      <!-- Pin 1: 3V3 (cx=650) -->
+      <circle cx="650" cy="442" r="8" fill="#ef4444" stroke="#ffffff" stroke-width="2.5" filter="url(#glow-red)"/>
+      <rect x="626" y="402" width="48" height="24" rx="5" fill="#ef4444"/>
+      <text x="650" y="419" fill="#ffffff" font-size="13" font-weight="900" text-anchor="middle">3V3</text>
+
+      <!-- Pin 2: GND (cx=678) -->
+      <circle cx="678" cy="442" r="8" fill="#475569" stroke="#ffffff" stroke-width="2.5" filter="url(#glow-black)"/>
+      <rect x="654" y="402" width="48" height="24" rx="5" fill="#334155"/>
+      <text x="678" y="419" fill="#ffffff" font-size="13" font-weight="900" text-anchor="middle">GND</text>
+
+      <!-- Pins 3-4: D15, D2 -->
+      <circle cx="706" cy="442" r="5" fill="#1e293b" stroke="#64748b" stroke-width="1.5"/><text x="706" y="427" fill="#64748b" font-size="10" font-weight="bold" text-anchor="middle">D15</text>
+      <circle cx="734" cy="442" r="5" fill="#1e293b" stroke="#64748b" stroke-width="1.5"/><text x="734" y="427" fill="#64748b" font-size="10" font-weight="bold" text-anchor="middle">D2</text>
+
+      <!-- Pin 5: D4 (GPIO 4 - DHT22 DATA) (cx=762) -->
+      <circle cx="762" cy="442" r="9" fill="#facc15" stroke="#000000" stroke-width="2.5" filter="url(#glow-yellow)"/>
+      <rect x="726" y="360" width="72" height="34" rx="7" fill="#facc15" stroke="#000000" stroke-width="1.5" filter="drop-shadow(0 6px 12px rgba(0,0,0,0.6))"/>
+      <text x="762" y="383" fill="#000000" font-size="18" font-weight="900" text-anchor="middle">PIN D4</text>
+      <text x="762" y="350" fill="#fef08a" font-size="12" font-weight="800" text-anchor="middle">GPIO 4 (DHT22)</text>
+
+      <!-- Other Top Pins -->
+      <circle cx="790" cy="442" r="5" fill="#1e293b" stroke="#64748b" stroke-width="1.5"/><text x="790" y="427" fill="#64748b" font-size="10" text-anchor="middle">RX2</text>
+      <circle cx="818" cy="442" r="5" fill="#1e293b" stroke="#64748b" stroke-width="1.5"/><text x="818" y="427" fill="#64748b" font-size="10" text-anchor="middle">TX2</text>
+      <circle cx="846" cy="442" r="5" fill="#1e293b" stroke="#64748b" stroke-width="1.5"/><text x="846" y="427" fill="#64748b" font-size="10" text-anchor="middle">D5</text>
+      <circle cx="874" cy="442" r="5" fill="#1e293b" stroke="#64748b" stroke-width="1.5"/><text x="874" y="427" fill="#64748b" font-size="10" text-anchor="middle">D18</text>
+      <circle cx="902" cy="442" r="5" fill="#1e293b" stroke="#64748b" stroke-width="1.5"/><text x="902" y="427" fill="#64748b" font-size="10" text-anchor="middle">D19</text>
+      <circle cx="930" cy="442" r="5" fill="#1e293b" stroke="#64748b" stroke-width="1.5"/><text x="930" y="427" fill="#64748b" font-size="10" text-anchor="middle">D21</text>
+      <circle cx="958" cy="442" r="5" fill="#1e293b" stroke="#64748b" stroke-width="1.5"/><text x="958" y="427" fill="#64748b" font-size="10" text-anchor="middle">RX0</text>
+      <circle cx="986" cy="442" r="5" fill="#1e293b" stroke="#64748b" stroke-width="1.5"/><text x="986" y="427" fill="#64748b" font-size="10" text-anchor="middle">TX0</text>
+      <circle cx="1014" cy="442" r="5" fill="#1e293b" stroke="#64748b" stroke-width="1.5"/><text x="1014" y="427" fill="#64748b" font-size="10" text-anchor="middle">D22</text>
+      <circle cx="1042" cy="442" r="5" fill="#1e293b" stroke="#64748b" stroke-width="1.5"/><text x="1042" y="427" fill="#64748b" font-size="10" text-anchor="middle">D23</text>
+
+
+      <!-- ============================================== -->
+      <!-- BOTTOM HEADER PINS (15 Pins)                   -->
+      <!-- X starts at 650, step = 28, Y = 682            -->
+      <!-- ============================================== -->
+      <circle cx="650" cy="682" r="6" fill="#334155" stroke="#94a3b8" stroke-width="1.5"/><text x="650" y="703" fill="#94a3b8" font-size="11" font-weight="bold" text-anchor="middle">VIN</text>
+      <circle cx="678" cy="682" r="6" fill="#334155" stroke="#94a3b8" stroke-width="1.5"/><text x="678" y="703" fill="#94a3b8" font-size="11" font-weight="bold" text-anchor="middle">GND</text>
+      <circle cx="706" cy="682" r="5" fill="#1e293b" stroke="#64748b" stroke-width="1.5"/><text x="706" y="703" fill="#64748b" font-size="10" text-anchor="middle">D13</text>
+      <circle cx="734" cy="682" r="5" fill="#1e293b" stroke="#64748b" stroke-width="1.5"/><text x="734" y="703" fill="#64748b" font-size="10" text-anchor="middle">D12</text>
+      <circle cx="762" cy="682" r="5" fill="#1e293b" stroke="#64748b" stroke-width="1.5"/><text x="762" y="703" fill="#64748b" font-size="10" text-anchor="middle">D14</text>
+      <circle cx="790" cy="682" r="5" fill="#1e293b" stroke="#64748b" stroke-width="1.5"/><text x="790" y="703" fill="#64748b" font-size="10" text-anchor="middle">D27</text>
+      <circle cx="818" cy="682" r="5" fill="#1e293b" stroke="#64748b" stroke-width="1.5"/><text x="818" y="703" fill="#64748b" font-size="10" text-anchor="middle">D26</text>
+      <circle cx="846" cy="682" r="5" fill="#1e293b" stroke="#64748b" stroke-width="1.5"/><text x="846" y="703" fill="#64748b" font-size="10" text-anchor="middle">D25</text>
+      <circle cx="874" cy="682" r="5" fill="#1e293b" stroke="#64748b" stroke-width="1.5"/><text x="874" y="703" fill="#64748b" font-size="10" text-anchor="middle">D33</text>
+      <circle cx="902" cy="682" r="5" fill="#1e293b" stroke="#64748b" stroke-width="1.5"/><text x="902" y="703" fill="#64748b" font-size="10" text-anchor="middle">D32</text>
+      <circle cx="930" cy="682" r="5" fill="#1e293b" stroke="#64748b" stroke-width="1.5"/><text x="930" y="703" fill="#64748b" font-size="10" text-anchor="middle">D35</text>
+
+      <!-- Pin 12: D34 (GPIO 34 - SOIL SENSOR AOUT) (cx=958) -->
+      <circle cx="958" cy="682" r="9" fill="#0284c7" stroke="#ffffff" stroke-width="2.5" filter="url(#glow-blue)"/>
+      <rect x="918" y="725" width="80" height="34" rx="7" fill="#0284c7" stroke="#38bdf8" stroke-width="1.5" filter="drop-shadow(0 6px 12px rgba(0,0,0,0.6))"/>
+      <text x="958" y="748" fill="#ffffff" font-size="18" font-weight="900" text-anchor="middle">PIN D34</text>
+      <text x="958" y="776" fill="#7dd3fc" font-size="12" font-weight="800" text-anchor="middle">GPIO 34 (ADC1)</text>
+
+      <circle cx="986" cy="682" r="5" fill="#1e293b" stroke="#64748b" stroke-width="1.5"/><text x="986" y="703" fill="#64748b" font-size="10" text-anchor="middle">VN</text>
+      <circle cx="1014" cy="682" r="5" fill="#1e293b" stroke="#64748b" stroke-width="1.5"/><text x="1014" y="703" fill="#64748b" font-size="10" text-anchor="middle">VP</text>
+      <circle cx="1042" cy="682" r="5" fill="#1e293b" stroke="#64748b" stroke-width="1.5"/><text x="1042" y="703" fill="#64748b" font-size="10" text-anchor="middle">EN</text>
+    </g>
+
+
+    <!-- ========================================== -->
+    <!-- 3. DHT22 SENSOR MODULE (Top Right)         -->
+    <!-- Box at X: 1330, Y: 155                     -->
+    <!-- ========================================== -->
+    <g id="dht22-sensor">
+      <rect x="1330" y="155" width="520" height="360" rx="18" fill="rgba(15,23,42,0.92)" stroke="#334155" stroke-width="2" filter="drop-shadow(0 20px 35px rgba(0,0,0,0.6))"/>
+      <text x="1355" y="195" fill="#ffffff" font-size="22" font-weight="900">DHT22 / AM2302 SENSOR</text>
+      <text x="1355" y="218" fill="#94a3b8" font-size="14">Digital Temperature &amp; Relative Humidity Sensor</text>
+
+      <!-- Sensor White Mesh Body -->
+      <rect x="1360" y="245" width="160" height="200" rx="12" fill="#ffffff" stroke="#cbd5e1" stroke-width="2.5" filter="drop-shadow(0 10px 20px rgba(0,0,0,0.3))"/>
+      <!-- Grill Holes -->
+      <g fill="#94a3b8">
+        <rect x="1380" y="265" width="22" height="10" rx="2"/><rect x="1410" y="265" width="22" height="10" rx="2"/><rect x="1440" y="265" width="22" height="10" rx="2"/><rect x="1470" y="265" width="22" height="10" rx="2"/>
+        <rect x="1380" y="285" width="22" height="10" rx="2"/><rect x="1410" y="285" width="22" height="10" rx="2"/><rect x="1440" y="285" width="22" height="10" rx="2"/><rect x="1470" y="285" width="22" height="10" rx="2"/>
+        <rect x="1380" y="305" width="22" height="10" rx="2"/><rect x="1410" y="305" width="22" height="10" rx="2"/><rect x="1440" y="305" width="22" height="10" rx="2"/><rect x="1470" y="305" width="22" height="10" rx="2"/>
+        <rect x="1380" y="325" width="22" height="10" rx="2"/><rect x="1410" y="325" width="22" height="10" rx="2"/><rect x="1440" y="325" width="22" height="10" rx="2"/><rect x="1470" y="325" width="22" height="10" rx="2"/>
+        <circle cx="1440" cy="395" r="14" fill="#cbd5e1"/>
+      </g>
+
+      <!-- DHT22 Pin Connection Badges (Facing Bottom) -->
+      <!-- Pin 1: VCC (X=1380) -->
+      <line x1="1380" y1="445" x2="1380" y2="475" stroke="#cbd5e1" stroke-width="5"/>
+      <circle cx="1380" cy="475" r="7" fill="#ef4444" stroke="#ffffff" stroke-width="2"/>
+      <rect x="1340" y="482" width="76" height="22" rx="4" fill="#ef4444"/>
+      <text x="1378" y="497" fill="#ffffff" font-size="11" font-weight="900" text-anchor="middle">1: VCC (3.3V)</text>
+
+      <!-- Pin 2: DATA (X=1420) -->
+      <line x1="1420" y1="445" x2="1420" y2="475" stroke="#cbd5e1" stroke-width="5"/>
+      <circle cx="1420" cy="475" r="7" fill="#facc15" stroke="#000000" stroke-width="2"/>
+      <rect x="1420" y="482" width="80" height="22" rx="4" fill="#facc15"/>
+      <text x="1460" y="497" fill="#000000" font-size="11" font-weight="900" text-anchor="middle">2: DATA (D4)</text>
+
+      <!-- Pin 3: NC (X=1460) -->
+      <line x1="1460" y1="445" x2="1460" y2="475" stroke="#cbd5e1" stroke-width="4"/>
+      <circle cx="1460" cy="475" r="5" fill="#475569"/>
+      <text x="1460" y="470" fill="#94a3b8" font-size="10" text-anchor="middle" transform="translate(45, 12)">3: NC (Empty)</text>
+
+      <!-- Pin 4: GND (X=1500) -->
+      <line x1="1500" y1="445" x2="1500" y2="475" stroke="#cbd5e1" stroke-width="5"/>
+      <circle cx="1500" cy="475" r="7" fill="#475569" stroke="#ffffff" stroke-width="2"/>
+      <rect x="1505" y="482" width="70" height="22" rx="4" fill="#334155"/>
+      <text x="1540" y="497" fill="#ffffff" font-size="11" font-weight="900" text-anchor="middle">4: GND</text>
+
+      <!-- Pull-Up Resistor Card on Right of Sensor -->
+      <g transform="translate(1550, 250)">
+        <rect x="0" y="0" width="275" height="150" rx="12" fill="#090d16" stroke="#d97706" stroke-width="1.5"/>
+        <text x="137" y="28" fill="#fb923c" font-size="15" font-weight="900" text-anchor="middle">10k&Omega; PULL-UP RESISTOR</text>
+        <text x="137" y="48" fill="#94a3b8" font-size="12" text-anchor="middle">Bridges VCC (3.3V) &amp; DATA (Pin 2)</text>
+        
+        <!-- Resistor illustration -->
+        <line x1="30" y1="95" x2="80" y2="95" stroke="#cbd5e1" stroke-width="3.5"/>
+        <rect x="80" y="83" width="115" height="24" rx="7" fill="#d97706" stroke="#92400e" stroke-width="2"/>
+        <!-- Color bands: Brown, Black, Orange, Gold -->
+        <rect x="98" y="83" width="8" height="24" fill="#78350f"/>
+        <rect x="116" y="83" width="8" height="24" fill="#000000"/>
+        <rect x="134" y="83" width="8" height="24" fill="#ea580c"/>
+        <rect x="160" y="83" width="8" height="24" fill="#eab308"/>
+        <line x1="195" y1="95" x2="245" y2="95" stroke="#cbd5e1" stroke-width="3.5"/>
+      </g>
+    </g>
+
+
+    <!-- ========================================== -->
+    <!-- 4. CAPACITIVE SOIL SENSOR v1.2 (Bottom Right) -->
+    <!-- Box at X: 1330, Y: 550                     -->
+    <!-- ========================================== -->
+    <g id="soil-sensor">
+      <rect x="1330" y="545" width="520" height="380" rx="18" fill="rgba(15,23,42,0.92)" stroke="#334155" stroke-width="2" filter="drop-shadow(0 20px 35px rgba(0,0,0,0.6))"/>
+      <text x="1355" y="585" fill="#ffffff" font-size="22" font-weight="900">SOIL MOISTURE SENSOR v1.2</text>
+      <text x="1355" y="608" fill="#94a3b8" font-size="14">Capacitive Corrosion-Resistant Soil Probe (Analog AOUT)</text>
+
+      <!-- Probe Drawing -->
+      <!-- Top header box -->
+      <rect x="1360" y="640" width="120" height="80" rx="8" fill="#090d16" stroke="#475569" stroke-width="2"/>
+      <!-- Blade with pointed tip -->
+      <path d="M1365 720 h110 v130 l-55 45 l-55 -45 z" fill="#090d16" stroke="#475569" stroke-width="2.5"/>
+      <!-- Capacitive copper trace outlines -->
+      <path d="M1380 735 h80 v105 l-40 32 l-40 -32 z" fill="none" stroke="#eab308" stroke-width="2.5" stroke-dasharray="7,5"/>
+      <text x="1420" y="785" fill="#94a3b8" font-size="12" font-weight="900" text-anchor="middle" transform="rotate(-90 1420 785)">CAPACITIVE PROBE</text>
+
+      <!-- 3 Sensor Pins (Facing Left) -->
+      <!-- VCC (X=1360, Y=660) -->
+      <circle cx="1360" cy="660" r="7" fill="#ef4444" stroke="#ffffff" stroke-width="2"/>
+      <rect x="1275" y="648" width="75" height="24" rx="5" fill="#ef4444"/>
+      <text x="1312" y="665" fill="#ffffff" font-size="12" font-weight="900" text-anchor="middle">VCC (3.3V)</text>
+
+      <!-- GND (X=1360, Y=680) -->
+      <circle cx="1360" cy="680" r="7" fill="#475569" stroke="#ffffff" stroke-width="2"/>
+      <rect x="1275" y="674" width="75" height="24" rx="5" fill="#334155"/>
+      <text x="1312" y="691" fill="#ffffff" font-size="12" font-weight="900" text-anchor="middle">GND</text>
+
+      <!-- AOUT (X=1360, Y=700) -->
+      <circle cx="1360" cy="700" r="8" fill="#0284c7" stroke="#ffffff" stroke-width="2.5" filter="url(#glow-blue)"/>
+      <rect x="1200" y="700" width="150" height="26" rx="5" fill="#0284c7" stroke="#38bdf8" stroke-width="1"/>
+      <text x="1275" y="718" fill="#ffffff" font-size="12" font-weight="900" text-anchor="middle">AOUT &rarr; PIN D34</text>
+
+      <!-- Info Callout inside Card -->
+      <g transform="translate(1505, 640)">
+        <rect x="0" y="0" width="320" height="170" rx="12" fill="#090d16" stroke="#1e3a8a" stroke-width="1.5"/>
+        <text x="160" y="32" fill="#38bdf8" font-size="15" font-weight="900" text-anchor="middle">ADC1 Channel (Safe with Wi-Fi)</text>
+        <text x="20" y="65" fill="#cbd5e1" font-size="13" line-height="1.6">
+          <tspan x="20" dy="0">&bull; Reads 0 &ndash; 3.0V calibrated analog voltage</tspan>
+          <tspan x="20" dy="25">&bull; Dry Air &asymp; 3200 raw reading (0% moisture)</tspan>
+          <tspan x="20" dy="25">&bull; Water &asymp; 1400 raw reading (100% moisture)</tspan>
+          <tspan x="20" dy="25">&bull; Connects directly to ESP32 Pin D34</tspan>
+        </text>
+      </g>
+    </g>
+
+
+    <!-- ========================================== -->
+    <!-- 5. WIRES & CONNECTIONS (Clean Clear Routes) -->
+    <!-- ========================================== -->
+
+    <!-- [RED WIRE 1]: ESP32 3V3 (cx=650, cy=442) -> Breadboard (+) Rail (cx=650, cy=215) -->
+    <path d="M 650 442 V 215" stroke="#ef4444" stroke-width="5" fill="none" filter="url(#glow-red)"/>
+    <circle cx="650" cy="215" r="6" fill="#ef4444"/>
+
+    <!-- [RED WIRE 2]: Breadboard (+) Rail (cx=1130, cy=215) -> DHT22 Pin 1 VCC (cx=1380, cy=475) -->
+    <path d="M 1130 215 H 1250 V 475 H 1380" stroke="#ef4444" stroke-width="4.5" fill="none" filter="url(#glow-red)"/>
+    
+    <!-- [RED WIRE 3]: Breadboard (+) Rail (cx=1100, cy=215) -> Soil Sensor VCC (cx=1360, cy=660) -->
+    <path d="M 1100 215 H 1220 V 660 H 1360" stroke="#ef4444" stroke-width="4.5" fill="none" filter="url(#glow-red)"/>
+
+
+    <!-- [BLACK WIRE 1]: ESP32 GND (cx=678, cy=442) -> Breadboard (-) Rail (cx=678, cy=240) -->
+    <path d="M 678 442 V 240" stroke="#64748b" stroke-width="5" fill="none" filter="url(#glow-black)"/>
+    <circle cx="678" cy="240" r="6" fill="#64748b"/>
+
+    <!-- [BLACK WIRE 2]: Breadboard (-) Rail (cx=1130, cy=240) -> DHT22 Pin 4 GND (cx=1500, cy=475) -->
+    <path d="M 1130 240 H 1290 V 525 H 1500 V 475" stroke="#64748b" stroke-width="4.5" fill="none" filter="url(#glow-black)"/>
+
+    <!-- [BLACK WIRE 3]: Breadboard (-) Rail (cx=1070, cy=240) -> Soil Sensor GND (cx=1360, cy=680) -->
+    <path d="M 1070 240 H 1200 V 680 H 1360" stroke="#64748b" stroke-width="4.5" fill="none" filter="url(#glow-black)"/>
+
+
+    <!-- ======================================================== -->
+    <!-- [YELLOW WIRE]: ESP32 Pin D4 (cx=762, cy=442) -> DHT22 Pin 2 DATA (cx=1420, cy=475) -->
+    <!-- ======================================================== -->
+    <path d="M 762 442 V 300 H 1280 V 475 H 1420" stroke="#facc15" stroke-width="5.5" fill="none" filter="url(#glow-yellow)"/>
+    <circle cx="762" cy="442" r="8" fill="#facc15"/>
+    <circle cx="1420" cy="475" r="8" fill="#facc15"/>
+    <!-- Wire Label Badge on the Yellow Line -->
+    <rect x="940" y="282" width="220" height="34" rx="7" fill="#facc15" stroke="#000000" stroke-width="1.5" filter="drop-shadow(0 4px 10px rgba(0,0,0,0.6))"/>
+    <text x="1050" y="305" fill="#000000" font-size="14" font-weight="900" text-anchor="middle">🟡 YELLOW WIRE &rarr; PIN D4</text>
+
+
+    <!-- ======================================================== -->
+    <!-- [PULL-UP RESISTOR WIRE]: From DHT22 DATA to 3.3V Rail   -->
+    <!-- ======================================================== -->
+    <path d="M 1420 445 V 345 H 1550" stroke="#ea580c" stroke-width="3" stroke-dasharray="6,4" fill="none"/>
+    <circle cx="1420" cy="445" r="4.5" fill="#ea580c"/>
+    <path d="M 1795 345 H 1820 V 130 H 1130 V 215" stroke="#ea580c" stroke-width="3" stroke-dasharray="6,4" fill="none"/>
+
+
+    <!-- ======================================================== -->
+    <!-- [BLUE WIRE]: ESP32 Pin D34 (cx=958, cy=682) -> Soil Sensor AOUT (cx=1360, cy=700) -->
+    <!-- ======================================================== -->
+    <path d="M 958 682 V 825 H 1180 V 700 H 1360" stroke="#0284c7" stroke-width="5.5" fill="none" filter="url(#glow-blue)"/>
+    <circle cx="958" cy="682" r="8" fill="#0284c7"/>
+    <circle cx="1360" cy="700" r="8" fill="#0284c7"/>
+    <!-- Wire Label Badge on the Blue Line -->
+    <rect x="1000" y="807" width="230" height="34" rx="7" fill="#0284c7" stroke="#38bdf8" stroke-width="1.5" filter="drop-shadow(0 4px 10px rgba(0,0,0,0.6))"/>
+    <text x="1115" y="830" fill="#ffffff" font-size="14" font-weight="900" text-anchor="middle">🔵 BLUE WIRE &rarr; PIN D34</text>
+
+  </svg>
+</body>
+</html>

@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>AgriGuard LCD Wiring Guide</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body {
+      width: 1400px;
+      height: 850px;
+      background: #080d1a;
+      color: #f8fafc;
+      padding: 30px 50px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    header { text-align: center; }
+    h1 { font-size: 34px; font-weight: 900; color: #38bdf8; }
+    p.sub { font-size: 17px; color: #94a3b8; }
+
+    .banner {
+      background: rgba(56, 189, 248, 0.12);
+      border: 2px solid #38bdf8;
+      border-radius: 14px;
+      padding: 16px 24px;
+      text-align: center;
+      font-size: 18px;
+      font-weight: 700;
+      color: #bae6fd;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+      flex: 1;
+    }
+    .card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 18px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .card-title {
+      font-size: 20px;
+      font-weight: 900;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #334155;
+    }
+    .pin-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      background: #0f172a;
+      padding: 14px 18px;
+      border-radius: 10px;
+      font-size: 16px;
+    }
+    .badge {
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-weight: 900;
+      font-size: 14px;
+      min-width: 110px;
+      text-align: center;
+    }
+    .bg-red { background: #ef4444; color: #fff; }
+    .bg-black { background: #475569; color: #fff; }
+    .bg-green { background: #10b981; color: #000; }
+    .bg-blue { background: #0284c7; color: #fff; }
+    .arrow { color: #94a3b8; font-weight: bold; }
+    .target { font-weight: 800; color: #f8fafc; }
+
+    /* LCD Screen Preview Box */
+    .lcd-preview {
+      background: #0284c7;
+      border: 6px solid #0f172a;
+      border-radius: 12px;
+      padding: 24px;
+      font-family: 'Courier New', Courier, monospace;
+      color: #ffffff;
+      box-shadow: inset 0 0 20px rgba(0,0,0,0.5), 0 10px 20px rgba(0,0,0,0.5);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: auto;
+      margin-bottom: auto;
+    }
+    .lcd-line {
+      font-size: 26px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      background: rgba(0,0,0,0.2);
+      padding: 10px 16px;
+      border-radius: 6px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>AgriGuard IoT — LCD DISPLAY WIRING (I2C)</h1>
+    <p class="sub">16x2 LCD Display with 4-Pin I2C Backpack &bull; SDA on D21 &bull; SCL on D22</p>
+  </header>
+
+  <div class="banner">
+    🖥️ Connect the 4 pins on the back of your LCD display to the ESP32 as shown below:
+  </div>
+
+  <div class="grid">
+    <!-- Card 1: Pin Connection Map -->
+    <div class="card" style="border-top: 5px solid #38bdf8;">
+      <div class="card-title" style="color: #38bdf8;">
+        🔌 4 LCD Pin Connections
+      </div>
+
+      <div class="pin-row">
+        <span class="badge bg-red">VCC</span>
+        <span class="arrow">&rarr;</span>
+        <span class="target">ESP32 VIN (5V Power) or 3.3V</span>
+      </div>
+
+      <div class="pin-row">
+        <span class="badge bg-black">GND</span>
+        <span class="arrow">&rarr;</span>
+        <span class="target">ESP32 GND (Ground)</span>
+      </div>
+
+      <div class="pin-row">
+        <span class="badge bg-green">SDA</span>
+        <span class="arrow">&rarr;</span>
+        <span class="target" style="color: #34d399;">ESP32 Pin D21 (GPIO 21 - Data)</span>
+      </div>
+
+      <div class="pin-row">
+        <span class="badge bg-blue">SCL</span>
+        <span class="arrow">&rarr;</span>
+        <span class="target" style="color: #38bdf8;">ESP32 Pin D22 (GPIO 22 - Clock)</span>
+      </div>
+    </div>
+
+    <!-- Card 2: Live LCD Display Output -->
+    <div class="card" style="border-top: 5px solid #10b981;">
+      <div class="card-title" style="color: #10b981;">
+        📺 Live Display Screen Preview
+      </div>
+
+      <div class="lcd-preview">
+        <div class="lcd-line">T:28.4C  H:65%</div>
+        <div class="lcd-line">Soil Mois: 48.0%</div>
+      </div>
+
+      <div style="font-size: 13.5px; color: #94a3b8; text-align: center;">
+        Updates automatically every 5 seconds with live temperature, humidity, and soil moisture!
+      </div>
+    </div>
+  </div>
+</body>
+</html>

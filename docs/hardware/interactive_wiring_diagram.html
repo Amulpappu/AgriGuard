@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AgriGuard IoT - Exact Wire Connection Diagram</title>
+  <style>
+    :root {
+      --bg: #0b1120;
+      --card-bg: #1e293b;
+      --border: #334155;
+      --accent: #10b981;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background: var(--bg); color: var(--text); padding: 2rem; min-height: 100vh; }
+    .container { max-width: 1200px; margin: 0 auto; }
+    header { text-align: center; margin-bottom: 2rem; }
+    h1 { font-size: 2.2rem; color: #38bdf8; margin-bottom: 0.5rem; letter-spacing: -0.5px; }
+    p.subtitle { color: var(--text-muted); font-size: 1.1rem; }
+    .schematic-img { width: 100%; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 20px 40px rgba(0,0,0,0.5); margin-bottom: 2.5rem; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+    .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; }
+    .card h2 { font-size: 1.3rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; }
+    .wire-list { display: flex; flex-direction: column; gap: 1rem; }
+    .wire-item { display: flex; align-items: flex-start; gap: 1rem; background: rgba(15, 23, 42, 0.6); padding: 1rem; border-radius: 8px; border-left: 5px solid; }
+    .wire-red { border-color: #ef4444; }
+    .wire-black { border-color: #64748b; }
+    .wire-yellow { border-color: #eab308; }
+    .wire-blue { border-color: #3b82f6; }
+    .wire-resistor { border-color: #d97706; }
+    .wire-badge { font-weight: bold; font-size: 0.85rem; padding: 0.2rem 0.6rem; border-radius: 4px; color: #fff; display: inline-block; }
+    .badge-red { background: #ef4444; }
+    .badge-black { background: #475569; }
+    .badge-yellow { background: #ca8a04; color: #000; }
+    .badge-blue { background: #2563eb; }
+    .badge-resistor { background: #d97706; }
+    .wire-details { flex: 1; }
+    .wire-title { font-weight: 600; font-size: 1.05rem; margin-bottom: 0.25rem; color: #f1f5f9; }
+    .wire-desc { font-size: 0.9rem; color: var(--text-muted); line-height: 1.4; }
+    table { width: 100%; border-collapse: collapse; margin-top: 0.5rem; }
+    th, td { text-align: left; padding: 0.75rem; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+    th { color: #94a3b8; font-weight: 600; }
+    td code { background: #0f172a; padding: 0.2rem 0.4rem; border-radius: 4px; font-family: monospace; color: #38bdf8; font-size: 0.9rem; }
+    .tag { padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.8rem; font-weight: 600; }
+    .tag-pwr { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+    .tag-gnd { background: rgba(100, 116, 139, 0.2); color: #cbd5e1; }
+    .tag-sig { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
+    .callout { background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 8px; padding: 1rem; margin-top: 1.5rem; }
+    .callout-title { font-weight: 600; color: #34d399; margin-bottom: 0.5rem; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>AgriGuard IoT Node — Exact Wire Connections</h1>
+      <p class="subtitle">ESP32 DevKit V1 + DHT22 Temp/Humidity + Capacitive Soil Moisture v1.2</p>
+    </header>
+
+    <img class="schematic-img" src="agriguard_exact_wire_schematic.jpg" alt="AgriGuard Exact Wire Connection Diagram">
+
+    <div class="grid">
+      <!-- Wire by Wire Guide -->
+      <div class="card">
+        <h2>🔌 Exact Wire-by-Wire Instructions</h2>
+        <div class="wire-list">
+          <div class="wire-item wire-red">
+            <span class="wire-badge badge-red">RED WIRE 1</span>
+            <div class="wire-details">
+              <div class="wire-title">ESP32 3V3 ➔ Breadboard (+) Rail</div>
+              <div class="wire-desc">Connects pin <strong>3V3</strong> on ESP32 to the red <strong>(+) power bus rail</strong> on your breadboard. Supplies 3.3V power to all sensors.</div>
+            </div>
+          </div>
+
+          <div class="wire-item wire-red">
+            <span class="wire-badge badge-red">RED WIRE 2 & 3</span>
+            <div class="wire-details">
+              <div class="wire-title">Breadboard (+) Rail ➔ Sensor VCC Pins</div>
+              <div class="wire-desc">
+                • Wire to <strong>DHT22 Pin 1 (VCC)</strong><br>
+                • Wire to <strong>Soil Sensor VCC Pin</strong>
+              </div>
+            </div>
+          </div>
+
+          <div class="wire-item wire-black">
+            <span class="wire-badge badge-black">BLACK WIRE 1</span>
+            <div class="wire-details">
+              <div class="wire-title">ESP32 GND ➔ Breadboard (-) Rail</div>
+              <div class="wire-desc">Connects pin <strong>GND</strong> on ESP32 to the blue/black <strong>(-) ground bus rail</strong> on your breadboard. Creates common ground.</div>
+            </div>
+          </div>
+
+          <div class="wire-item wire-black">
+            <span class="wire-badge badge-black">BLACK WIRE 2 & 3</span>
+            <div class="wire-details">
+              <div class="wire-title">Breadboard (-) Rail ➔ Sensor GND Pins</div>
+              <div class="wire-desc">
+                • Wire to <strong>DHT22 Pin 4 (GND)</strong><br>
+                • Wire to <strong>Soil Sensor GND Pin</strong>
+              </div>
+            </div>
+          </div>
+
+          <div class="wire-item wire-yellow">
+            <span class="wire-badge badge-yellow">YELLOW WIRE</span>
+            <div class="wire-details">
+              <div class="wire-title">DHT22 Pin 2 (DATA) ➔ ESP32 Pin D4 (GPIO 4)</div>
+              <div class="wire-desc">Connects the digital data pin of the DHT22 directly to <strong>GPIO 4</strong> on the ESP32. Transmits temperature & humidity telemetry.</div>
+            </div>
+          </div>
+
+          <div class="wire-item wire-resistor">
+            <span class="wire-badge badge-resistor">10kΩ RESISTOR</span>
+            <div class="wire-details">
+              <div class="wire-title">Pull-Up: Between DHT22 DATA and 3.3V</div>
+              <div class="wire-desc">Place a <strong>10kΩ resistor</strong> (Brown-Black-Orange) bridging <strong>DHT22 DATA (GPIO 4)</strong> to the <strong>3.3V (+) rail</strong> for 1-wire bus signal stability.</div>
+            </div>
+          </div>
+
+          <div class="wire-item wire-blue">
+            <span class="wire-badge badge-blue">BLUE WIRE</span>
+            <div class="wire-details">
+              <div class="wire-title">Soil Sensor AOUT ➔ ESP32 Pin D34 (GPIO 34)</div>
+              <div class="wire-desc">Connects the analog signal pin (AOUT) of the capacitive soil sensor directly to <strong>GPIO 34 (ADC1_CH6)</strong> on the ESP32. ADC1 remains 100% active while Wi-Fi transmits.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pin Map Table -->
+      <div class="card">
+        <h2>📋 Complete Pin Reference Table</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Device & Pin</th>
+              <th>ESP32 Target Pin</th>
+              <th>Type</th>
+              <th>Wire Color</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>DHT22 Pin 1 (VCC)</strong></td>
+              <td><code>3V3</code></td>
+              <td><span class="tag tag-pwr">Power (3.3V)</span></td>
+              <td>🔴 Red</td>
+            </tr>
+            <tr>
+              <td><strong>DHT22 Pin 2 (DATA)</strong></td>
+              <td><code>GPIO 4 (D4)</code></td>
+              <td><span class="tag tag-sig">Digital 1-Wire</span></td>
+              <td>🟡 Yellow</td>
+            </tr>
+            <tr>
+              <td><strong>DHT22 Pin 3 (NC)</strong></td>
+              <td><em>Not Connected</em></td>
+              <td>—</td>
+              <td>None</td>
+            </tr>
+            <tr>
+              <td><strong>DHT22 Pin 4 (GND)</strong></td>
+              <td><code>GND</code></td>
+              <td><span class="tag tag-gnd">Ground</span></td>
+              <td>⚫ Black</td>
+            </tr>
+            <tr>
+              <td><strong>Soil Sensor VCC</strong></td>
+              <td><code>3V3</code></td>
+              <td><span class="tag tag-pwr">Power (3.3V)</span></td>
+              <td>🔴 Red</td>
+            </tr>
+            <tr>
+              <td><strong>Soil Sensor GND</strong></td>
+              <td><code>GND</code></td>
+              <td><span class="tag tag-gnd">Ground</span></td>
+              <td>⚫ Black</td>
+            </tr>
+            <tr>
+              <td><strong>Soil Sensor AOUT</strong></td>
+              <td><code>GPIO 34 (D34)</code></td>
+              <td><span class="tag tag-sig">Analog ADC1</span></td>
+              <td>🔵 Blue</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="callout">
+          <div class="callout-title">⚠️ Critical Hardware Safety Rules</div>
+          <p style="font-size: 0.9rem; color: #cbd5e1; line-height: 1.5;">
+            <strong>1. Never use 5V on ESP32 GPIOs:</strong> ESP32 pins are 3.3V logic only. Powering DHT22 or the Soil probe from 5V could damage GPIO 4 or GPIO 34.<br>
+            <strong>2. Wi-Fi ADC conflict:</strong> Always use GPIO 34 (ADC1). ADC2 channels (GPIO 0, 2, 4, 12-15, 25-27) shut down when Wi-Fi is transmitting.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

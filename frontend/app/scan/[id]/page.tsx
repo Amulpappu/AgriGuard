@@ -307,7 +307,14 @@ export default function ScanDetailPage() {
         {/* Left: photo + metrics */}
         <div className="lg:col-span-2 space-y-5">
           <div className="glass rounded-3xl overflow-hidden aspect-[4/3] bg-black relative">
-            <img src={imgSrc} alt="Leaf photo" className="w-full h-full object-cover" />
+            <img
+              src={imgSrc}
+              alt="Leaf photo"
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                (e.target as HTMLImageElement).src = "/agriguard_logo_4k.png";
+              }}
+            />
             <div className="absolute top-3 left-3">
               <button
                 type="button"

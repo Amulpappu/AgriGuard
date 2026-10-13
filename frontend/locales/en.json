@@ -22,8 +22,7 @@
     "logging_in": "Logging in...",
     "registering": "Creating account...",
     "switch_to_register": "New user? Create your separate account",
-    "switch_to_login": "Already have an account? Sign in",
-    "demo_hint": "Demo: demo@agriguard.in / Demo1234!"
+    "switch_to_login": "Already have an account? Sign in"
   },
   "crop": {
     "auto": "✨ Auto-Detect (Any Crop, Plant & Vegetable)",
