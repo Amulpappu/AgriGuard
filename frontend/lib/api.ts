@@ -577,42 +577,73 @@ export async function createScan(cropId: string | null | undefined, imageFile: F
   const userId = activeSession?.user?.id ?? null;
   const folderUid = userId || "anonymous";
 
-  // Convert to high-fidelity Base64 Data URLs so images are permanently persisted in PostgreSQL
+  // Convert to high-fidelity Base64 Data URL for instant local report rendering
   const [fullDataUrl, thumbDataUrl] = await Promise.all([
     fileToDataUrl(scaledImage),
     fileToDataUrl(thumbImage),
   ]);
 
-  let imageUrl = fullDataUrl;
-  let thumbUrl = thumbDataUrl;
-
-  // Also attempt Supabase Storage upload if bucket exists
-  try {
-    const imgPath = `${folderUid}/${newScanId}.jpg`;
-    const thPath = `${folderUid}/${newScanId}_thumb.jpg`;
-
-    const [imgRes, thRes] = await Promise.all([
-      supabase.storage.from("scan-images").upload(imgPath, scaledImage, { contentType: "image/jpeg", upsert: true }),
-      supabase.storage.from("scan-images").upload(thPath, thumbImage, { contentType: "image/jpeg", upsert: true }),
-    ]);
-
-    if (!imgRes.error) {
-      const { data: u } = supabase.storage.from("scan-images").getPublicUrl(imgPath);
-      if (u?.publicUrl) imageUrl = u.publicUrl;
-    }
-    if (!thRes.error) {
-      const { data: tu } = supabase.storage.from("scan-images").getPublicUrl(thPath);
-      if (tu?.publicUrl) thumbUrl = tu.publicUrl;
-    }
-  } catch (storageErr) {
-    // Falls back to direct PostgreSQL base64 data URLs
-  }
-
-  // Cache in sessionStorage for instant 0ms local report rendering
   if (typeof window !== "undefined") {
     try {
       sessionStorage.setItem(`scan_img_${newScanId}`, fullDataUrl);
     } catch {}
+  }
+
+  let imageUrl = `/uploads/scans/${newScanId}.jpg`;
+  let thumbUrl: string | undefined = undefined;
+
+  // 1. Try server-side upload route (stores in Supabase Cloud Storage bucket 'scan-images')
+  try {
+    const uploadForm = new FormData();
+    uploadForm.append("image", scaledImage);
+    uploadForm.append("thumb", thumbImage);
+    uploadForm.append("scan_id", newScanId);
+    if (userId) uploadForm.append("user_id", userId);
+
+    const uploadRes = await fetch("/api/v1/upload", {
+      method: "POST",
+      body: uploadForm,
+    });
+
+    if (uploadRes.ok) {
+      const uploadData = await uploadRes.json();
+      if (uploadData.image_url) {
+        imageUrl = uploadData.image_url;
+        thumbUrl = uploadData.thumb_url || uploadData.image_url;
+      }
+    }
+  } catch (err) {
+    console.warn("Storage upload route error:", err);
+  }
+
+  // 2. Direct client storage upload attempt fallback
+  if (!imageUrl.startsWith("https://")) {
+    try {
+      const imgPath = `${folderUid}/${newScanId}.jpg`;
+      const thPath = `${folderUid}/${newScanId}_thumb.jpg`;
+
+      const [imgRes, thRes] = await Promise.all([
+        supabase.storage.from("scan-images").upload(imgPath, scaledImage, { contentType: "image/jpeg", upsert: true }),
+        supabase.storage.from("scan-images").upload(thPath, thumbImage, { contentType: "image/jpeg", upsert: true }),
+      ]);
+
+      if (!imgRes.error) {
+        const { data: u } = supabase.storage.from("scan-images").getPublicUrl(imgPath);
+        if (u?.publicUrl) imageUrl = u.publicUrl;
+      }
+      if (!thRes.error) {
+        const { data: tu } = supabase.storage.from("scan-images").getPublicUrl(thPath);
+        if (tu?.publicUrl) thumbUrl = tu.publicUrl;
+      }
+    } catch (_) {}
+  }
+
+  // CRITICAL CONSTRAINT: Guarantee that image_url never exceeds VARCHAR(512) length constraint in Postgres
+  if (imageUrl.length > 500) {
+    imageUrl = `/uploads/scans/${newScanId}.jpg`;
+  }
+  if (thumbUrl && thumbUrl.length > 500) {
+    thumbUrl = imageUrl;
   }
 
   const scanRecord = {
