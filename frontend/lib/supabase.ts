@@ -11,13 +11,23 @@ const supabaseAnonKey =
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 /**
+ * Clean public Supabase client that never persists or sends synthetic session tokens.
+ * Guaranteed to succeed on public REST tables without PGRST301 JWT errors.
+ */
+export const supabasePublic = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: { persistSession: false, autoRefreshToken: false },
+});
+
+/**
  * Server-side client that acts as the caller: forwards their Supabase access
  * token so Row Level Security policies evaluate against that user.
  */
 export function supabaseForToken(accessToken: string | null) {
+  // Only forward if token is a valid 3-part JWT
+  const isValidJwt = accessToken && accessToken.split(".").length === 3;
   return createClient(supabaseUrl, supabaseAnonKey, {
     auth: { persistSession: false, autoRefreshToken: false },
-    global: accessToken ? { headers: { Authorization: `Bearer ${accessToken}` } } : undefined,
+    global: isValidJwt ? { headers: { Authorization: `Bearer ${accessToken}` } } : undefined,
   });
 }
 

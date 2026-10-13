@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth";
-import { supabase } from "@/lib/supabase";
+import { supabase, supabasePublic } from "@/lib/supabase";
 import { 
   Database, Users, HardDrive, Image as ImageIcon, Activity, 
   ShieldCheck, ShieldAlert, Lock, RefreshCw, KeyRound, UserPlus, Trash2, 
@@ -117,12 +117,12 @@ export default function AdminDatabasePage() {
     // Direct Supabase cloud telemetry stats
     try {
       const [cropsRes, diseasesRes, scansRes, sensorRes, usersRes, allScansRes] = await Promise.all([
-        supabase.from("crops").select("id", { count: "exact", head: true }),
-        supabase.from("diseases").select("id", { count: "exact", head: true }),
-        supabase.from("scans").select("id", { count: "exact", head: true }),
-        supabase.from("sensor_readings").select("id", { count: "exact", head: true }),
-        supabase.from("users").select("id, email, full_name, is_active, created_at").limit(100),
-        supabase.from("scans").select("id, user_id, status").limit(500),
+        supabasePublic.from("crops").select("id", { count: "exact", head: true }),
+        supabasePublic.from("diseases").select("id", { count: "exact", head: true }),
+        supabasePublic.from("scans").select("id", { count: "exact", head: true }),
+        supabasePublic.from("sensor_readings").select("id", { count: "exact", head: true }),
+        supabasePublic.from("users").select("id, email, full_name, is_active, created_at").limit(100),
+        supabasePublic.from("scans").select("id, user_id, status").limit(500),
       ]);
 
       const scansList = allScansRes.data || [];
@@ -251,7 +251,7 @@ export default function AdminDatabasePage() {
 
     // Fallback: Query Supabase directly
     try {
-      let q = supabase.from(tableName).select("*", { count: "exact" }).limit(50);
+      let q = supabasePublic.from(tableName).select("*", { count: "exact" }).limit(50);
       const { data, count, error } = await q;
       if (error) throw error;
       const columns = data && data.length > 0 ? Object.keys(data[0]) : [];
@@ -345,10 +345,10 @@ export default function AdminDatabasePage() {
     // Cloud export fallback: Download JSON snapshot directly from Supabase
     try {
       const [crops, diseases, scans, users] = await Promise.all([
-        supabase.from("crops").select("*"),
-        supabase.from("diseases").select("*"),
-        supabase.from("scans").select("*"),
-        supabase.from("users").select("id, email, full_name, is_active, created_at"),
+        supabasePublic.from("crops").select("*"),
+        supabasePublic.from("diseases").select("*"),
+        supabasePublic.from("scans").select("*"),
+        supabasePublic.from("users").select("id, email, full_name, is_active, created_at"),
       ]);
       const backupObj = {
         exported_at: new Date().toISOString(),
