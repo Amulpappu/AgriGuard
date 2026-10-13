@@ -229,7 +229,7 @@ export default function DashboardPage() {
                             src={resolveImageUrl(scan.thumb_url || scan.image_url)}
                             alt=""
                             className="w-full h-full object-cover"
-                            onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                            onError={(e) => { (e.target as HTMLImageElement).src = "/agriguard_logo_4k.png"; }}
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-xl">

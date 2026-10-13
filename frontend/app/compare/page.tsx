@@ -165,7 +165,7 @@ export default function ComparePage() {
                       src={resolveImageUrl(scan.thumb_url || scan.image_url)}
                       alt=""
                       className="w-full h-full object-cover"
-                      onError={(e) => { (e.target as HTMLImageElement).style.opacity = "0.2"; }}
+                      onError={(e) => { (e.target as HTMLImageElement).src = "/agriguard_logo_4k.png"; }}
                     />
                     <div className="absolute bottom-2 left-2">
                       <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-black/70 backdrop-blur-md text-white">
