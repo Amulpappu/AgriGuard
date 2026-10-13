@@ -52,9 +52,16 @@ export function I18nProvider({ children }: { children: ReactNode }) {
 
   const t = useCallback(
     (key: string) => {
-      const val = getNestedValue(STRINGS[lang], key);
+      let val = getNestedValue(STRINGS[lang], key);
       if (val === key && lang !== "en") {
-        return getNestedValue(STRINGS["en"], key);
+        val = getNestedValue(STRINGS["en"], key);
+      }
+      if (val === key && (key.startsWith("disease.") || key.startsWith("crop."))) {
+        return key
+          .replace(/^(disease|crop)\./, "")
+          .split("_")
+          .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+          .join(" ");
       }
       return val;
     },

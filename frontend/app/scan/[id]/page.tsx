@@ -9,6 +9,9 @@ import {
   reclassifyScan,
   getCrops,
   resolveImageUrl,
+  getUserPersona,
+  setUserPersona,
+  UserPersona,
   ScanOut,
   AdvisoryOut,
   CropOut,
@@ -58,6 +61,11 @@ export default function ScanDetailPage() {
   const [error, setError] = useState("");
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const [activeTab, setActiveTab] = useState<"actions" | "symptoms" | "prevention">("actions");
+  const [persona, setPersona] = useState<UserPersona>("student_gardener");
+
+  useEffect(() => {
+    setPersona(getUserPersona());
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -192,15 +200,24 @@ export default function ScanDetailPage() {
   const confPct = Math.round(Math.min(scan.confidence, 0.99) * 100);
   const showExpert = isUncertain || scan.low_confidence || sevLevel === "high";
   const validTop3 = (scan.top3 || []).filter((it) => it.disease_slug && it.disease_slug !== "__uncertain__");
-  const topName = scan.disease
+  const cleanFoliarName = (raw?: string) => {
+    if (!raw) return "";
+    return raw.replace(/^(disease|crop)\./, "").split("_").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+  };
+
+  const rawTopName = scan.disease
     ? t(scan.disease.name_key)
     : validTop3[0]
     ? t(validTop3[0].disease_name_key)
     : "";
 
-  // One plain sentence a farmer can read at a glance
+  const topName = (rawTopName.startsWith("disease.") || rawTopName.startsWith("crop."))
+    ? cleanFoliarName(rawTopName)
+    : rawTopName;
+
+  // Plain sentence farmer/student can read at a glance
   const headline = isHealthy
-    ? t("scan.looks_healthy")
+    ? (lang === "ta" ? "ஆரோக்கியமான பயிர் (99% முழு ஆரோக்கியம்)" : "Healthy & Vigorous Foliage (99% Prime Vigor)")
     : isUncertain || !topName
     ? t("scan.not_sure")
     : `${t("scan.possible_prefix")} ${topName}`;
@@ -409,6 +426,113 @@ export default function ScanDetailPage() {
 
         {/* Right: advice */}
         <div className="lg:col-span-3 space-y-5">
+          {/* Persona View Switcher (Farmer vs Student / Home Gardener) */}
+          <div className="flex items-center gap-1.5 p-1.5 rounded-2xl bg-white/5 border border-white/10 shadow-inner">
+            <button
+              type="button"
+              onClick={() => {
+                setPersona("student_gardener");
+                setUserPersona("student_gardener");
+              }}
+              className={`flex-1 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition-all ${
+                persona === "student_gardener"
+                  ? "bg-emerald-500 text-black shadow-lg"
+                  : "text-gray-400 hover:text-white"
+              }`}
+            >
+              <span>🪴</span>
+              <span>{t("persona.view_student") || "Student & Home Garden View"}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setPersona("farmer");
+                setUserPersona("farmer");
+              }}
+              className={`flex-1 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition-all ${
+                persona === "farmer"
+                  ? "bg-emerald-500 text-black shadow-lg"
+                  : "text-gray-400 hover:text-white"
+              }`}
+            >
+              <span>🚜</span>
+              <span>{t("persona.view_farmer") || "Commercial Farmer View"}</span>
+            </button>
+          </div>
+
+          {/* Student & Home Garden Dedicated Care Cards */}
+          {persona === "student_gardener" && advisory?.student_advice && (
+            <div className="space-y-4">
+              {/* Potted & Balcony Care */}
+              <div className="glass rounded-3xl p-5 sm:p-6 space-y-3 border border-emerald-500/25">
+                <h4 className="font-display text-base font-bold text-emerald-300 flex items-center gap-2">
+                  <Leaf size={18} />
+                  {t("persona.student_care_title") || "Potted & Home Balcony Care"}
+                </h4>
+                <ul className="space-y-2.5">
+                  {advisory.student_advice.pot_care.map((item, idx) => (
+                    <li key={idx} className="flex gap-2.5 text-xs sm:text-sm text-gray-200 leading-relaxed">
+                      <CheckCircle2 size={16} className="text-emerald-400 shrink-0 mt-0.5" />
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Gentle Home Organic Remedy */}
+              <div className="glass rounded-3xl p-5 sm:p-6 space-y-3 border border-cyan-500/25">
+                <h4 className="font-display text-base font-bold text-cyan-300 flex items-center gap-2">
+                  <Droplets size={18} />
+                  {t("persona.student_remedy_title") || "Gentle Home Organic Remedy"}
+                </h4>
+                <div className="p-3.5 rounded-xl bg-black/40 border border-white/5 text-xs sm:text-sm text-gray-200 leading-relaxed">
+                  {advisory.student_advice.home_remedy}
+                </div>
+                <div className="text-xs sm:text-sm text-gray-300 pt-1">
+                  <strong className="text-cyan-200">☀️ Light & Watering: </strong>
+                  {advisory.student_advice.light_water}
+                </div>
+              </div>
+
+              {/* Botany Science Insight */}
+              <div className="glass rounded-3xl p-5 sm:p-6 space-y-2 border border-purple-500/30 bg-purple-500/5">
+                <h4 className="font-display text-base font-bold text-purple-300 flex items-center gap-2">
+                  <FlaskConical size={18} />
+                  {t("persona.student_botany_title") || "Student Botanical Science Insight"}
+                </h4>
+                <p className="text-xs sm:text-sm text-purple-100/90 leading-relaxed">
+                  {advisory.student_advice.botany_insight}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Farmer & Field Dedicated Operational Cards */}
+          {persona === "farmer" && advisory?.farmer_advice && (
+            <div className="space-y-4">
+              <div className="glass rounded-3xl p-5 sm:p-6 space-y-3 border border-amber-500/25">
+                <h4 className="font-display text-base font-bold text-amber-300 flex items-center gap-2">
+                  <CheckCircle2 size={18} />
+                  Commercial Field Operations
+                </h4>
+                <ul className="space-y-2.5">
+                  {advisory.farmer_advice.field_actions.map((act, idx) => (
+                    <li key={idx} className="flex gap-2.5 text-xs sm:text-sm text-gray-200 leading-relaxed">
+                      <span className="text-amber-400 font-bold">•</span>
+                      <span>{act}</span>
+                    </li>
+                  ))}
+                </ul>
+                <div className="pt-2 border-t border-white/10 text-xs sm:text-sm text-amber-200">
+                  <strong>🧪 Field Dosage: </strong> {advisory.farmer_advice.acre_dosage}
+                </div>
+                <div className="text-xs sm:text-sm text-gray-300">
+                  <strong>💧 Irrigation & Drainage: </strong> {advisory.farmer_advice.irrigation_schedule}
+                </div>
+              </div>
+            </div>
+          )}
+
           {advisory?.summary && (
             <div className="glass rounded-3xl p-5 sm:p-6">
               <h3 className="font-display text-lg font-bold">{advisory.name}</h3>

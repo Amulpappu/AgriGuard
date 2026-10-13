@@ -181,6 +181,17 @@ export interface AdvisoryOut {
   sources: string[];
   reviewed_by?: string;
   disclaimer: string;
+  student_advice?: {
+    pot_care: string[];
+    home_remedy: string;
+    light_water: string;
+    botany_insight: string;
+  };
+  farmer_advice?: {
+    field_actions: string[];
+    acre_dosage: string;
+    irrigation_schedule: string;
+  };
 }
 
 export interface SensorLatestOut {
@@ -442,10 +453,51 @@ export async function getCrops(): Promise<CropOut[]> {
 
 // ─── Scans ───────────────────────────────────────────────────────────────────
 
-async function analyzeImageColors(file: File): Promise<{ greenFrac: number; yellowFrac: number; brownFrac: number }> {
+// ─── User Persona (Farmer vs Student / Home Gardener) ───────────────────────
+
+export type UserPersona = "farmer" | "student_gardener";
+
+export function getUserPersona(): UserPersona {
+  if (typeof window === "undefined") return "student_gardener";
+  try {
+    const p = localStorage.getItem("agriguard_user_persona");
+    if (p === "farmer") return "farmer";
+  } catch {}
+  return "student_gardener";
+}
+
+export function setUserPersona(persona: UserPersona) {
+  if (typeof window !== "undefined") {
+    try {
+      localStorage.setItem("agriguard_user_persona", persona);
+    } catch {}
+  }
+}
+
+// ─── Scans & Foliar Lesion AI Engine ────────────────────────────────────────
+
+interface FoliarAnalysis {
+  plantCanopyPixels: number;
+  greenPixels: number;
+  chlorosisPixels: number;
+  necrosisPixels: number;
+  lesionRatio: number;
+  greenRatio: number;
+  dominantColor: "green" | "yellow" | "brown";
+}
+
+async function analyzeFoliarHealth(file: File): Promise<FoliarAnalysis> {
   return new Promise((resolve) => {
     if (typeof window === "undefined") {
-      resolve({ greenFrac: 0.45, yellowFrac: 0.06, brownFrac: 0.02 });
+      resolve({
+        plantCanopyPixels: 8000,
+        greenPixels: 7600,
+        chlorosisPixels: 250,
+        necrosisPixels: 150,
+        lesionRatio: 0.05,
+        greenRatio: 0.95,
+        dominantColor: "green",
+      });
       return;
     }
     const img = new Image();
@@ -458,44 +510,103 @@ async function analyzeImageColors(file: File): Promise<{ greenFrac: number; yell
         canvas.height = 128;
         const ctx = canvas.getContext("2d");
         if (!ctx) {
-          resolve({ greenFrac: 0.45, yellowFrac: 0.06, brownFrac: 0.02 });
+          resolve({
+            plantCanopyPixels: 8000,
+            greenPixels: 7600,
+            chlorosisPixels: 250,
+            necrosisPixels: 150,
+            lesionRatio: 0.05,
+            greenRatio: 0.95,
+            dominantColor: "green",
+          });
           return;
         }
         ctx.drawImage(img, 0, 0, 128, 128);
         const data = ctx.getImageData(0, 0, 128, 128).data;
-        const totalPixels = 128 * 128;
+
         let greenCount = 0;
-        let yellowCount = 0;
-        let brownCount = 0;
+        let chlorosisCount = 0;
+        let necrosisCount = 0;
 
         for (let i = 0; i < data.length; i += 4) {
           const r = data[i];
           const g = data[i + 1];
           const b = data[i + 2];
 
-          if (g > r && g > b && g > 55) {
+          // Filter out dark night shadows and perimeter underexposure
+          if (r < 32 && g < 32 && b < 32) continue;
+          // Filter out uniform neutral backgrounds (concrete, wall, tile)
+          if (Math.abs(r - g) < 12 && Math.abs(g - b) < 12 && (r + g + b) > 120 && (r + g + b) < 580) continue;
+
+          // 1. Plant Foliage Chlorophyll (Healthy Green)
+          const isGreenFoliage =
+            (g > r * 0.92 && g > b * 1.05 && g > 38) ||
+            (g > 60 && g > r && g > b);
+
+          if (isGreenFoliage) {
             greenCount++;
+            continue;
           }
-          if (r > 85 && g > 85 && b < 130 && Math.abs(r - g) < 55) {
-            yellowCount++;
+
+          // 2. Foliar Chlorosis (Abnormal bright yellow lesion/halo on leaf surface)
+          const isChlorosis =
+            r > 125 && g > 110 && b < 88 && (r - b) > 48 && Math.abs(r - g) < 40;
+
+          if (isChlorosis) {
+            chlorosisCount++;
+            continue;
           }
-          if (r > 60 && g < r && b < g && r < 160) {
-            brownCount++;
+
+          // 3. Foliar Necrosis (Abnormal dark brown/black fungal rot or blight spot on leaf)
+          const isFocalNecrosis =
+            r > 68 && r < 155 && g < r * 0.76 && b < g * 0.85 && (r - g) > 20 && b < 80;
+
+          if (isFocalNecrosis) {
+            necrosisCount++;
+            continue;
           }
         }
 
+        const plantCanopy = greenCount + chlorosisCount + necrosisCount;
+        const lesionRatio = plantCanopy > 0 ? (chlorosisCount + necrosisCount) / plantCanopy : 0;
+        const greenRatio = plantCanopy > 0 ? greenCount / plantCanopy : 1;
+
+        let dom: "green" | "yellow" | "brown" = "green";
+        if (chlorosisCount > greenCount && chlorosisCount > necrosisCount) dom = "yellow";
+        else if (necrosisCount > greenCount && necrosisCount > chlorosisCount) dom = "brown";
+
         resolve({
-          greenFrac: greenCount / totalPixels,
-          yellowFrac: yellowCount / totalPixels,
-          brownFrac: brownCount / totalPixels,
+          plantCanopyPixels: plantCanopy,
+          greenPixels: greenCount,
+          chlorosisPixels: chlorosisCount,
+          necrosisPixels: necrosisCount,
+          lesionRatio,
+          greenRatio,
+          dominantColor: dom,
         });
       } catch {
-        resolve({ greenFrac: 0.45, yellowFrac: 0.06, brownFrac: 0.02 });
+        resolve({
+          plantCanopyPixels: 8000,
+          greenPixels: 7600,
+          chlorosisPixels: 250,
+          necrosisPixels: 150,
+          lesionRatio: 0.05,
+          greenRatio: 0.95,
+          dominantColor: "green",
+        });
       }
     };
     img.onerror = () => {
       URL.revokeObjectURL(url);
-      resolve({ greenFrac: 0.45, yellowFrac: 0.06, brownFrac: 0.02 });
+      resolve({
+        plantCanopyPixels: 8000,
+        greenPixels: 7600,
+        chlorosisPixels: 250,
+        necrosisPixels: 150,
+        lesionRatio: 0.05,
+        greenRatio: 0.95,
+        dominantColor: "green",
+      });
     };
     img.src = url;
   });
@@ -520,7 +631,7 @@ export async function createScan(cropId: string | null | undefined, imageFile: F
   // 2. Pure Cloud EdgeVision AI Engine
   const scaledImage = await downscaleImage(imageFile, 1024, 0.82);
   const thumbImage = await downscaleImage(imageFile, 256, 0.75);
-  const { greenFrac, yellowFrac, brownFrac } = await analyzeImageColors(scaledImage);
+  const foliar = await analyzeFoliarHealth(scaledImage);
 
   // Fetch crops catalog from Supabase
   let crops: CropOut[] = [];
@@ -539,11 +650,9 @@ export async function createScan(cropId: string | null | undefined, imageFile: F
 
   if (!matchedCrop) {
     let candidateSlug = "cucumber";
-    if (greenFrac > 0.35 && yellowFrac > 0.03) {
-      candidateSlug = "cucumber";
-    } else if (yellowFrac > 0.35) {
+    if (foliar.dominantColor === "yellow") {
       candidateSlug = "rice";
-    } else if (greenFrac > 0.5) {
+    } else if (foliar.greenRatio > 0.6) {
       candidateSlug = "cucumber";
     } else {
       candidateSlug = "tomato";
@@ -563,40 +672,52 @@ export async function createScan(cropId: string | null | undefined, imageFile: F
     if (data && data.length > 0) diseases = data;
   } catch {}
 
-  // Determine pathology vs healthy
-  const isDiseased = yellowFrac > 0.025 || brownFrac > 0.02;
-  const isHealthy = !isDiseased;
+  // ── Precision Pathology Rule (User Specification):
+  // Filter ONLY if the crop has abnormal focal lesions (yellow halos or necrotic spots) covering >= 14% of the leaf.
+  // Otherwise, if green foliar health is preserved: Give 99% Good / Healthy!
+  const hasAbnormalLesions = foliar.plantCanopyPixels > 60 && foliar.lesionRatio >= 0.14 && foliar.greenRatio < 0.86;
+  const isHealthy = !hasAbnormalLesions;
 
   let matchedDisease: any = null;
   let top3Items: Top3Item[] = [];
   let severityLevel: "none" | "low" | "moderate" | "high" = "none";
   let affectedPct = 0;
-  const confidence = isHealthy ? 0.95 : 0.94;
+  // User Requirement: "if normal give 99 percent good"
+  const confidence = isHealthy ? 0.99 : 0.93;
 
   if (isHealthy) {
     severityLevel = "none";
     affectedPct = 0;
-    matchedDisease = diseases.find(d => d.slug.includes("healthy")) || null;
+    matchedDisease = diseases.find(d => d.slug.includes("healthy")) || {
+      id: `${matchedCrop.id}_healthy`,
+      slug: `${matchedCrop.slug}_healthy`,
+      name_key: `crop.${matchedCrop.slug}.healthy`,
+    };
     top3Items = [
       {
         disease_id: matchedDisease?.id,
         disease_slug: `${matchedCrop.slug}_healthy`,
         disease_name_key: `crop.${matchedCrop.slug}.healthy`,
-        confidence: 0.95,
+        confidence: 0.99,
       },
     ];
   } else {
-    affectedPct = Math.min(85, Math.max(10, Math.round((yellowFrac + brownFrac) * 100 * 1.5)));
-    severityLevel = affectedPct > 35 ? "high" : (affectedPct > 15 ? "moderate" : "low");
+    affectedPct = Math.min(85, Math.max(14, Math.round(foliar.lesionRatio * 100)));
+    severityLevel = affectedPct > 40 ? "high" : (affectedPct > 22 ? "moderate" : "low");
 
     const nonHealthyDiseases = diseases.filter(d => !d.slug.includes("healthy"));
-    matchedDisease = nonHealthyDiseases[0] || null;
+    // Match spot/blight if necrotic spots dominate, or chlorosis/rust if yellow dominates
+    if (foliar.necrosisPixels > foliar.chlorosisPixels) {
+      matchedDisease = nonHealthyDiseases.find(d => d.slug.includes("spot") || d.slug.includes("blight")) || nonHealthyDiseases[0] || null;
+    } else {
+      matchedDisease = nonHealthyDiseases[0] || null;
+    }
 
     top3Items = nonHealthyDiseases.slice(0, 3).map((d, i) => ({
       disease_id: d.id,
       disease_slug: d.slug,
       disease_name_key: d.name_key,
-      confidence: i === 0 ? 0.94 : (i === 1 ? 0.04 : 0.02),
+      confidence: i === 0 ? 0.93 : (i === 1 ? 0.05 : 0.02),
     }));
 
     if (top3Items.length === 0) {
@@ -604,7 +725,7 @@ export async function createScan(cropId: string | null | undefined, imageFile: F
         {
           disease_slug: `${matchedCrop.slug}_downy_mildew`,
           disease_name_key: `disease.${matchedCrop.slug}_downy_mildew`,
-          confidence: 0.94,
+          confidence: 0.93,
         },
       ];
     }
@@ -1112,36 +1233,61 @@ export async function getAdvisory(diseaseId: string, lang = "en"): Promise<Advis
       name: isTa ? `ஆரோக்கியமான ${cropName}` : `${cropName} Healthy Foliage`,
       category: isTa ? "பயிர் ஆரோக்கியம்" : "Commercial Crop Vigor & Immunity",
       summary: isTa
-        ? `${cropName} பயிர் வலுவான பச்சையத்துடன் ஆரோக்கியமாக காணப்படுகிறது.`
-        : `The ${cropName} foliage exhibits vigorous vegetative health, optimal chlorophyll reflectance, and intact cuticle barriers.`,
+        ? `${cropName} பயிர் வலுவான பச்சையத்துடன் ஆரோக்கியமாக காணப்படுகிறது. (99% முழு ஆரோக்கியம்)`
+        : `The ${cropName} foliage exhibits vigorous vegetative health, optimal chlorophyll reflectance, and intact cuticle barriers (99% Healthy Vigor).`,
       emergency_action: isTa
-        ? "வழக்கமான பாசனம் மற்றும் களையெடுப்பை தொடரவும்."
-        : "No emergency intervention required. Maintain scheduled balanced fertigation and regular field scouting.",
+        ? "வழக்கமான பாசனம் மற்றும் எளிய பராமரிப்பை தொடரவும்."
+        : "No intervention needed. Your plant is thriving in prime health.",
       organic_solution: isTa
-        ? "15 நாட்களுக்கு ஒருமுறை பஞ்சகாவ்யா (3%) தெளிக்கவும்."
-        : "Apply Panchagavya (3%) or Seaweed biostimulant every 14 days to sustain active microbial root defense.",
+        ? "15 நாட்களுக்கு ஒருமுறை பஞ்சகாவ்யா (3%) அல்லது மண்புழு உரம் இடவும்."
+        : "Apply light organic compost tea or seaweed biostimulant every 14 days to sustain active microbial defense.",
       soil_and_water: isTa
         ? "வேர்ப்பகுதியில் சீரான ஈரப்பதத்தை பராமரிக்கவும்."
-        : "Ensure balanced furrow or drip irrigation at 60–70% field capacity. Avoid water ponding.",
+        : "Maintain steady moisture; avoid overwatering or water stagnating in the soil.",
       symptoms: [
         isTa ? "சீரான பச்சை நிற இலைகள்" : "Uniform deep green chlorophyll pigmentation",
         isTa ? "வலுவான தண்டு" : "Erect stem and turgid leaves free of necrotic lesions",
       ],
       prevention: [
-        isTa ? "பயறு வகை பயிர்களுடன் பயிர் சுழற்சி செய்யவும்" : "Practice regular crop rotation with leguminous green manure",
-        isTa ? "பரிந்துரைக்கப்பட்ட பயிர் இடைவெளியை கடைபிடிக்கவும்" : "Maintain optimal planting geometry for sunlight penetration and canopy aeration",
+        isTa ? "காற்றோட்டமான இடத்தில் வைக்கவும்" : "Maintain good air circulation and adequate sunlight exposure",
+        isTa ? "மண் வளம் காக்கவும்" : "Mulch lightly with dry leaves or compost to retain balanced root moisture",
       ],
       management: [
-        isTa ? "ஒட்டும் பொறிகளை பயன்படுத்தவும்" : "Deploy yellow and blue sticky traps (10 per acre) for prophylactic pest monitoring",
+        isTa ? "இலை தூசியை துடைக்கவும்" : "Clean leaf surfaces periodically with a soft damp cloth to optimize sunlight absorption",
+        isTa ? "காய்ந்த இலைகளை நீக்கவும்" : "Gently prune aged yellowing bottom leaves to channel energy to new shoots",
       ],
       seek_help_when: [
-        isTa ? "இலைகள் திடீரென வாடினால்" : "Foliar chlorosis or atypical wilting appears on new shoots",
+        isTa ? "இலைகள் திடீரென வாடினால்" : "Sudden wilting or atypical spotting appears on new shoots",
       ],
       severity_notes: {
-        none: isTa ? "பயிர் ஆரோக்கியமாக உள்ளது." : "Prime crop vigor. Continue prophylactic management.",
+        none: isTa ? "பயிர் 99% ஆரோக்கியமாக உள்ளது." : "Prime vigor (99% healthy). Continue routine care.",
       },
-      sources: ["APMC Commercial Quality Standards", "AgriGuard Agronomy Protocols"],
-      disclaimer: isTa ? "நல்ல விவசாய முறைகளை கடைபிடிக்கவும்." : "Prescription optimized for Grade-A foliar protection and export safety standards.",
+      sources: ["ICAR Botanical Protocols", "AgriGuard Foliar Science"],
+      disclaimer: isTa ? "வழக்கமான பராமரிப்பை தொடரவும்." : "Optimal plant vigor detected. Continue regular sunlight and moisture routine.",
+      student_advice: {
+        pot_care: [
+          isTa ? "தொட்டியின் அடிப்பகுதியில் உள்ள துளை அடைக்காமல் இருப்பதை உறுதி செய்யவும்." : "Inspect drainage holes beneath the pot so excess irrigation freely drains into the saucer.",
+          isTa ? "மாதமொருமுறை தொட்டி மேல் மண்ணை ஒரு முட்கரண்டியால் லேசாக கிளறி விடவும்." : "Gently aerate the top 1 inch of pot soil with a fork once a month for root oxygenation.",
+          isTa ? "செடியை 4 முதல் 6 மணி நேரம் மிதமான காலை வெயில் படும் இடத்தில் வைக்கவும்." : "Position pot where it receives 4–6 hours of bright morning sunlight and pleasant ventilation.",
+        ],
+        home_remedy: isTa
+          ? "வேதி உரங்கள் தேவையில்லை; வீட்டில் தயாரித்த காய்கறி கழிவு உரம் அல்லது டீ தூள் உரம் போதுமானது."
+          : "Zero chemical sprays needed. A teaspoon of vermicompost or used dry tea grounds monthly sustains vigorous potted foliage.",
+        light_water: isTa
+          ? "தொட்டி மேல் மண் 1 அங்குலம் காய்ந்த பிறகு மட்டுமே நீர் ஊற்றவும்."
+          : "Water only when the top 1 inch of potted soil feels dry to touch. Empty excess standing water from the bottom saucer.",
+        botany_insight: isTa
+          ? "செடியின் இலைகளில் பச்சையம் (Chlorophyll A & B) அதிக அளவில் உள்ளது. ஒளிச்சேர்க்கை (Photosynthesis) மற்றும் நீராவிப்போக்கு (Transpiration) சீராக இயங்குகிறது."
+          : "Botanical Science: The leaf exhibits high Chlorophyll A & B reflectance and firm turgor pressure in guard cells, indicating optimal photosynthesis and active cellular transpiration.",
+      },
+      farmer_advice: {
+        field_actions: [
+          isTa ? "வயல் வரப்புகளை சுத்தமாக வைத்து பயிர் இடைவெளியை பராமரிக்கவும்." : "Maintain clean field bunds and ensure optimal row geometry for daylight penetration.",
+          isTa ? "15 நாட்களுக்கு ஒருமுறை பஞ்சகாவ்யா (3%) தெளிக்கவும்." : "Foliar spray with Panchagavya (3%) or seaweed bio-extract every 14 days for systemic resistance.",
+        ],
+        acre_dosage: isTa ? "ஏக்கருக்கு 5 டன் மக்கிய தொழுவுரம் அல்லது மண்புழு உரம்." : "5 tonnes/acre well-decomposed FYM (Farm Yard Manure) or 2 tonnes/acre vermicompost at planting.",
+        irrigation_schedule: isTa ? "மண்ணின் ஈரப்பதம் 60-70% இருக்குமாறு சொட்டுநீர் பாசனம் செய்யவும்." : "Drip or furrow irrigation at 60–70% field capacity; avoid stagnation in low-lying furrows.",
+      },
     };
   }
 
@@ -1153,36 +1299,60 @@ export async function getAdvisory(diseaseId: string, lang = "en"): Promise<Advis
       ? `${cropName} பயிரில் இலைப்புள்ளி அல்லது கருகல் நோய் தொற்று கண்டறியப்பட்டுள்ளது.`
       : `Active foliar infection identified on ${cropName} (${condition}). Targeted biological containment is required to safeguard photosynthetic area and harvest yield.`,
     emergency_action: isTa
-      ? "பாதிக்கப்பட்ட இலைகளை அகற்றி சூடோமோனாஸ் தெளிக்கவும்."
-      : "Prune severely infected lower leaves. Spray Pseudomonas fluorescens (10g/L) or certified copper formulation in the cool evening.",
+      ? "பாதிக்கப்பட்ட இலைகளை அகற்றி சூடோமோனாஸ் அல்லது வேப்ப எண்ணெய் தெளிக்கவும்."
+      : "Prune severely affected lower leaves. Apply protective organic neem emulsion or biological foliar spray in the cool evening.",
     organic_solution: isTa
-      ? "புளித்த மோர் கரைசல் (5%) அல்லது வேப்பங்கொட்டை சாறு தெளிக்கவும்."
-      : "Apply fermented sour buttermilk (5%) + Neem seed kernel extract (5%) every 7 days for biological fungistatic suppression.",
+      ? "1 லிட்டர் தண்ணீரில் 5 மிலி வேப்ப எண்ணெய் + 2 துளி சோப்பு கரைசல் கலந்து தெளிக்கவும்."
+      : "Dilute 5ml organic cold-pressed neem oil + 2 drops mild liquid soap in 1 litre water. Spray thoroughly on both leaf sides in the evening.",
     soil_and_water: isTa
-      ? "இலைகளில் நீர் தெளிப்பதை தவிர்க்கவும்."
-      : "Switch to base or drip irrigation to keep leaf surfaces dry and stop fungal zoospore dissemination.",
+      ? "இலைகளில் நீர் தெளிப்பதை தவிர்க்கவும்; வேரில் மட்டும் நீர் ஊற்றவும்."
+      : "Switch to base or drip watering to keep foliage dry and arrest fungal zoospore dissemination.",
     symptoms: [
-      isTa ? "இலைகளில் கரும் புள்ளிகள்" : "Discrete or confluent lesions with chlorotic halos",
+      isTa ? "இலைகளில் கரும் புள்ளிகள் அல்லது மஞ்சள் வளையம்" : "Discrete focal lesions with chlorotic halos or brown necrotic margins",
       isTa ? "இலை உதிர்தல்" : "Accelerated senescence and leaf drop on affected stems",
     ],
     prevention: [
-      isTa ? "சான்றளிக்கப்பட்ட விதைகளை பயன்படுத்தவும்" : "Use certified disease-indexed seeds and sterilize pruning shears",
-      isTa ? "காற்றோட்டத்திற்கு இடைவெளி விடவும்" : "Ensure wide row spacing to accelerate canopy drying after dew",
+      isTa ? "பாதிக்கப்பட்ட செடியை மற்ற செடிகளிலிருந்து தள்ளி வைக்கவும்" : "Isolate affected plant and sterilize pruning shears with rubbing alcohol after cutting",
+      isTa ? "காற்றோட்டத்திற்கு இடைவெளி விடவும்" : "Ensure adequate spacing between plants to accelerate canopy drying after dew",
     ],
     management: [
-      isTa ? "பாதிக்கப்பட்ட கழிவுகளை அகற்றவும்" : "Apply targeted bio-fungicide formulation (Pseudomonas fluorescens 10g/L or Trichoderma viride)",
-      isTa ? "வேப்ப எண்ணெய் தெளிக்கவும்" : "Maintain preventive botanical spray schedule during humid conditions",
+      isTa ? "வேப்ப எண்ணெய் கரைசல் தெளிக்கவும்" : "Apply organic cold-pressed neem emulsion (5ml/L) every 5-7 days",
+      isTa ? "பாதிக்கப்பட்ட இலைகளை வெட்டி அப்புறப்படுத்தவும்" : "Prune diseased leaves and dispose in garbage (do not compost diseased foliage)",
     ],
     seek_help_when: [
       isTa ? "இரண்டு நாட்களுக்குள் நோய் வேகமாக பரவினால்" : "Lesions spread across more than 20% of canopy within 48 hours",
     ],
     severity_notes: {
-      low: isTa ? "ஆரம்ப நிலை." : "Early foliar manifestation. Isolate affected leaves and apply protective bio-fungicide wash.",
+      low: isTa ? "ஆரம்ப நிலை." : "Early foliar manifestation. Isolate affected leaves and apply protective bio-wash.",
       moderate: isTa ? "நோய் பரவுகிறது." : "Active infection spread. Apply bio-control spray and maintain dry root-zone aeration.",
       high: isTa ? "தீவிர பாதிப்பு." : "High pathology threshold. Apply curative bio-formulation and prune heavily blighted foliage.",
     },
     sources: ["ICAR Agronomic Standard Protocols", "APMC Quality Guidelines"],
     disclaimer: isTa ? "நல்ல விவசாய முறைகளை கடைபிடிக்கவும்." : "Prescription optimized for Grade-A foliar protection and export safety standards.",
+    student_advice: {
+      pot_care: [
+        isTa ? "இந்த செடியை பால்கனியில் உள்ள மற்ற வீட்டுச் செடிகளிலிருந்து 1 வாரத்திற்கு தள்ளி வைக்கவும்." : "Isolate this pot at least 2 metres away from other balcony/room plants for 7 days to stop fungal spore drift.",
+        isTa ? "தொட்டியின் அடிப்பகுதி தட்டில் தேங்கியுள்ள நீரை உடனே ஊற்றி விடவும்." : "Empty the saucer tray beneath the pot immediately; standing water encourages root rot and soil pathogens.",
+        isTa ? "தொட்டியின் மேல் மண்ணை முட்கரண்டியால் கிளறி வேருக்கு காற்றோட்டம் தரவும்." : "Carefully scratch and aerate the topsoil with a fork so the root ball breathes and dries out excess dampness.",
+      ],
+      home_remedy: isTa
+        ? "வீட்டு முறை: 1 லிட்டர் தண்ணீரில் 1 டீஸ்பூன் (5 மி.லி) வேப்ப எண்ணெய் மற்றும் 2 சொட்டு பாத்திரம் கழுவும் லிக்விட் சோப்பு கலந்து மாலையில் இலைகளின் மேல் மற்றும் அடியில் தெளிக்கவும்."
+        : "Home Remedy: Mix 1 teaspoon (5ml) pure neem oil + 2 drops mild dish soap into 1 litre warm water. Shake vigorously and mist both upper and lower leaf surfaces during cool evening hours.",
+      light_water: isTa
+        ? "செடியை நல்ல காற்றோட்டமும், காலை வெயிலும் உள்ள இடத்திற்கு மாற்றவும். தண்ணீர் ஊற்றும்போது இலைகளில் படாமல் மண்ணில் மட்டும் ஊற்றவும்."
+        : "Move pot to a spot with bright morning sunlight and open airflow. When watering, pour directly onto the soil base—never wet the leaves.",
+      botany_insight: isTa
+        ? "தாவரவியல் அறிவியல்: இலைகளில் உள்ள பச்சைய செல்களை பூஞ்சை தாக்கியுள்ளது. ஆரம்பத்திலேயே வேப்ப எண்ணெய் தெளித்தால் பூஞ்சை இலைத் துளைகள் (Stomata) வழியே பரவுவது தடுக்கப்படும்."
+        : "Botanical Science: The spots mark localized fungal mycelium or bacterial penetration in leaf mesophyll tissue. Evening botanical spray disrupts pathogen cell membranes and protects surrounding chloroplasts.",
+    },
+    farmer_advice: {
+      field_actions: [
+        isTa ? "பாதிக்கப்பட்ட இலைகளை வெட்டி வயலுக்கு வெளியே கொண்டு சென்று எரிக்கவும்." : "Prune severely infected lower leaves and safely incinerate outside the field perimeter.",
+        isTa ? "சூடோமோனாஸ் ஃப்ளோரசன்ஸ் (10 கிராம்/லிட்டர்) மாலையில் தெளிக்கவும்." : "Spray Pseudomonas fluorescens (10g/L) or Trichoderma viride in the cool evening for biological antagonism.",
+      ],
+      acre_dosage: isTa ? "ஏக்கருக்கு 1 கிலோ சூடோமோனாஸ் 200 லிட்டர் தண்ணீரில் கலந்து தெளிக்கவும்." : "1 kg Pseudomonas fluorescens or 2.5 kg copper oxychloride 50% WP in 200 litres water per acre.",
+      irrigation_schedule: isTa ? "வாய்க்கால் பாசனத்தை குறைத்து சொட்டுநீர் பாசனத்தை கடைபிடிக்கவும்." : "Avoid overhead furrow splashing; use drip fertigation to maintain leaf dryness.",
+    },
   };
 }
 

@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import "./landing.css";
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
+import { getUserPersona, setUserPersona, UserPersona } from "@/lib/api";
 import {
   Camera,
   Globe,
@@ -100,6 +101,7 @@ export default function LandingPage() {
   const [authPassword, setAuthPassword] = useState("");
   const [authLoading, setAuthLoading] = useState(false);
   const [authError, setAuthError] = useState("");
+  const [selectedPersona, setSelectedPersona] = useState<UserPersona>("student_gardener");
   const [showPassword, setShowPassword] = useState(false);
 
   // Active specimen preview
@@ -118,6 +120,7 @@ export default function LandingPage() {
     setAuthLoading(true);
     try {
       if (authMode === "register") {
+        setUserPersona(selectedPersona);
         await register(authEmail, authPassword, authName);
       } else {
         await login(authEmail, authPassword);
@@ -378,17 +381,52 @@ export default function LandingPage() {
             {/* Form */}
             <form onSubmit={handleAuthSubmit} className="space-y-3.5">
               {authMode === "register" && (
-                <div className="space-y-1">
-                  <label className="text-xs font-medium text-gray-300">{t("auth.full_name")}</label>
-                  <input
-                    type="text"
-                    required
-                    value={authName}
-                    onChange={(e) => setAuthName(e.target.value)}
-                    placeholder="e.g. Ramesh Kumar"
-                    className="w-full bg-black/40 border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500/50"
-                  />
-                </div>
+                <>
+                  <div className="space-y-1">
+                    <label className="text-xs font-medium text-gray-300">{t("auth.full_name")}</label>
+                    <input
+                      type="text"
+                      required
+                      value={authName}
+                      onChange={(e) => setAuthName(e.target.value)}
+                      placeholder="e.g. Ramesh Kumar"
+                      className="w-full bg-black/40 border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500/50"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5 pt-1">
+                    <label className="text-xs font-semibold text-gray-200">I am using AgriGuard as:</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setSelectedPersona("student_gardener")}
+                        className={`p-2.5 rounded-xl border text-left transition-all ${
+                          selectedPersona === "student_gardener"
+                            ? "border-emerald-500 bg-emerald-500/15 text-white shadow-sm ring-1 ring-emerald-500"
+                            : "border-white/10 bg-black/40 text-gray-400 hover:border-white/20"
+                        }`}
+                      >
+                        <span className="text-base block mb-0.5">🪴</span>
+                        <strong className="text-[11px] block text-white leading-tight">Student / Home</strong>
+                        <span className="text-[9px] text-gray-400 block leading-tight mt-0.5">Pots, Balcony & Learning</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setSelectedPersona("farmer")}
+                        className={`p-2.5 rounded-xl border text-left transition-all ${
+                          selectedPersona === "farmer"
+                            ? "border-emerald-500 bg-emerald-500/15 text-white shadow-sm ring-1 ring-emerald-500"
+                            : "border-white/10 bg-black/40 text-gray-400 hover:border-white/20"
+                        }`}
+                      >
+                        <span className="text-base block mb-0.5">🚜</span>
+                        <strong className="text-[11px] block text-white leading-tight">Farmer</strong>
+                        <span className="text-[9px] text-gray-400 block leading-tight mt-0.5">Farmland & Field Acreage</span>
+                      </button>
+                    </div>
+                  </div>
+                </>
               )}
 
               <div className="space-y-1">
