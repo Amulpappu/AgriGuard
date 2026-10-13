@@ -58,9 +58,6 @@ export default function ScanPage() {
       if (typeof window !== "undefined") {
         try {
           sessionStorage.setItem(`scan_data_${result.id}`, JSON.stringify(result));
-          if (preview) {
-            sessionStorage.setItem(`scan_img_${result.id}`, preview);
-          }
         } catch {}
       }
       invalidateCached("dashboard");

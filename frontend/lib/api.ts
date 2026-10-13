@@ -69,7 +69,10 @@ export function resolveImageUrl(url?: string | null): string {
   if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("data:")) {
     return url;
   }
-  const base = getBackendUrl() || "http://localhost:8001";
+  const base = getBackendUrl();
+  if (!base) {
+    return "/agriguard_logo_4k.png";
+  }
   return `${base}${url.startsWith("/") ? "" : "/"}${url}`;
 }
 

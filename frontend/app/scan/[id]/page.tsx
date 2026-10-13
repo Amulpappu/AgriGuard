@@ -8,6 +8,7 @@ import {
   getAdvisory,
   reclassifyScan,
   getCrops,
+  resolveImageUrl,
   ScanOut,
   AdvisoryOut,
   CropOut,
@@ -227,7 +228,7 @@ export default function ScanDetailPage() {
 
   const imgSrc =
     (typeof window !== "undefined" && sessionStorage.getItem(`scan_img_${scan.id}`)) ||
-    (scan.image_url.startsWith("http") || scan.image_url.startsWith("data:") ? scan.image_url : `${API_BASE}${scan.image_url}`);
+    resolveImageUrl(scan.image_url);
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-6xl mx-auto space-y-5 pb-28 sm:pb-16">
