@@ -13,6 +13,15 @@ import requests
 import serial
 import serial.tools.list_ports
 
+# Fix Windows console UTF-8 output if needed
+try:
+    if hasattr(sys.stdout, 'reconfigure'):
+        sys.stdout.reconfigure(encoding='utf-8')
+    if hasattr(sys.stderr, 'reconfigure'):
+        sys.stderr.reconfigure(encoding='utf-8')
+except Exception:
+    pass
+
 SUPABASE_URL = "https://todwosflbwzuizvedouy.supabase.co"
 SUPABASE_ANON_KEY = (
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9."
