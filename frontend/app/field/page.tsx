@@ -180,7 +180,9 @@ export default function FieldPage() {
     } catch (err: any) {
       console.warn("Serial connection notice:", err);
       if (err.name !== "NotFoundError") {
-        setUsbError(err.message || "Failed to open COM port. Please close Arduino IDE Serial Monitor if open.");
+        setUsbError(
+          `${err.message || "Failed to open serial port."} Tip: If you selected a Bluetooth port (COM3/COM4), cancel and look for "Silicon Labs CP210x" or "CH340". If it doesn't appear, your USB cable may only have charging wires (no data) or Arduino IDE Serial Monitor is still open.`
+        );
       }
       setUsbConnected(false);
       setUsbConnecting(false);
