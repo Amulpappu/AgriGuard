@@ -1,10 +1,15 @@
 "use client";
 
+import { useState, useRef } from "react";
 import { getSensorLatest, getBioRisk, SensorLatestOut, BioRiskOut } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import { useCachedQuery } from "@/lib/useCachedQuery";
-import { Wifi, WifiOff, Droplets, Thermometer, Wind, Info, Activity, RefreshCw, ShieldAlert } from "lucide-react";
+import { supabase } from "@/lib/supabase";
+import { 
+  Wifi, WifiOff, Droplets, Thermometer, Wind, Info, Activity, RefreshCw, 
+  ShieldAlert, Cable, Terminal, AlertCircle, CheckCircle2 
+} from "lucide-react";
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
 } from "recharts";
@@ -55,6 +60,22 @@ export default function FieldPage() {
   const { t } = useI18n();
   const { userId, email } = useAuth();
 
+  // USB Data Cable Live Web Serial State
+  const [usbConnected, setUsbConnected] = useState(false);
+  const [usbConnecting, setUsbConnecting] = useState(false);
+  const [usbError, setUsbError] = useState<string | null>(null);
+  const [usbLogs, setUsbLogs] = useState<string[]>([]);
+  const [showLogs, setShowLogs] = useState(false);
+  const [usbLive, setUsbLive] = useState<{
+    id: number;
+    device_id: string;
+    soil_moisture: number;
+    temp_c: number;
+    humidity: number;
+    recorded_at: string;
+  } | null>(null);
+  const portRef = useRef<any>(null);
+
   // Live telemetry: cached reading scoped by user, refreshed every 15s in the background.
   const sensorKey = userId ? `sensor:latest:${userId}` : "sensor:latest";
   const sensorQ = useCachedQuery<SensorLatestOut>(sensorKey, getSensorLatest, { refreshInterval: 15_000 });
@@ -62,33 +83,14 @@ export default function FieldPage() {
   const loading = sensorQ.isValidating;
   const fetchLatest = () => sensorQ.refresh();
 
-  const fallbackTelemetry: SensorLatestOut = {
-    latest: {
-      id: 101,
-      device_id: "ESP32-AGRI-STATION-01",
-      soil_moisture: 62.5,
-      temp_c: 24.8,
-      humidity: 78.4,
-      recorded_at: new Date().toISOString(),
-    },
-    series: [
-      { id: 95, device_id: "ESP32-AGRI-STATION-01", soil_moisture: 58.2, temp_c: 21.0, humidity: 86.5, recorded_at: new Date(Date.now() - 3600000 * 5).toISOString() },
-      { id: 96, device_id: "ESP32-AGRI-STATION-01", soil_moisture: 59.4, temp_c: 22.1, humidity: 84.0, recorded_at: new Date(Date.now() - 3600000 * 4).toISOString() },
-      { id: 97, device_id: "ESP32-AGRI-STATION-01", soil_moisture: 60.8, temp_c: 23.5, humidity: 81.2, recorded_at: new Date(Date.now() - 3600000 * 3).toISOString() },
-      { id: 98, device_id: "ESP32-AGRI-STATION-01", soil_moisture: 61.9, temp_c: 25.0, humidity: 77.0, recorded_at: new Date(Date.now() - 3600000 * 2).toISOString() },
-      { id: 99, device_id: "ESP32-AGRI-STATION-01", soil_moisture: 62.5, temp_c: 24.8, humidity: 78.4, recorded_at: new Date().toISOString() },
-    ],
-    context_hint: "Canopy humidity 78% with moderate dew duration. Spore incubation window active.",
-  };
-
-  const hasRealData = Boolean(data?.latest);
-  const activeData: SensorLatestOut = hasRealData ? data! : { series: [] };
-  const live = activeData.latest;
+  const hasRealData = Boolean(data?.latest || usbLive);
+  const activeData: SensorLatestOut = hasRealData ? (data || { series: [] }) : { series: [] };
+  const live = usbLive || activeData.latest;
 
   const recordedDate = live?.recorded_at ? new Date(live.recorded_at) : null;
   const recordedTs = recordedDate ? recordedDate.getTime() : null;
-  const isStale = recordedTs != null && !isNaN(recordedTs) && Date.now() - recordedTs > 30 * 60 * 1000;
-  const timeAgo = live?.recorded_at ? formatTimeAgo(live.recorded_at) : null;
+  const isStale = !usbConnected && recordedTs != null && !isNaN(recordedTs) && Date.now() - recordedTs > 30 * 60 * 1000;
+  const timeAgo = usbConnected ? "just now (USB Live)" : (live?.recorded_at ? formatTimeAgo(live.recorded_at) : null);
 
   // Disease Severity Value (DSV) risk derived from the current microclimate reading.
   const riskKey = live ? `biorisk:${live.temp_c}:${live.humidity}:${live.soil_moisture}` : null;
@@ -98,6 +100,102 @@ export default function FieldPage() {
   const risk = riskQ.data;
   const riskTone = !risk ? "text-gray-300" : risk.risk_percentage > 70 ? "text-rose-400" : risk.risk_percentage > 40 ? "text-amber-400" : "text-emerald-400";
   const riskBar = !risk ? "bg-gray-500" : risk.risk_percentage > 70 ? "bg-rose-500" : risk.risk_percentage > 40 ? "bg-amber-500" : "bg-emerald-500";
+
+  // Web Serial connect function
+  async function connectUSB() {
+    if (typeof window === "undefined" || !("serial" in navigator)) {
+      setUsbError("Web Serial is supported on desktop Chrome & Edge. You can also run: py scripts/esp32_usb_bridge.py");
+      return;
+    }
+    setUsbConnecting(true);
+    setUsbError(null);
+    try {
+      const port = await (navigator as any).serial.requestPort();
+      await port.open({ baudRate: 115200 });
+      portRef.current = port;
+      setUsbConnected(true);
+      setUsbConnecting(false);
+
+      const textDecoder = new TextDecoderStream();
+      port.readable.pipeTo(textDecoder.writable);
+      const reader = textDecoder.readable.getReader();
+
+      let buffer = "";
+      let curTemp: number | null = null;
+      let curHum: number | null = null;
+      let curSoil: number | null = null;
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        if (value) {
+          buffer += value;
+          const lines = buffer.split("\n");
+          buffer = lines.pop() || "";
+
+          for (const line of lines) {
+            const clean = line.trim();
+            if (!clean) continue;
+            setUsbLogs((prev) => [clean, ...prev.slice(0, 24)]);
+
+            // Parse text output
+            const tMatch = clean.match(/Temperature:\s*([\d\.]+)/i);
+            if (tMatch) curTemp = parseFloat(tMatch[1]);
+            const hMatch = clean.match(/Humidity:\s*([\d\.]+)/i);
+            if (hMatch) curHum = parseFloat(hMatch[1]);
+            const sMatch = clean.match(/Soil Moisture:\s*([\d\.]+)/i);
+            if (sMatch) curSoil = parseFloat(sMatch[1]);
+
+            if (curTemp !== null && curHum !== null && curSoil !== null) {
+              const reading = {
+                id: Date.now(),
+                device_id: "ESP32-USB-CABLE",
+                soil_moisture: curSoil,
+                temp_c: curTemp,
+                humidity: curHum,
+                recorded_at: new Date().toISOString(),
+              };
+              setUsbLive(reading);
+
+              // Persist directly to Supabase cloud
+              Promise.resolve(
+                supabase.from("sensor_readings").insert({
+                  device_id: reading.device_id,
+                  soil_moisture: reading.soil_moisture,
+                  temp_c: reading.temp_c,
+                  humidity: reading.humidity,
+                  recorded_at: reading.recorded_at,
+                })
+              ).then(() => {
+                sensorQ.refresh();
+              }).catch(() => {});
+
+              curTemp = null;
+              curHum = null;
+              curSoil = null;
+            }
+          }
+        }
+      }
+    } catch (err: any) {
+      console.warn("Serial connection notice:", err);
+      if (err.name !== "NotFoundError") {
+        setUsbError(err.message || "Failed to open COM port. Please close Arduino IDE Serial Monitor if open.");
+      }
+      setUsbConnected(false);
+      setUsbConnecting(false);
+    }
+  }
+
+  async function disconnectUSB() {
+    try {
+      if (portRef.current) {
+        await portRef.current.close();
+      }
+    } catch (_) {}
+    portRef.current = null;
+    setUsbConnected(false);
+  }
 
   // Format series for chart
   const seriesChartData = (activeData.series || []).map((s) => ({
@@ -124,6 +222,94 @@ export default function FieldPage() {
 
       {/* Bio-Shield 360° Epidemic Radar & Mandi Economics */}
       <BioShieldRadar />
+
+      {/* ⚡ ESP32 USB Cable Direct Stream Card */}
+      <div className="glass rounded-2xl p-4 sm:p-5 border border-emerald-500/30 bg-emerald-950/15 space-y-3 shadow-lg shadow-emerald-950/20">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className={`w-11 h-11 rounded-2xl flex items-center justify-center transition-all ${
+              usbConnected
+                ? "bg-emerald-500 text-black shadow-lg shadow-emerald-500/30 animate-pulse"
+                : "bg-white/10 text-emerald-400 border border-white/10"
+            }`}>
+              <Cable size={22} />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm font-bold text-white tracking-tight">ESP32 Data Cable Direct Stream</h3>
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                  usbConnected
+                    ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
+                    : "bg-white/10 text-gray-400"
+                }`}>
+                  {usbConnected ? "🟢 USB Connected & Streaming" : "USB Ready"}
+                </span>
+              </div>
+              <p className="text-xs text-gray-400 mt-0.5">
+                Plug your ESP32 into this laptop via USB cable and stream real-time DHT & Soil data straight into AgriGuard.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 self-start sm:self-center">
+            {usbConnected ? (
+              <button
+                type="button"
+                onClick={disconnectUSB}
+                className="px-4 py-2 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/40 text-xs font-bold transition-all"
+              >
+                Disconnect Cable
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={connectUSB}
+                disabled={usbConnecting}
+                className="px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-bold text-xs flex items-center gap-2 shadow-lg shadow-emerald-500/20 transition-all active:scale-95 disabled:opacity-50"
+              >
+                <Cable size={14} />
+                {usbConnecting ? "Selecting COM Port..." : "Connect ESP32 (USB Cable)"}
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => setShowLogs(!showLogs)}
+              className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 text-xs font-semibold flex items-center gap-1 border border-white/10 transition-all"
+              title="Toggle Live Serial Monitor Logs"
+            >
+              <Terminal size={14} />
+            </button>
+          </div>
+        </div>
+
+        {usbError && (
+          <div className="flex items-start gap-2 p-3 bg-rose-500/10 border border-rose-500/30 rounded-xl text-rose-300 text-xs">
+            <AlertCircle size={15} className="flex-shrink-0 mt-0.5" />
+            <div>
+              <p>{usbError}</p>
+              <p className="text-[11px] text-gray-400 mt-1">
+                Tip: Close Arduino IDE&apos;s Serial Monitor if it is currently open, then try connecting again.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {showLogs && (
+          <div className="bg-black/70 rounded-xl p-3 border border-white/10 font-mono text-[11px] text-emerald-400 space-y-1 max-h-40 overflow-y-auto">
+            <div className="flex items-center justify-between text-gray-400 text-[10px] pb-1 border-b border-white/10">
+              <span>ESP32 115200 Baud Live Serial Stream:</span>
+              <button onClick={() => setUsbLogs([])} className="hover:text-white">Clear</button>
+            </div>
+            {usbLogs.length === 0 ? (
+              <p className="text-gray-500 italic">No serial lines received yet. Click Connect ESP32 to open port.</p>
+            ) : (
+              usbLogs.map((log, idx) => (
+                <div key={idx} className="leading-relaxed truncate">{log}</div>
+              ))
+            )}
+          </div>
+        )}
+      </div>
 
       {/* Status Banner */}
       <div className="flex items-center justify-between p-3 rounded-2xl glass border border-white/5 text-xs">
