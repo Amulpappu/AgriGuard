@@ -6,6 +6,7 @@
 import type { Session } from "@supabase/supabase-js";
 import { supabase, ADMIN_EMAIL } from "@/lib/supabase";
 import { invalidateCached } from "@/lib/useCachedQuery";
+import { predictLeaf, evaluateConfidence } from "@/lib/leafModel";
 
 /**
  * Backend URL is only used when explicitly configured via env var.
@@ -689,10 +690,9 @@ export async function createScan(cropId: string | null | undefined, imageFile: F
     } catch (_) {}
   }
 
-  // 2. Pure Cloud EdgeVision AI Engine
+  // 2. In-browser AgriGuard leaf model (agriguard-leaf-v1, same ONNX model as the Python backend)
   const scaledImage = await downscaleImage(imageFile, 1024, 0.82);
   const thumbImage = await downscaleImage(imageFile, 256, 0.75);
-  const foliar = await analyzeFoliarHealth(scaledImage);
 
   // Fetch crops catalog safely
   let crops: CropOut[] = [];
@@ -705,95 +705,73 @@ export async function createScan(cropId: string | null | undefined, imageFile: F
     crops = STATIC_FALLBACK_CROPS;
   }
 
-  // Determine Crop
-  let matchedCrop: CropOut | undefined;
+  let selectedCrop: CropOut | undefined;
   if (cropId && cropId !== "auto") {
-    matchedCrop = crops.find((c) => c.id === cropId || c.slug === cropId);
+    selectedCrop = crops.find((c) => c.id === cropId || c.slug === cropId);
   }
 
-  if (!matchedCrop) {
-    let candidateSlug = "cucumber";
-    if (foliar.dominantColor === "yellow") {
-      candidateSlug = "rice";
-    } else if (foliar.greenRatio > 0.6) {
-      candidateSlug = "cucumber";
-    } else {
-      candidateSlug = "tomato";
-    }
-    matchedCrop = crops.find((c) => c.slug === candidateSlug) || crops[0] || STATIC_FALLBACK_CROPS[0];
-  }
+  // Real AI prediction (crop auto-detect, disease, leaf-only colour check)
+  const pred = await predictLeaf(scaledImage, selectedCrop ? selectedCrop.slug : null);
+  const conf = evaluateConfidence(pred.probs);
+
+  // Resolve the crop the model detected (or the farmer selected)
+  const cropSlug = selectedCrop?.slug || pred.crop || "unknown";
+  let matchedCrop: CropOut =
+    selectedCrop ||
+    crops.find((c) => c.slug === cropSlug) ||
+    STATIC_FALLBACK_CROPS.find((c) => c.slug === cropSlug) || {
+      id: STATIC_FALLBACK_CROPS[0].id, // valid FK for the database row; display uses slug/name_key below
+      slug: "unknown",
+      name_key: "crop.unknown",
+      icon_emoji: "🌿",
+    };
 
   // Guarantee matchedCrop has a valid DB UUID
   if (!isValidUuid(matchedCrop.id)) {
-    const validMatch = STATIC_FALLBACK_CROPS.find((c) => c.slug === matchedCrop?.slug) || STATIC_FALLBACK_CROPS[0];
+    const validMatch = STATIC_FALLBACK_CROPS.find((c) => c.slug === matchedCrop.slug) || STATIC_FALLBACK_CROPS[0];
     matchedCrop = { ...matchedCrop, id: validMatch.id };
   }
 
-  // Fetch available diseases for this crop
+  // Disease rows from Supabase (for ids); fall back to slug-only objects
   let diseases: any[] = [];
   try {
     const { data } = await supabase.from("diseases").select("id, slug, name_key").eq("crop_id", matchedCrop.id);
     if (data && data.length > 0) diseases = data;
   } catch (_) {}
+  const diseaseFor = (slug: string) => {
+    const row = diseases.find((d) => d.slug === slug);
+    return row ? { id: row.id, slug: row.slug, name_key: row.name_key } : { id: null, slug, name_key: `disease.${slug}` };
+  };
 
-  // ── Precision Pathology Rule (User Specification):
-  // Filter ONLY if the crop has abnormal focal lesions (yellow halos or necrotic spots) covering >= 14% of the leaf.
-  // Otherwise, if green foliar health is preserved: Give 99% Good / Healthy!
-  const hasAbnormalLesions = foliar.plantCanopyPixels > 60 && foliar.lesionRatio >= 0.14 && foliar.greenRatio < 0.86;
-  const isHealthy = !hasAbnormalLesions;
+  const isHealthy = conf.status === "healthy";
+  const isUncertain = conf.status === "uncertain";
+  const matchedDisease: any = isUncertain ? null : diseaseFor(conf.top);
 
-  let matchedDisease: any = null;
-  let top3Items: Top3Item[] = [];
+  const top3Items: Top3Item[] = pred.probs
+    .filter((p) => p.disease_slug !== "__uncertain__")
+    .slice(0, 3)
+    .map((p) => {
+      const d = diseaseFor(p.disease_slug);
+      return {
+        disease_id: isValidUuid(d.id) ? d.id : undefined,
+        disease_slug: p.disease_slug,
+        disease_name_key: d.name_key,
+        confidence: Math.round(p.prob * 10000) / 10000,
+      };
+    });
+
+  // Severity = share of LEAF area with symptoms (background ignored). Healthy / not sure -> none.
   let severityLevel: "none" | "low" | "moderate" | "high" = "none";
   let affectedPct = 0;
-  // User Requirement: "if normal give 99 percent good"
-  const confidence = isHealthy ? 0.99 : 0.93;
-
-  if (isHealthy) {
-    severityLevel = "none";
-    affectedPct = 0;
-    matchedDisease = diseases.find((d) => d.slug.includes("healthy")) || {
-      id: null,
-      slug: `${matchedCrop.slug}_healthy`,
-      name_key: `crop.${matchedCrop.slug}.healthy`,
-    };
-    top3Items = [
-      {
-        disease_id: undefined,
-        disease_slug: `${matchedCrop.slug}_healthy`,
-        disease_name_key: `crop.${matchedCrop.slug}.healthy`,
-        confidence: 0.99,
-      },
-    ];
-  } else {
-    affectedPct = Math.min(85, Math.max(14, Math.round(foliar.lesionRatio * 100)));
-    severityLevel = affectedPct > 40 ? "high" : affectedPct > 22 ? "moderate" : "low";
-
-    const nonHealthyDiseases = diseases.filter((d) => !d.slug.includes("healthy"));
-    // Match spot/blight if necrotic spots dominate, or chlorosis/rust if yellow dominates
-    if (foliar.necrosisPixels > foliar.chlorosisPixels) {
-      matchedDisease = nonHealthyDiseases.find((d) => d.slug.includes("spot") || d.slug.includes("blight")) || nonHealthyDiseases[0] || null;
-    } else {
-      matchedDisease = nonHealthyDiseases[0] || null;
-    }
-
-    top3Items = nonHealthyDiseases.slice(0, 3).map((d, i) => ({
-      disease_id: isValidUuid(d.id) ? d.id : undefined,
-      disease_slug: d.slug,
-      disease_name_key: d.name_key,
-      confidence: i === 0 ? 0.93 : i === 1 ? 0.05 : 0.02,
-    }));
-
-    if (top3Items.length === 0) {
-      top3Items = [
-        {
-          disease_slug: `${matchedCrop.slug}_downy_mildew`,
-          disease_name_key: `disease.${matchedCrop.slug}_downy_mildew`,
-          confidence: 0.93,
-        },
-      ];
-    }
+  if (!isHealthy && !isUncertain && pred.screen.lesion_pct !== null) {
+    affectedPct = Math.round(pred.screen.lesion_pct * 10) / 10;
+    severityLevel = affectedPct < 10 ? "low" : affectedPct < 30 ? "moderate" : "high";
   }
+  const confidence = Math.round(conf.conf * 10000) / 10000;
+  const scanStatus = conf.status;
+  const lowConfidence = conf.low;
+  const modelVersion = pred.modelVersion;
+  const conditionType = isHealthy ? "healthy" : isUncertain ? "uncertain" : "disease";
 
   // Generate UUID
   const newScanId = typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `scan_${Date.now()}`;
@@ -875,25 +853,26 @@ export async function createScan(cropId: string | null | undefined, imageFile: F
   const scanOutResult: ScanOut = {
     id: newScanId,
     crop: matchedCrop,
-    status: isHealthy ? "healthy" : "potentially_diseased",
+    status: scanStatus,
     disease: matchedDisease && matchedDisease.slug ? {
       id: isValidUuid(matchedDisease.id) ? matchedDisease.id : undefined,
       slug: matchedDisease.slug,
       name_key: matchedDisease.name_key,
     } : undefined,
     confidence: confidence,
-    low_confidence: false,
+    low_confidence: lowConfidence,
     top3: top3Items,
     severity: {
       level: severityLevel,
       affected_pct: affectedPct,
       is_estimate: true,
     },
-    model_version: "EdgeVision-v2.0",
+    model_version: modelVersion,
+    condition_type: conditionType,
     image_url: imageUrl,
     thumb_url: thumbUrl || imageUrl,
     created_at: new Date().toISOString(),
-    crop_auto_detected: !cropId || cropId === "auto",
+    crop_auto_detected: pred.autoDetected,
   };
 
   // IMMEDIATE SESSION STORAGE PERSISTENCE (GUARANTEES 100% REPORT RETRIEVAL IN 0ms)
@@ -920,11 +899,11 @@ export async function createScan(cropId: string | null | undefined, imageFile: F
     top3: top3Items,
     severity: severityLevel,
     severity_pct: affectedPct,
-    low_confidence: false,
-    status: isHealthy ? "healthy" : "potentially_diseased",
-    model_version: "EdgeVision-v2.0",
-    crop_auto_detected: !cropId || cropId === "auto",
-    condition_type: "disease",
+    low_confidence: lowConfidence,
+    status: scanStatus,
+    model_version: modelVersion,
+    crop_auto_detected: pred.autoDetected,
+    condition_type: conditionType,
     created_at: scanOutResult.created_at,
   };
 
