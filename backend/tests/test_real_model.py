@@ -82,3 +82,33 @@ def test_photo_without_a_leaf_is_not_sure(clf):
     assert evaluate_confidence(r["probs"])["status"] == "uncertain"
     r = _predict(clf, "grey_wall.jpg", "rice")
     assert evaluate_confidence(r["probs"])["status"] == "uncertain"
+
+
+# ---- Photo check: only the crop in the photo, else ask for a retake ----
+from app.ml.leaf_screen import photo_check
+
+
+@pytest.mark.parametrize("name", ["tomato_healthy.jpg", "potato_healthy.jpg", "tomato_early_blight.jpg", "corn_common_rust.jpg"])
+def test_clean_leaf_photos_pass_photo_check(name):
+    c = photo_check(Image.open(FIX / name))
+    assert c["ok"], c
+
+
+def test_gloved_hand_and_paper_ask_for_retake():
+    c = photo_check(Image.open(FIX / "gloved_hand_leaf.jpg"))
+    assert not c["ok"]
+    assert "objects" in c["issues"]
+
+
+def test_bare_hand_asks_for_retake():
+    # leaf held in a bare hand (synthetic): green leaf + skin-coloured area
+    img = Image.open(FIX / "tomato_healthy.jpg").convert("RGB").resize((256, 256))
+    hand = Image.new("RGB", (256, 90), (224, 172, 140))
+    img.paste(hand, (0, 166))
+    c = photo_check(img)
+    assert "hand" in c["issues"], c
+
+
+def test_photo_without_leaf_asks_for_retake():
+    c = photo_check(Image.open(FIX / "grey_wall.jpg"))
+    assert "no_leaf" in c["issues"]

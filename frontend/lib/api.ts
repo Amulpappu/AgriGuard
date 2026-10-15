@@ -6,7 +6,7 @@
 import type { Session } from "@supabase/supabase-js";
 import { supabase, ADMIN_EMAIL } from "@/lib/supabase";
 import { invalidateCached } from "@/lib/useCachedQuery";
-import { predictLeaf, evaluateConfidence } from "@/lib/leafModel";
+import { predictLeaf, evaluateConfidence, checkPhoto } from "@/lib/leafModel";
 
 /**
  * Backend URL is only used when explicitly configured via env var.
@@ -675,6 +675,17 @@ async function analyzeFoliarHealth(file: File): Promise<FoliarAnalysis> {
 }
 
 export async function createScan(cropId: string | null | undefined, imageFile: File): Promise<ScanOut> {
+  // 0. Photo check BEFORE any AI: only the crop leaf, no hand / gloves / paper / other objects.
+  //    If the photo is not clean, do not diagnose - ask the farmer to retake it.
+  const photo = await checkPhoto(imageFile);
+  if (!photo.ok) {
+    const err: any = new Error("");
+    err.code = "retake_photo";
+    err.issues = photo.issues;
+    err.stats = photo.stats;
+    throw err;
+  }
+
   // 1. If backend configured, try FastAPI proxy first
   if (getBackendUrl()) {
     try {

@@ -92,4 +92,18 @@ def check_quality(data: bytes) -> Image.Image:
     except ImportError:
         pass  # cv2 not available; skip blur check
 
+    # Only the crop leaf may be in the photo: no hand, gloves, paper or other objects.
+    from app.ml.leaf_screen import photo_check
+
+    check = photo_check(img_rgb)
+    if not check["ok"]:
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "code": "retake_photo",
+                "issues": check["issues"],
+                "message": "Please retake the photo. Only the crop leaf should be in the photo - no hands, gloves, paper or other objects.",
+            },
+        )
+
     return img_rgb

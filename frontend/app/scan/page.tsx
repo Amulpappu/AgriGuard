@@ -28,6 +28,8 @@ export default function ScanPage() {
   const [file, setFile] = useState<File | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [error, setError] = useState("");
+  // Photo check failed -> list of reasons (hand, objects, ...). Shown instead of a diagnosis.
+  const [retakeIssues, setRetakeIssues] = useState<string[]>([]);
 
   useEffect(() => {
     getCrops().then((c) => {
@@ -37,6 +39,7 @@ export default function ScanPage() {
 
   const handleFile = useCallback(async (f: File) => {
     setError("");
+    setRetakeIssues([]);
     try {
       const scaled = await downscaleImage(f, 1280);
       setFile(scaled);
@@ -51,6 +54,7 @@ export default function ScanPage() {
     e.preventDefault();
     if (!file) return;
     setError("");
+    setRetakeIssues([]);
     setAnalyzing(true);
     try {
       const cropId = selectedCrop ? selectedCrop.id : "auto";
@@ -64,6 +68,11 @@ export default function ScanPage() {
       invalidateCached("scans");
       router.push(`/scan/${result.id}`);
     } catch (err: any) {
+      if (err?.code === "retake_photo") {
+        setRetakeIssues(err.issues || []);
+        setAnalyzing(false);
+        return;
+      }
       console.error("Scan error:", err);
       const key = ERROR_KEYS[err?.code] || "scan.error_generic";
       setError(err?.message || t(key));
@@ -225,6 +234,24 @@ export default function ScanPage() {
                     </span>
                   </div>
                 </button>
+              )}
+
+              {retakeIssues.length > 0 && (
+                <div id="retake-box" className="bg-amber-900/30 border border-amber-600/60 rounded-xl p-4 text-amber-100 text-xs sm:text-sm space-y-2">
+                  <div className="flex items-start gap-2.5">
+                    <Camera size={18} className="text-amber-400 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-semibold text-amber-200">{t("scan.retake_title")}</p>
+                      <p className="text-amber-100/80 mt-0.5">{t("scan.retake_body")}</p>
+                    </div>
+                  </div>
+                  <ul className="list-disc pl-9 space-y-0.5">
+                    {retakeIssues.map((i) => (
+                      <li key={i}>{t(`scan.retake_${i}`)}</li>
+                    ))}
+                  </ul>
+                  <p className="pl-7 text-amber-100/80">{t("scan.retake_tip")}</p>
+                </div>
               )}
 
               {error && (

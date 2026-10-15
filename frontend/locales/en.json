@@ -197,7 +197,15 @@
     "no_visible_problem": "No visible problem found",
     "early_signs_prefix": "Early signs of",
     "screen_only_note": "AgriGuard’s disease model does not cover this crop yet, so it only checked the leaf for spots and yellowing. This is not a diagnosis — if the plant looks unwell, ask your local agriculture officer or KVK.",
-    "early_signs_note": "Only a small part of the leaf is affected. Acting now — removing affected leaves and checking nearby plants — can stop it spreading."
+    "early_signs_note": "Only a small part of the leaf is affected. Acting now — removing affected leaves and checking nearby plants — can stop it spreading.",
+    "retake_title": "Please retake the photo",
+    "retake_body": "The AI did not check this photo, so no diagnosis is given. A wrong photo can give a wrong result.",
+    "retake_hand": "A hand or person is visible. Only the crop leaf should be in the photo.",
+    "retake_objects": "Gloves, paper or other objects are visible. Remove them from the photo.",
+    "retake_no_leaf": "No green leaf was found. Take a close photo of one leaf.",
+    "retake_too_dark": "The photo is too dark. Take it in daylight.",
+    "retake_too_bright": "The photo is too bright. Avoid direct sunlight on the leaf.",
+    "retake_tip": "Tip: Take one leaf close up so it fills the screen, against the plant or plain ground, in daylight. No hands, gloves, paper or tools."
   },
   "dashboard": {
     "title": "Dashboard",

@@ -71,3 +71,61 @@ def screen_leaf(img: Image.Image) -> Dict[str, Any]:
         "leaf_frac": round(leaf_px / float(SIZE * SIZE), 3),
         "lesion_pct": lesion_pct,
     }
+
+
+def photo_check(img: Image.Image) -> Dict[str, Any]:
+    """
+    Is this a clean close-up of the crop only? Runs BEFORE the AI.
+    Flags a visible hand/person, gloves/paper/other objects, no leaf, or bad light,
+    so the app asks for a retake instead of giving a diagnosis.
+    Mirrored in frontend/lib/leafModel.ts (checkPhotoImage) — keep the two in sync.
+    """
+    a = np.asarray(img.convert("RGB").resize((SIZE, SIZE), Image.BILINEAR), dtype=np.float32)
+    r, g, b = a[..., 0], a[..., 1], a[..., 2]
+    mx = a.max(axis=2)
+    mn = a.min(axis=2)
+    sat = np.where(mx > 0, (mx - mn) / np.maximum(mx, 1), 0)
+    green = (g > r * 1.05) & (g > b * 1.05) & (g > 45) & (sat > 0.15)
+    near = _close(green, 4)
+    for _ in range(3):
+        near = _shift_max(near)
+    bg = ~near
+
+    y = 0.299 * r + 0.587 * g + 0.114 * b
+    cb = 128 - 0.1687 * r - 0.3313 * g + 0.5 * b
+    cr = 128 + 0.5 * r - 0.4187 * g - 0.0813 * b
+    skin = (y > 110) & (cr > 140) & (cr < 170) & (cb > 85) & (cb < 125) & (sat > 0.12) & (sat < 0.55) & (r > 150) & bg
+    white = (mx > 215) & (sat < 0.10) & bg
+
+    skin_f = float(skin.mean())
+    white_f = float(white.mean())
+    bg_f = float(bg.mean())
+    bg_std = float(y[bg].std()) if bg.sum() > 50 else 0.0
+    brightness = float(y.mean())
+    green_f = float(green.mean())
+
+    issues = []
+    if brightness < 40:
+        issues.append("too_dark")
+    if brightness > 235:
+        issues.append("too_bright")
+    if green_f < 0.02:
+        issues.append("no_leaf")
+    if skin_f > 0.05:
+        issues.append("hand")
+    # A plain white/grey sheet behind the leaf is fine (white fills the even background).
+    share = white_f / bg_f if bg_f > 0 else 0.0
+    if white_f > 0.04 and 0.15 < share < 0.75 and bg_std > 40:
+        issues.append("objects")
+    return {
+        "ok": not issues,
+        "issues": issues,
+        "stats": {
+            "skin": round(skin_f, 3),
+            "white": round(white_f, 3),
+            "background": round(bg_f, 3),
+            "bg_std": round(bg_std),
+            "brightness": round(brightness),
+            "green": round(green_f, 3),
+        },
+    }

@@ -162,6 +162,113 @@ export function screenLeaf(img: HTMLImageElement): LeafScreen {
   };
 }
 
+/* ------------------------------------------------------------------ */
+/* Photo check: is this a clean close-up of the crop only?            */
+/* Runs BEFORE the AI. If a hand, gloves, paper or other objects are  */
+/* in the photo, the app asks for a retake instead of diagnosing.     */
+/* Keep in sync with backend/app/ml/leaf_screen.py (photo_check).     */
+/* ------------------------------------------------------------------ */
+
+export type PhotoIssue = "hand" | "objects" | "too_dark" | "too_bright" | "no_leaf";
+
+export interface PhotoCheck {
+  ok: boolean;
+  issues: PhotoIssue[];
+  stats: { skin: number; white: number; background: number; bg_std: number; brightness: number; green: number };
+}
+
+function morph(m: Uint8Array, N: number, dilate: boolean): Uint8Array {
+  const o = new Uint8Array(m);
+  for (let y = 0; y < N; y++) {
+    for (let x = 0; x < N; x++) {
+      const i = y * N + x;
+      const a = y > 0 ? m[i - N] : m[i];
+      const b = y < N - 1 ? m[i + N] : m[i];
+      const c = x > 0 ? m[i - 1] : m[i];
+      const d = x < N - 1 ? m[i + 1] : m[i];
+      o[i] = dilate ? (m[i] | a | b | c | d) : (m[i] & a & b & c & d);
+    }
+  }
+  return o;
+}
+
+export function checkPhotoImage(img: HTMLImageElement): PhotoCheck {
+  const N = 128;
+  const canvas = document.createElement("canvas");
+  canvas.width = N;
+  canvas.height = N;
+  const ctx = canvas.getContext("2d")!;
+  ctx.drawImage(img, 0, 0, N, N);
+  const d = ctx.getImageData(0, 0, N, N).data;
+  const P = N * N;
+  const green = new Uint8Array(P);
+  const Y = new Float32Array(P);
+  let greenCount = 0, sumY = 0;
+  for (let i = 0; i < P; i++) {
+    const r = d[i * 4], g = d[i * 4 + 1], b = d[i * 4 + 2];
+    const mx = Math.max(r, g, b), mn = Math.min(r, g, b);
+    const sat = mx > 0 ? (mx - mn) / mx : 0;
+    if (g > r * 1.05 && g > b * 1.05 && g > 45 && sat > 0.15) {
+      green[i] = 1;
+      greenCount++;
+    }
+    Y[i] = 0.299 * r + 0.587 * g + 0.114 * b;
+    sumY += Y[i];
+  }
+  // Leaf region (+ a small margin) — everything else is "background"
+  let near: Uint8Array = green;
+  for (let k = 0; k < 4; k++) near = morph(near, N, true);
+  for (let k = 0; k < 4; k++) near = morph(near, N, false);
+  for (let k = 0; k < 3; k++) near = morph(near, N, true);
+
+  let bgPx = 0, skinPx = 0, whitePx = 0, bgSum = 0, bgSq = 0;
+  for (let i = 0; i < P; i++) {
+    if (near[i]) continue;
+    bgPx++;
+    bgSum += Y[i];
+    bgSq += Y[i] * Y[i];
+    const r = d[i * 4], g = d[i * 4 + 1], b = d[i * 4 + 2];
+    const mx = Math.max(r, g, b), mn = Math.min(r, g, b);
+    const sat = mx > 0 ? (mx - mn) / mx : 0;
+    const cb = 128 - 0.1687 * r - 0.3313 * g + 0.5 * b;
+    const cr = 128 + 0.5 * r - 0.4187 * g - 0.0813 * b;
+    // bare human skin (hand / fingers / arm)
+    if (Y[i] > 110 && cr > 140 && cr < 170 && cb > 85 && cb < 125 && sat > 0.12 && sat < 0.55 && r > 150) skinPx++;
+    // very bright white/grey object (gloves, lab coat, paper, clipboard)
+    if (mx > 215 && sat < 0.1) whitePx++;
+  }
+  const skin = skinPx / P;
+  const white = whitePx / P;
+  const background = bgPx / P;
+  const bgMean = bgPx ? bgSum / bgPx : 0;
+  const bgStd = bgPx > 50 ? Math.sqrt(Math.max(0, bgSq / bgPx - bgMean * bgMean)) : 0;
+  const brightness = sumY / P;
+  const greenFrac = greenCount / P;
+
+  const issues: PhotoIssue[] = [];
+  if (brightness < 40) issues.push("too_dark");
+  if (brightness > 235) issues.push("too_bright");
+  if (greenFrac < 0.02) issues.push("no_leaf");
+  if (skin > 0.05) issues.push("hand");
+  // White object in a busy scene. A plain white/grey sheet behind the leaf is fine:
+  // then the white covers (almost) the whole background and the background is even.
+  const whiteShare = background > 0 ? white / background : 0;
+  if (white > 0.04 && whiteShare > 0.15 && whiteShare < 0.75 && bgStd > 40) issues.push("objects");
+
+  const r3 = (v: number) => Math.round(v * 1000) / 1000;
+  return {
+    ok: issues.length === 0,
+    issues,
+    stats: { skin: r3(skin), white: r3(white), background: r3(background), bg_std: Math.round(bgStd), brightness: Math.round(brightness), green: r3(greenFrac) },
+  };
+}
+
+/** Check a photo file before running the AI. */
+export async function checkPhoto(file: File): Promise<PhotoCheck> {
+  const img = await fileToImage(file);
+  return checkPhotoImage(img);
+}
+
 function softmax(x: Float32Array | number[]): number[] {
   const arr = Array.from(x);
   const m = Math.max(...arr);
