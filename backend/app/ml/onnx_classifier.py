@@ -61,6 +61,8 @@ class OnnxClassifier(ModelAdapter):
         self._version = self._meta.get("version", "agriguard-leaf-v1")
         self._session = ort.InferenceSession(model_path, providers=["CPUExecutionProvider"])
         self._input = self._session.get_inputs()[0].name
+        self._outputs = [o.name for o in self._session.get_outputs()]
+        self._produce = self._meta.get("produce")  # fruit / vegetable / tuber brain (optional)
 
     @property
     def version(self) -> str:
@@ -70,24 +72,70 @@ class OnnxClassifier(ModelAdapter):
     def supported_crops(self) -> List[str]:
         return list(self._crops)
 
+    def _run(self, img: Image.Image) -> Dict[str, np.ndarray]:
+        outs = self._session.run(None, {self._input: _preprocess(img)})
+        return {name: _softmax(o[0].astype(np.float64)) for name, o in zip(self._outputs, outs)}
+
     def _probs(self, img: Image.Image) -> np.ndarray:
-        logits = self._session.run(None, {self._input: _preprocess(img)})[0][0]
-        return _softmax(logits.astype(np.float64))
+        return self._run(img)[self._outputs[0]]
+
+    def _produce_brain(self, out: Dict[str, np.ndarray], img: Image.Image, screen: Dict[str, Any], crop: Optional[str]):
+        """Fruits / vegetables / tubers: which crop it is and its condition (fresh / rotten / potato tuber diseases)."""
+        pm = self._produce
+        if not pm or pm["output_identity"] not in out or pm["output_condition"] not in out:
+            return None
+        pid, pc = out[pm["output_identity"]], out[pm["output_condition"]]
+        ids, conds = pm["identity_classes"], pm["conditions"]
+        leaf_i = ids.index("leaf") if "leaf" in ids else -1
+        best = max((i for i in range(len(ids)) if i != leaf_i), key=lambda i: pid[i])
+        chosen = crop if crop and crop in ids and crop != "leaf" else ids[best]
+        allowed = conds if chosen == "potato" else ["fresh", "rotten"]
+        total = sum(pc[conds.index(c)] for c in allowed)
+        probs = sorted(
+            (
+                {
+                    "disease_slug": f"{chosen}_healthy" if c == "fresh" else f"{chosen}_rot" if c == "rotten" else c,
+                    "prob": float(pc[conds.index(c)] / total),
+                }
+                for c in allowed
+            ),
+            key=lambda x: x["prob"],
+            reverse=True,
+        )
+        surf = surface_screen(img)
+        result = {
+            "probs": probs,
+            "model_version": f"{self._version}+produce",
+            "detected_crop_slug": chosen,
+            "auto_detected_crop": crop is None,
+            "condition_type": classify_condition_type(probs[0]["disease_slug"]),
+            "leaf_screen": {**screen, "lesion_pct": surf.get("blemish_pct")},
+            "produce": True,
+        }
+        return (float(pid[leaf_i]) if leaf_i >= 0 else 0.0), float(pid[best]), result
 
     async def predict(self, image_bytes: bytes, crop_id: Optional[str] = None) -> Dict[str, Any]:
         img = Image.open(io.BytesIO(image_bytes)).convert("RGB")
         screen = screen_leaf(img)
         crop = crop_id if crop_id and crop_id not in ("auto", "none", "null") else None
 
-        # Crop not covered by the trained model -> colour screen only, never a guessed disease.
+        out = self._run(img)
+        p = out[self._outputs[0]]
+        # 1. Leaf, or a fruit / vegetable / tuber?
+        not_leaf_photo = not_a_leaf(screen, float(p.max()))
+        produce = self._produce_brain(out, img, screen, crop)
+        if produce:
+            leaf_prob, id_conf, result = produce
+            if (leaf_prob < 0.5 and id_conf >= 0.6) or (not_leaf_photo and id_conf >= 0.5):
+                return result
+        if not_leaf_photo:
+            return not_a_leaf_result(crop, screen, self._version, auto_detected=crop is None)
+
+        # 2. Leaf of a crop the leaf AI does not cover -> colour screen only, never a guessed disease.
         if crop and crop not in self._crops:
-            if not_a_leaf(screen, 0.0):
-                return not_a_leaf_result(crop, screen, self._version, auto_detected=False, surface=surface_screen(img))
             return screen_only_result(crop, screen, self._version, auto_detected=False)
 
-        p = self._probs(img)
-        if not_a_leaf(screen, float(p.max())):
-            return not_a_leaf_result(crop, screen, self._version, auto_detected=crop is None, surface=surface_screen(img))
+        # 3. Leaf disease AI
         auto_detected = crop is None
         if crop is None:
             crop_scores = {c: float(sum(p[i] for i, k in enumerate(self._classes) if k.startswith(c + "_"))) for c in self._crops}
@@ -133,29 +181,8 @@ def not_a_leaf(screen: Dict[str, Any], top_prob: float) -> bool:
     return not screen.get("is_leaf") and plant < 0.08 and top_prob < 0.80
 
 
-def not_a_leaf_result(
-    crop: Optional[str], screen: Dict[str, Any], version: str, auto_detected: bool, surface: Optional[Dict[str, Any]] = None
-) -> Dict[str, Any]:
-    """
-    No leaf in the photo. If it shows a fruit / tuber / vegetable, report a surface colour check:
-    clean surface -> "no visible problem" (70%, or 60% with a few dark marks); many dark spots -> not sure.
-    Anything else (wall, soil, sky) -> not sure.
-    """
-    if surface and surface.get("produce_frac", 0) >= 0.15 and surface.get("blemish_pct") is not None:
-        bl = surface["blemish_pct"]
-        if bl < 8.0:
-            conf = 0.70 if bl < 5.0 else 0.60
-            slug = f"{crop or 'unknown'}_healthy"
-            return {
-                "probs": [{"disease_slug": slug, "prob": conf}, {"disease_slug": "__uncertain__", "prob": round(1 - conf, 2)}],
-                "model_version": f"{version}+surface-screen",
-                "detected_crop_slug": crop,
-                "auto_detected_crop": auto_detected,
-                "condition_type": "healthy",
-                "leaf_screen": {**screen, "lesion_pct": bl},
-                "screen_only": True,
-                "surface_screen": surface,
-            }
+def not_a_leaf_result(crop: Optional[str], screen: Dict[str, Any], version: str, auto_detected: bool) -> Dict[str, Any]:
+    """Neither a leaf nor a fruit / vegetable the AI recognises (wall, soil, sky, hand): not sure."""
     return {
         "probs": [{"disease_slug": "__uncertain__", "prob": 1.0}],
         "model_version": version,

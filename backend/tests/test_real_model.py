@@ -137,24 +137,32 @@ def test_new_crop_auto_detect(clf):
     assert r["detected_crop_slug"] == "apple"
 
 
-# ---- fruit / tuber photos: surface colour check instead of a blank "not sure" ----
-def test_clean_potato_tuber_reports_no_visible_problem(clf):
+# ---- produce brain: fruits / vegetables / tubers ----
+def test_potato_tuber_is_identified_as_healthy_potato(clf):
     r = _predict(clf, "potato_tuber.jpg", None)
-    assert r.get("screen_only") and r["probs"][0]["disease_slug"].endswith("_healthy"), r["probs"]
+    assert r.get("produce") and r["detected_crop_slug"] == "potato", r
+    assert r["probs"][0]["disease_slug"] == "potato_healthy", r["probs"]
     assert evaluate_confidence(r["probs"])["status"] == "healthy"
 
 
-def test_rotten_potato_is_not_called_healthy(clf):
+def test_damaged_potato_is_not_called_healthy(clf):
     r = _predict(clf, "potato_rot.jpg", None)
-    assert not r["probs"][0]["disease_slug"].endswith("_healthy"), r["probs"]
+    assert r["detected_crop_slug"] == "potato"
+    assert r["probs"][0]["disease_slug"] != "potato_healthy", r["probs"]
+
+
+def test_tomato_fruit_pile_is_identified_as_tomato(clf):
+    r = _predict(clf, "tomato_fruit.jpg", None)
+    assert r.get("produce") and r["detected_crop_slug"] == "tomato", r
+    assert r["probs"][0]["disease_slug"] == "tomato_healthy"
+
+
+@pytest.mark.parametrize("name", ["tomato_healthy.jpg", "corn_common_rust.jpg", "apple_scab.jpg", "rice_brown_spot.jpg"])
+def test_leaf_photos_go_to_leaf_ai(clf, name):
+    r = _predict(clf, name, None)
+    assert not r.get("produce"), r["probs"][:2]
 
 
 def test_wall_is_still_not_sure(clf):
     r = _predict(clf, "grey_wall.jpg", None)
     assert evaluate_confidence(r["probs"])["status"] == "uncertain"
-
-
-def test_tomato_fruit_is_not_judged_by_leaf_ai(clf):
-    r = _predict(clf, "tomato_fruit.jpg", None)
-    assert r.get("screen_only") or evaluate_confidence(r["probs"])["status"] == "uncertain", r["probs"][:2]
-    assert "peach" not in r["probs"][0]["disease_slug"]

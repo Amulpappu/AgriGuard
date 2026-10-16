@@ -1,5 +1,5 @@
 {
-  "version": "agriguard-leaf-v2",
+  "version": "agriguard-leaf-v2.1",
   "created": "2026-10-16",
   "architecture": "MobileNetV2 (ImageNet, ONNX Model Zoo) + 256-unit MLP head",
   "input": {
@@ -136,7 +136,26 @@
       "strawberry": 0.99,
       "tomato": 0.922
     },
-    "note": "Field figures include AgriGuard's confidence policy and leaf-only health guard. Small field test sets; re-measure on local photos before claiming accuracy."
+    "note": "Field figures include AgriGuard's confidence policy and leaf-only health guard. Small field test sets; re-measure on local photos before claiming accuracy.",
+    "produce": {
+      "identity_accuracy": {
+        "fruits360_studio_test": 0.939,
+        "real_fresh_rotten_photos": 0.996,
+        "potato_disease_photos": 0.983,
+        "real_greenhouse_tomatoes": 1.0,
+        "leaf_photos_routed_to_leaf": 0.999
+      },
+      "potato_tuber_condition_6_classes": {
+        "images": 60,
+        "accuracy": 0.683,
+        "note": "small dataset (440 photos)"
+      },
+      "fresh_vs_rotten_real_photos": {
+        "images": 480,
+        "accuracy": 0.992,
+        "note": "apple, banana, orange only"
+      }
+    }
   },
   "training_data": [
     {
@@ -160,6 +179,26 @@
       "license": "not stated by the author - research/prototype use only; replace before commercial use",
       "use": "up to 250 photos per folder (+1 augmented copy); val split held out",
       "source": "github.com/auchinto-c/Cotton-Disease-Prediction"
+    },
+    {
+      "name": "Fruits-360 (github.com/fruits-360/fruits-360-100x100, Mihai Oltean)",
+      "license": "CC BY-SA 4.0",
+      "use": "25 fruit/vegetable crops, studio photos pasted on varied backgrounds + synthetic piles with leaf clutter"
+    },
+    {
+      "name": "Fruits fresh and rotten (Kaggle sriramr, copy at github.com/Bangkit-JKT2-D/fruits-fresh-rotten-classification)",
+      "license": "not stated - prototype use only",
+      "use": "fresh vs rotten apples, bananas, oranges"
+    },
+    {
+      "name": "Potato Disease dataset (github.com/Mukaffi28/Potato-Disease, validated by BARI; Faria et al., IEEE CCWC 2023)",
+      "license": "MIT (credit the paper)",
+      "use": "potato tuber: healthy, dry rot, common scab, blackleg, pink rot, black scurf"
+    },
+    {
+      "name": "Greenhouse tomato images (github.com/Daric-Weng/CFD-DETR-Dataset, subset)",
+      "license": "not stated - research subset, prototype use only",
+      "use": "real tomato fruits cut out from labelled boxes"
     }
   ],
   "backbone": {
@@ -168,5 +207,52 @@
   },
   "crops_without_healthy_class": [
     "rice"
-  ]
+  ],
+  "produce": {
+    "identity_classes": [
+      "apple",
+      "banana",
+      "beetroot",
+      "brinjal",
+      "cabbage",
+      "carrot",
+      "cauliflower",
+      "corn",
+      "cucumber",
+      "garlic",
+      "ginger",
+      "grape",
+      "guava",
+      "lemon",
+      "mango",
+      "onion",
+      "orange",
+      "papaya",
+      "pepper",
+      "pineapple",
+      "pomegranate",
+      "potato",
+      "strawberry",
+      "tomato",
+      "watermelon",
+      "leaf"
+    ],
+    "conditions": [
+      "fresh",
+      "rotten",
+      "potato_black_scurf",
+      "potato_blackleg",
+      "potato_common_scab",
+      "potato_dry_rot",
+      "potato_pink_rot"
+    ],
+    "output_identity": "pid_logits",
+    "output_condition": "pcond_logits",
+    "rot_trained_on": [
+      "apple",
+      "banana",
+      "orange"
+    ],
+    "note": "Second brain on the same backbone. 'leaf' = photo is a leaf -> leaf disease AI. Potato tubers get 6 conditions; other produce fresh vs rotten (rot learned from apples, bananas, oranges)."
+  }
 }

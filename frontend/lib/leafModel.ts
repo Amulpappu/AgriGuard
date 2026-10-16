@@ -41,6 +41,8 @@ interface Meta {
   classes: string[];
   crops: string[];
   crops_without_healthy_class?: string[];
+  // Produce brain: identifies fruits / vegetables / tubers ("leaf" = send to the leaf AI) and their condition
+  produce?: { identity_classes: string[]; conditions: string[]; output_identity: string; output_condition: string };
 }
 
 let sessionPromise: Promise<{ session: any; ort: any; meta: Meta }> | null = null;
@@ -381,54 +383,71 @@ function healthGuard(probs: { disease_slug: string; prob: number }[], screen: Le
   return probs;
 }
 
+/**
+ * Produce brain (fruits, vegetables, tubers). Compares the photo with reference photos learned in training:
+ * which crop it is (potato, tomato, onion, ...) and its condition (fresh / rotten, and for potato
+ * tubers: dry rot, common scab, blackleg, pink rot, black scurf).
+ */
+function produceBrain(out: any, meta: Meta, img: HTMLImageElement, screen: LeafScreen, crop: string | null) {
+  const pm = meta.produce;
+  if (!pm || !out[pm.output_identity] || !out[pm.output_condition]) return null;
+  const pid = softmax(out[pm.output_identity].data as Float32Array);
+  const pc = softmax(out[pm.output_condition].data as Float32Array);
+  const ids = pm.identity_classes;
+  const leafIdx = ids.indexOf("leaf");
+  let best = -1;
+  for (let i = 0; i < ids.length; i++) if (i !== leafIdx && (best < 0 || pid[i] > pid[best])) best = i;
+  const detected = ids[best];
+  const chosen = crop && ids.includes(crop) && crop !== "leaf" ? crop : detected;
+  const allowed = chosen === "potato" ? pm.conditions : ["fresh", "rotten"];
+  const total = allowed.reduce((a, c) => a + pc[pm.conditions.indexOf(c)], 0);
+  const probs = allowed
+    .map((c) => ({
+      disease_slug: c === "fresh" ? `${chosen}_healthy` : c === "rotten" ? `${chosen}_rot` : c,
+      prob: pc[pm.conditions.indexOf(c)] / total,
+    }))
+    .sort((a, b) => b.prob - a.prob);
+  const surf = surfaceScreen(img);
+  const prediction: LeafPrediction = {
+    probs,
+    crop: chosen,
+    autoDetected: !crop,
+    screenOnly: false,
+    screen: { ...screen, lesion_pct: surf.blemish_pct },
+    modelVersion: `${meta.version}+produce`,
+  };
+  return { leafProb: leafIdx >= 0 ? pid[leafIdx] : 0, idConf: pid[best], prediction };
+}
+
 export async function predictLeaf(file: File, cropSlug: string | null): Promise<LeafPrediction> {
   const img = await fileToImage(file);
   const screen = screenLeaf(img);
   const { session, ort, meta } = await loadModel();
   const crop = cropSlug && cropSlug !== "auto" ? cropSlug : null;
 
-  const notLeaf = (topProb: number) =>
-    screen.plant_frac < 0.02 ||
-    (screen.red_frac > 0.2 && screen.red_frac > screen.green_frac) || // mostly red fruit: leaf AI must not judge it
-    (!screen.is_leaf && screen.plant_frac < 0.08 && topProb < 0.8);
-  const notLeafResult = (): LeafPrediction => {
-    // No leaf: if it shows a fruit / tuber / vegetable, report a surface colour check instead of a blank "not sure"
-    const surf = surfaceScreen(img);
-    if (surf.produce_frac >= 0.15 && surf.blemish_pct !== null && surf.blemish_pct < 8) {
-      const conf = surf.blemish_pct < 5 ? 0.7 : 0.6;
-      return {
-        probs: [
-          { disease_slug: `${crop || "unknown"}_healthy`, prob: conf },
-          { disease_slug: "__uncertain__", prob: Math.round((1 - conf) * 100) / 100 },
-        ],
-        crop,
-        autoDetected: !crop,
-        screenOnly: true,
-        screen: { ...screen, lesion_pct: surf.blemish_pct },
-        modelVersion: `${meta.version}+surface-screen`,
-      };
-    }
-    return {
-      probs: [{ disease_slug: "__uncertain__", prob: 1 }],
-      crop,
-      autoDetected: !crop,
-      screenOnly: false,
-      screen,
-      modelVersion: meta.version,
-    };
-  };
-
-  if (crop && !meta.crops.includes(crop)) {
-    if (notLeaf(0)) return notLeafResult();
-    return screenOnly(crop, screen, meta.version, false);
-  }
-
   const input = new ort.Tensor("float32", toTensorData(img), [1, 3, 224, 224]);
   const out = await session.run({ [session.inputNames[0]]: input });
   const p = softmax(out[session.outputNames[0]].data as Float32Array);
   const cls = meta.classes;
-  if (notLeaf(Math.max(...p))) return notLeafResult();
 
+  // 1. Is this a leaf, or a fruit / vegetable / tuber?
+  const notLeafPhoto =
+    screen.plant_frac < 0.02 ||
+    (screen.red_frac > 0.2 && screen.red_frac > screen.green_frac) || // mostly red fruit
+    (!screen.is_leaf && screen.plant_frac < 0.08 && Math.max(...p) < 0.8);
+  const produce = produceBrain(out, meta, img, screen, crop);
+  if (produce && ((produce.leafProb < 0.5 && produce.idConf >= 0.6) || (notLeafPhoto && produce.idConf >= 0.5))) {
+    return produce.prediction;
+  }
+  if (notLeafPhoto) {
+    // neither a leaf nor a produce item the AI recognises (wall, soil, sky, ...)
+    return { probs: [{ disease_slug: "__uncertain__", prob: 1 }], crop, autoDetected: !crop, screenOnly: false, screen, modelVersion: meta.version };
+  }
+
+  // 2. Leaf: crop not covered by the leaf AI -> colour screen only
+  if (crop && !meta.crops.includes(crop)) return screenOnly(crop, screen, meta.version, false);
+
+  // 3. Leaf disease AI
   let chosen = crop;
   if (!chosen) {
     let best = "";

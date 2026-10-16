@@ -26,3 +26,22 @@ Crops: apple, cherry, corn, cotton, grape, orange, peach, pepper/chilli, potato,
 Field healthy leaves (72): 67 healthy, 2 uncertain, 3 called diseased. Field diseased leaves (140): 125 flagged, 7 uncertain, 8 called healthy.
 The field test sets are small. Before quoting accuracy, collect 30–50 of your own labelled leaf photos per class and re-run the evaluation.
 Next: own photos of Indian field crops (rice, cotton, chilli, brinjal, banana), and fine-tuning the whole network on a GPU.
+
+## v2.1 – produce brain (fruits, vegetables, potato tubers) – 16 Oct 2026
+Two extra heads on the same MobileNetV2 features, inside the same ONNX file (outputs `pid_logits`, `pcond_logits`):
+- **Identity** (26 classes): 25 fruits/vegetables (potato, tomato, onion, chilli/pepper, brinjal, banana, mango, ...) + `leaf`. `leaf` routes the photo to the leaf-disease AI.
+- **Condition** (7 classes): fresh, rotten, and potato tuber diseases (black scurf, blackleg, common scab, dry rot, pink rot). Non-potato produce uses fresh vs rotten only.
+
+Reference photos: Fruits-360 (CC BY-SA 4.0, studio photos pasted on varied backgrounds + synthetic piles with leaf clutter), fresh/rotten apples-bananas-oranges (Kaggle sriramr; licence not stated), potato tuber disease photos (Mukaffi28/Potato-Disease, MIT, BARI-validated), real greenhouse tomatoes cut from labelled boxes (Daric-Weng/CFD-DETR-Dataset subset; licence not stated). Unlicensed sets: prototype use only.
+Scripts: `extract_produce.py`, `extract_piles.py`, `extract_realtom.py`, `train_produce.py --export` (uses `produce_map.json`).
+
+| Test | Result |
+| --- | --- |
+| Crop identity – studio test photos (1,526) | 93.9% |
+| Crop identity – real fresh/rotten photos (480) | 99.6% |
+| Crop identity – real greenhouse tomatoes (265) | 100% |
+| Leaf photos routed to the leaf AI (666 field/lab leaves) | 665 / 666 |
+| Fresh vs rotten – real photos (apple/banana/orange, 480) | 99.2% |
+| Potato tuber condition, 6 classes (60 photos) | 68.3% – small dataset |
+
+Limits: no tomato-fruit disease photos were available, so tomato and other produce get fresh vs rotten (rot learned from apples, bananas and oranges), not a named fruit disease.
