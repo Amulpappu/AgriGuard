@@ -112,3 +112,8 @@ def test_bare_hand_asks_for_retake():
 def test_photo_without_leaf_asks_for_retake():
     c = photo_check(Image.open(FIX / "grey_wall.jpg"))
     assert "no_leaf" in c["issues"]
+
+
+def test_fruit_photo_asks_for_leaf():
+    c = photo_check(Image.open(FIX / "tomato_fruit.jpg"))
+    assert "fruit" in c["issues"], c

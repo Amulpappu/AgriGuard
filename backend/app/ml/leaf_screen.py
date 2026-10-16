@@ -103,13 +103,17 @@ def photo_check(img: Image.Image) -> Dict[str, Any]:
     bg_std = float(y[bg].std()) if bg.sum() > 50 else 0.0
     brightness = float(y.mean())
     green_f = float(green.mean())
+    red_f = float(((r > 110) & (r > g * 1.6) & (r > b * 1.6) & (sat > 0.45)).mean())
 
     issues = []
     if brightness < 40:
         issues.append("too_dark")
     if brightness > 235:
         issues.append("too_bright")
-    if green_f < 0.02:
+    # Mostly red fruit and little leaf -> the AI checks leaves, not fruit
+    if red_f > 0.2 and red_f > green_f:
+        issues.append("fruit")
+    elif green_f < 0.02:
         issues.append("no_leaf")
     if skin_f > 0.05:
         issues.append("hand")

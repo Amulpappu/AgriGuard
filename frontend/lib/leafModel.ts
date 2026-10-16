@@ -169,7 +169,7 @@ export function screenLeaf(img: HTMLImageElement): LeafScreen {
 /* Keep in sync with backend/app/ml/leaf_screen.py (photo_check).     */
 /* ------------------------------------------------------------------ */
 
-export type PhotoIssue = "hand" | "objects" | "too_dark" | "too_bright" | "no_leaf";
+export type PhotoIssue = "hand" | "objects" | "too_dark" | "too_bright" | "no_leaf" | "fruit";
 
 export interface PhotoCheck {
   ok: boolean;
@@ -203,7 +203,7 @@ export function checkPhotoImage(img: HTMLImageElement): PhotoCheck {
   const P = N * N;
   const green = new Uint8Array(P);
   const Y = new Float32Array(P);
-  let greenCount = 0, sumY = 0;
+  let greenCount = 0, redCount = 0, sumY = 0;
   for (let i = 0; i < P; i++) {
     const r = d[i * 4], g = d[i * 4 + 1], b = d[i * 4 + 2];
     const mx = Math.max(r, g, b), mn = Math.min(r, g, b);
@@ -212,6 +212,8 @@ export function checkPhotoImage(img: HTMLImageElement): PhotoCheck {
       green[i] = 1;
       greenCount++;
     }
+    // ripe fruit / flower red (tomato, chilli): strongly red, saturated
+    if (r > 110 && r > g * 1.6 && r > b * 1.6 && sat > 0.45) redCount++;
     Y[i] = 0.299 * r + 0.587 * g + 0.114 * b;
     sumY += Y[i];
   }
@@ -248,7 +250,10 @@ export function checkPhotoImage(img: HTMLImageElement): PhotoCheck {
   const issues: PhotoIssue[] = [];
   if (brightness < 40) issues.push("too_dark");
   if (brightness > 235) issues.push("too_bright");
-  if (greenFrac < 0.02) issues.push("no_leaf");
+  const redFrac = redCount / P;
+  // Mostly red fruit and little leaf -> the AI checks leaves, not fruit
+  if (redFrac > 0.2 && redFrac > greenFrac) issues.push("fruit");
+  else if (greenFrac < 0.02) issues.push("no_leaf");
   if (skin > 0.05) issues.push("hand");
   // White object in a busy scene. A plain white/grey sheet behind the leaf is fine:
   // then the white covers (almost) the whole background and the background is even.

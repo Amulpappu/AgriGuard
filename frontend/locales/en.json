@@ -205,7 +205,8 @@
     "retake_no_leaf": "No green leaf was found. Take a close photo of one leaf.",
     "retake_too_dark": "The photo is too dark. Take it in daylight.",
     "retake_too_bright": "The photo is too bright. Avoid direct sunlight on the leaf.",
-    "retake_tip": "Tip: Take one leaf close up so it fills the screen, against the plant or plain ground, in daylight. No hands, gloves, paper or tools."
+    "retake_tip": "Tip: Take one leaf close up so it fills the screen, against the plant or plain ground, in daylight. No hands, gloves, paper or tools.",
+    "retake_fruit": "This looks like fruit, not a leaf. AgriGuard checks leaves – take a close photo of one leaf of the plant."
   },
   "dashboard": {
     "title": "Dashboard",
