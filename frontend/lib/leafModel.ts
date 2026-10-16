@@ -22,6 +22,7 @@ export interface LeafScreen {
   is_leaf: boolean;
   green_frac: number;
   plant_frac: number; // incl. yellow-green leaves (rice, maize); only used to decide "is there a leaf"
+  red_frac: number; // ripe red fruit (tomato, chilli, apple) - a fruit photo, not a leaf
   leaf_frac: number;
   lesion_pct: number | null;
 }
@@ -119,12 +120,13 @@ export function screenLeaf(img: HTMLImageElement): LeafScreen {
   const d = ctx.getImageData(0, 0, N, N).data;
   const green = new Uint8Array(N * N);
   const sym = new Uint8Array(N * N);
-  let greenCount = 0, plantCount = 0;
+  let greenCount = 0, plantCount = 0, redCount = 0;
   for (let i = 0; i < N * N; i++) {
     const r = d[i * 4], g = d[i * 4 + 1], b = d[i * 4 + 2];
     const mx = Math.max(r, g, b), mn = Math.min(r, g, b);
     const sat = mx > 0 ? (mx - mn) / mx : 0;
     const isGreen = g > r * 1.05 && g > b * 1.05 && g > 45 && sat > 0.15;
+    if (r > 110 && r > g * 1.6 && r > b * 1.6 && sat > 0.45) redCount++;
     if (isGreen || (g >= r * 0.9 && g > b * 1.25 && g > 60 && sat > 0.2)) plantCount++;
     if (isGreen) {
       green[i] = 1;
@@ -163,6 +165,7 @@ export function screenLeaf(img: HTMLImageElement): LeafScreen {
     is_leaf: greenFrac >= 0.08 && leafPx >= 400,
     green_frac: Math.round(greenFrac * 1000) / 1000,
     plant_frac: Math.round((plantCount / (N * N)) * 1000) / 1000,
+    red_frac: Math.round((redCount / (N * N)) * 1000) / 1000,
     leaf_frac: Math.round((leafPx / (N * N)) * 1000) / 1000,
     lesion_pct: leafPx ? Math.round((10000 * lesionPx) / leafPx) / 100 : null,
   };
@@ -181,6 +184,46 @@ export interface PhotoCheck {
   ok: boolean;
   issues: PhotoIssue[];
   stats: { skin: number; white: number; background: number; bg_std: number; brightness: number; green: number };
+}
+
+/**
+ * For photos of fruits, tubers or vegetables (not leaves). The leaf AI cannot judge these,
+ * so only the surface is checked: share of dark brown/black rot or spots inside the produce.
+ * A colour check, not a diagnosis. Keep in sync with backend leaf_screen.surface_screen.
+ */
+export function surfaceScreen(img: HTMLImageElement): { produce_frac: number; blemish_pct: number | null } {
+  const N = 128;
+  const canvas = document.createElement("canvas");
+  canvas.width = N;
+  canvas.height = N;
+  const ctx = canvas.getContext("2d")!;
+  ctx.drawImage(img, 0, 0, N, N);
+  const d = ctx.getImageData(0, 0, N, N).data;
+  const produce = new Uint8Array(N * N);
+  const rot = new Uint8Array(N * N);
+  for (let i = 0; i < N * N; i++) {
+    const r = d[i * 4], g = d[i * 4 + 1], b = d[i * 4 + 2];
+    const mx = Math.max(r, g, b), mn = Math.min(r, g, b);
+    const sat = mx > 0 ? (mx - mn) / mx : 0;
+    // dark brown/black rot or spots (dark-red shadows between fruits are excluded)
+    const isRot = mx > 25 && mx < 95 && g > r * 0.45 && r >= b && sat > 0.2;
+    rot[i] = isRot ? 1 : 0;
+    produce[i] = (sat > 0.22 && mx > 70) || isRot ? 1 : 0;
+  }
+  let region: Uint8Array = produce;
+  for (let k = 0; k < 4; k++) region = morph(region, N, true);
+  for (let k = 0; k < 4; k++) region = morph(region, N, false);
+  let px = 0, bad = 0;
+  for (let i = 0; i < N * N; i++) {
+    if (region[i]) {
+      px++;
+      if (rot[i]) bad++;
+    }
+  }
+  return {
+    produce_frac: Math.round((px / (N * N)) * 1000) / 1000,
+    blemish_pct: px ? Math.round((10000 * bad) / px) / 100 : null,
+  };
 }
 
 function morph(m: Uint8Array, N: number, dilate: boolean): Uint8Array {
@@ -345,15 +388,35 @@ export async function predictLeaf(file: File, cropSlug: string | null): Promise<
   const crop = cropSlug && cropSlug !== "auto" ? cropSlug : null;
 
   const notLeaf = (topProb: number) =>
-    screen.plant_frac < 0.02 || (!screen.is_leaf && screen.plant_frac < 0.08 && topProb < 0.8);
-  const notLeafResult = (): LeafPrediction => ({
-    probs: [{ disease_slug: "__uncertain__", prob: 1 }],
-    crop,
-    autoDetected: !crop,
-    screenOnly: false,
-    screen,
-    modelVersion: meta.version,
-  });
+    screen.plant_frac < 0.02 ||
+    (screen.red_frac > 0.2 && screen.red_frac > screen.green_frac) || // mostly red fruit: leaf AI must not judge it
+    (!screen.is_leaf && screen.plant_frac < 0.08 && topProb < 0.8);
+  const notLeafResult = (): LeafPrediction => {
+    // No leaf: if it shows a fruit / tuber / vegetable, report a surface colour check instead of a blank "not sure"
+    const surf = surfaceScreen(img);
+    if (surf.produce_frac >= 0.15 && surf.blemish_pct !== null && surf.blemish_pct < 8) {
+      const conf = surf.blemish_pct < 5 ? 0.7 : 0.6;
+      return {
+        probs: [
+          { disease_slug: `${crop || "unknown"}_healthy`, prob: conf },
+          { disease_slug: "__uncertain__", prob: Math.round((1 - conf) * 100) / 100 },
+        ],
+        crop,
+        autoDetected: !crop,
+        screenOnly: true,
+        screen: { ...screen, lesion_pct: surf.blemish_pct },
+        modelVersion: `${meta.version}+surface-screen`,
+      };
+    }
+    return {
+      probs: [{ disease_slug: "__uncertain__", prob: 1 }],
+      crop,
+      autoDetected: !crop,
+      screenOnly: false,
+      screen,
+      modelVersion: meta.version,
+    };
+  };
 
   if (crop && !meta.crops.includes(crop)) {
     if (notLeaf(0)) return notLeafResult();

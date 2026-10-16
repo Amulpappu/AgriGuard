@@ -135,3 +135,26 @@ def test_rice_disease_is_never_a_confident_claim(clf):
 def test_new_crop_auto_detect(clf):
     r = _predict(clf, "apple_scab.jpg", None)
     assert r["detected_crop_slug"] == "apple"
+
+
+# ---- fruit / tuber photos: surface colour check instead of a blank "not sure" ----
+def test_clean_potato_tuber_reports_no_visible_problem(clf):
+    r = _predict(clf, "potato_tuber.jpg", None)
+    assert r.get("screen_only") and r["probs"][0]["disease_slug"].endswith("_healthy"), r["probs"]
+    assert evaluate_confidence(r["probs"])["status"] == "healthy"
+
+
+def test_rotten_potato_is_not_called_healthy(clf):
+    r = _predict(clf, "potato_rot.jpg", None)
+    assert not r["probs"][0]["disease_slug"].endswith("_healthy"), r["probs"]
+
+
+def test_wall_is_still_not_sure(clf):
+    r = _predict(clf, "grey_wall.jpg", None)
+    assert evaluate_confidence(r["probs"])["status"] == "uncertain"
+
+
+def test_tomato_fruit_is_not_judged_by_leaf_ai(clf):
+    r = _predict(clf, "tomato_fruit.jpg", None)
+    assert r.get("screen_only") or evaluate_confidence(r["probs"])["status"] == "uncertain", r["probs"][:2]
+    assert "peach" not in r["probs"][0]["disease_slug"]

@@ -27,7 +27,7 @@ import numpy as np
 from PIL import Image, ImageOps
 
 from app.ml.classifier import ModelAdapter, classify_condition_type
-from app.ml.leaf_screen import screen_leaf
+from app.ml.leaf_screen import screen_leaf, surface_screen
 
 _MEAN = np.array([0.485, 0.456, 0.406], dtype=np.float32)
 _STD = np.array([0.229, 0.224, 0.225], dtype=np.float32)
@@ -82,12 +82,12 @@ class OnnxClassifier(ModelAdapter):
         # Crop not covered by the trained model -> colour screen only, never a guessed disease.
         if crop and crop not in self._crops:
             if not_a_leaf(screen, 0.0):
-                return not_a_leaf_result(crop, screen, self._version, auto_detected=False)
+                return not_a_leaf_result(crop, screen, self._version, auto_detected=False, surface=surface_screen(img))
             return screen_only_result(crop, screen, self._version, auto_detected=False)
 
         p = self._probs(img)
         if not_a_leaf(screen, float(p.max())):
-            return not_a_leaf_result(crop, screen, self._version, auto_detected=crop is None)
+            return not_a_leaf_result(crop, screen, self._version, auto_detected=crop is None, surface=surface_screen(img))
         auto_detected = crop is None
         if crop is None:
             crop_scores = {c: float(sum(p[i] for i, k in enumerate(self._classes) if k.startswith(c + "_"))) for c in self._crops}
@@ -127,10 +127,35 @@ def not_a_leaf(screen: Dict[str, Any], top_prob: float) -> bool:
     plant = screen.get("plant_frac", screen.get("green_frac", 0))
     if plant < 0.02:
         return True
+    red = screen.get("red_frac", 0)
+    if red > 0.2 and red > screen.get("green_frac", 0):
+        return True  # mostly red fruit: the leaf AI must not judge it
     return not screen.get("is_leaf") and plant < 0.08 and top_prob < 0.80
 
 
-def not_a_leaf_result(crop: Optional[str], screen: Dict[str, Any], version: str, auto_detected: bool) -> Dict[str, Any]:
+def not_a_leaf_result(
+    crop: Optional[str], screen: Dict[str, Any], version: str, auto_detected: bool, surface: Optional[Dict[str, Any]] = None
+) -> Dict[str, Any]:
+    """
+    No leaf in the photo. If it shows a fruit / tuber / vegetable, report a surface colour check:
+    clean surface -> "no visible problem" (70%, or 60% with a few dark marks); many dark spots -> not sure.
+    Anything else (wall, soil, sky) -> not sure.
+    """
+    if surface and surface.get("produce_frac", 0) >= 0.15 and surface.get("blemish_pct") is not None:
+        bl = surface["blemish_pct"]
+        if bl < 8.0:
+            conf = 0.70 if bl < 5.0 else 0.60
+            slug = f"{crop or 'unknown'}_healthy"
+            return {
+                "probs": [{"disease_slug": slug, "prob": conf}, {"disease_slug": "__uncertain__", "prob": round(1 - conf, 2)}],
+                "model_version": f"{version}+surface-screen",
+                "detected_crop_slug": crop,
+                "auto_detected_crop": auto_detected,
+                "condition_type": "healthy",
+                "leaf_screen": {**screen, "lesion_pct": bl},
+                "screen_only": True,
+                "surface_screen": surface,
+            }
     return {
         "probs": [{"disease_slug": "__uncertain__", "prob": 1.0}],
         "model_version": version,

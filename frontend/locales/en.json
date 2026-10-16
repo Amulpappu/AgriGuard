@@ -227,7 +227,8 @@
     "retake_no_leaf": "Crop not detected or did not cover the photo. Take a close photo covering the crop.",
     "retake_too_dark": "The photo is too dark. Take it in clear daylight.",
     "retake_too_bright": "The photo is too bright / overexposed. Avoid harsh glare.",
-    "retake_tip": "Tip: Take a close photo so the crop fills the frame, against the plant or ground, in daylight. No hands, gloves, paper or foreign tools."
+    "retake_tip": "Tip: Take a close photo so the crop fills the frame, against the plant or ground, in daylight. No hands, gloves, paper or foreign tools.",
+    "closest_match": "Closest match"
   },
   "dashboard": {
     "title": "Dashboard",

@@ -71,6 +71,8 @@ def screen_leaf(img: Image.Image) -> Dict[str, Any]:
         "is_leaf": bool(is_leaf),
         "green_frac": round(green_frac, 3),
         "plant_frac": round(plant_frac, 3),
+        # ripe red fruit (tomato, chilli, apple): photo of fruit, not leaf
+        "red_frac": round(float(((r > 110) & (r > g * 1.6) & (r > b * 1.6) & (sat > 0.45)).mean()), 3),
         "leaf_frac": round(leaf_px / float(SIZE * SIZE), 3),
         "lesion_pct": lesion_pct,
     }
@@ -150,4 +152,26 @@ def photo_check(img: Image.Image) -> Dict[str, Any]:
             "green": round(float(green.mean()), 3),
             "crop": round(crop_f, 3),
         },
+    }
+
+
+def surface_screen(img: Image.Image) -> Dict[str, Any]:
+    """
+    For photos of fruits, tubers or vegetables (not leaves). The leaf AI cannot judge these,
+    so only the surface is checked: share of dark brown/black rot or spots inside the produce.
+    This is a colour check, not a diagnosis. Mirrored in frontend/lib/leafModel.ts (surfaceScreen).
+    """
+    a = np.asarray(img.convert("RGB").resize((SIZE, SIZE), Image.BILINEAR), dtype=np.float32)
+    r, g, b = a[..., 0], a[..., 1], a[..., 2]
+    mx = a.max(axis=2)
+    mn = a.min(axis=2)
+    sat = np.where(mx > 0, (mx - mn) / np.maximum(mx, 1), 0)
+    # dark brown/black rot or spots (dark-red shadows between fruits are excluded)
+    rot = (mx > 25) & (mx < 95) & (g > r * 0.45) & (r >= b) & (sat > 0.2)
+    produce = ((sat > 0.22) & (mx > 70)) | rot
+    region = _close(produce, 4)
+    px = int(region.sum())
+    return {
+        "produce_frac": round(px / float(SIZE * SIZE), 3),
+        "blemish_pct": round(100.0 * float((region & rot).sum()) / px, 2) if px else None,
     }

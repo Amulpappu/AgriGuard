@@ -200,6 +200,9 @@ export default function ScanDetailPage() {
   const confPct = Math.round(Math.min(scan.confidence, 0.99) * 100);
   const showExpert = isUncertain || scan.low_confidence || sevLevel === "high";
   const validTop3 = (scan.top3 || []).filter((it) => it.disease_slug && it.disease_slug !== "__uncertain__");
+  // "Not sure": still show the AI's best guess and its (low) score instead of a blank 0%
+  const bestGuess = isUncertain && validTop3.length > 0 ? validTop3[0] : null;
+  const guessPct = bestGuess ? Math.round(Math.min(bestGuess.confidence, 0.99) * 100) : 0;
   const cleanFoliarName = (raw?: string) => {
     if (!raw) return "";
     return raw.replace(/^(disease|crop)\./, "").split("_").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
@@ -378,14 +381,23 @@ export default function ScanDetailPage() {
             <div>
               <div className="flex justify-between items-center text-sm">
                 <span className="text-gray-300 font-medium">{t("scan.confidence")}</span>
-                <span className="font-mono font-bold">{isUncertain ? t("scan.status_uncertain_confidence") : `${confPct}%`}</span>
+                <span className="font-mono font-bold">
+                  {isUncertain
+                    ? `${t("scan.status_uncertain_confidence")}${bestGuess ? ` • ${guessPct}%` : ""}`
+                    : `${confPct}%`}
+                </span>
               </div>
               <div className="h-2.5 mt-2 rounded-full bg-white/10 overflow-hidden">
                 <div
-                  className={`h-full rounded-full ${isUncertain ? "bg-slate-500" : confPct >= 80 ? "bg-emerald-400" : "bg-amber-400"}`}
-                  style={{ width: `${isUncertain ? 100 : confPct}%`, opacity: isUncertain ? 0.35 : 1 }}
+                  className={`h-full rounded-full ${isUncertain ? "bg-amber-500" : confPct >= 80 ? "bg-emerald-400" : "bg-amber-400"}`}
+                  style={{ width: `${isUncertain ? (bestGuess ? guessPct : 100) : confPct}%`, opacity: isUncertain && !bestGuess ? 0.35 : 1 }}
                 />
               </div>
+              {bestGuess && (
+                <p className="text-xs text-gray-400 mt-1.5">
+                  {t("scan.closest_match")}: <span className="text-gray-200 font-semibold">{t(bestGuess.disease_name_key)}</span> ({guessPct}%)
+                </p>
+              )}
             </div>
             {/* Severity */}
             <div>
@@ -416,7 +428,7 @@ export default function ScanDetailPage() {
                 {validTop3.map((item, i) => (
                   <div key={i} className="p-3 rounded-xl bg-white/5 border border-white/10 flex items-center justify-between text-sm">
                     <span className="font-semibold text-gray-100">{t(item.disease_name_key)}</span>
-                    {!isUncertain && <span className="font-mono text-gray-300">{Math.round(item.confidence * 100)}%</span>}
+                    <span className="font-mono text-gray-300">{Math.round(item.confidence * 100)}%</span>
                   </div>
                 ))}
               </div>
