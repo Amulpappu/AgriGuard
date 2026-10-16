@@ -222,13 +222,12 @@
     "early_signs_note": "Only a small part of the leaf is affected. Acting now — removing affected leaves and checking nearby plants — can stop it spreading.",
     "retake_title": "Please retake the photo",
     "retake_body": "The AI did not check this photo, so no diagnosis is given. A wrong photo can give a wrong result.",
-    "retake_hand": "A hand or person is visible. Only the crop leaf should be in the photo.",
-    "retake_objects": "Gloves, paper or other objects are visible. Remove them from the photo.",
-    "retake_no_leaf": "No green leaf was found. Take a close photo of one leaf.",
-    "retake_too_dark": "The photo is too dark. Take it in daylight.",
-    "retake_too_bright": "The photo is too bright. Avoid direct sunlight on the leaf.",
-    "retake_tip": "Tip: Take one leaf close up so it fills the screen, against the plant or plain ground, in daylight. No hands, gloves, paper or tools.",
-    "retake_fruit": "This looks like fruit, not a leaf. AgriGuard checks leaves – take a close photo of one leaf of the plant."
+    "retake_hand": "A hand or person is visible. Only the crop should be in the photo.",
+    "retake_objects": "Gloves, paper or foreign objects are visible. Remove them from the photo.",
+    "retake_no_leaf": "Crop not detected or did not cover the photo. Take a close photo covering the crop.",
+    "retake_too_dark": "The photo is too dark. Take it in clear daylight.",
+    "retake_too_bright": "The photo is too bright / overexposed. Avoid harsh glare.",
+    "retake_tip": "Tip: Take a close photo so the crop fills the frame, against the plant or ground, in daylight. No hands, gloves, paper or foreign tools."
   },
   "dashboard": {
     "title": "Dashboard",

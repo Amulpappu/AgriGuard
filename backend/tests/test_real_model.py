@@ -114,9 +114,9 @@ def test_photo_without_leaf_asks_for_retake():
     assert "no_leaf" in c["issues"]
 
 
-def test_fruit_photo_asks_for_leaf():
+def test_fruit_photo_passes_check():
     c = photo_check(Image.open(FIX / "tomato_fruit.jpg"))
-    assert "fruit" in c["issues"], c
+    assert c["ok"], c
 
 
 # ---- v2: more crops ----

@@ -207,25 +207,41 @@ export function checkPhotoImage(img: HTMLImageElement): PhotoCheck {
   ctx.drawImage(img, 0, 0, N, N);
   const d = ctx.getImageData(0, 0, N, N).data;
   const P = N * N;
-  const green = new Uint8Array(P);
+  const crop = new Uint8Array(P);
   const Y = new Float32Array(P);
-  let greenCount = 0, redCount = 0, sumY = 0;
+  let cropCount = 0, greenCount = 0, sumY = 0;
+
   for (let i = 0; i < P; i++) {
     const r = d[i * 4], g = d[i * 4 + 1], b = d[i * 4 + 2];
     const mx = Math.max(r, g, b), mn = Math.min(r, g, b);
     const sat = mx > 0 ? (mx - mn) / mx : 0;
-    // green plant tissue, including yellow-green leaves (rice, maize, older leaves)
-    if ((g > r * 1.05 && g > b * 1.05 && g > 45 && sat > 0.15) || (g >= r * 0.9 && g > b * 1.25 && g > 60 && sat > 0.2)) {
-      green[i] = 1;
-      greenCount++;
+    const yVal = 0.299 * r + 0.587 * g + 0.114 * b;
+    const cb = 128 - 0.1687 * r - 0.3313 * g + 0.5 * b;
+    const cr = 128 + 0.5 * r - 0.4187 * g - 0.0813 * b;
+
+    // Bare human skin detector
+    const isSkin = yVal > 100 && cr > 140 && cr < 170 && cb > 85 && cb < 125 && sat > 0.12 && sat < 0.55 && r > 140;
+
+    // Green foliage
+    const isGreen = (g > r * 1.05 && g > b * 1.05 && g > 40 && sat > 0.12) || (g >= r * 0.88 && g > b * 1.2 && g > 50 && sat > 0.15);
+    // Yellow chlorotic foliage (excluding bare skin)
+    const isYellow = r > 80 && g > 75 && b < 0.85 * g && sat > 0.18 && !isSkin;
+    // Brown necrotic/rust/blight foliage (excluding bare skin)
+    const isBrown = r > 55 && r > g * 1.05 && g > b * 0.95 && sat > 0.12 && mx < 225 && !isSkin;
+    // Fruit / vegetable / tuber tissue (excluding bare skin)
+    const isFruit = r > 80 && r > g * 1.2 && r > b * 1.2 && sat > 0.25 && !isSkin;
+
+    if (isGreen) greenCount++;
+    if (isGreen || isYellow || isBrown || isFruit) {
+      crop[i] = 1;
+      cropCount++;
     }
-    // ripe fruit / flower red (tomato, chilli): strongly red, saturated
-    if (r > 110 && r > g * 1.6 && r > b * 1.6 && sat > 0.45) redCount++;
-    Y[i] = 0.299 * r + 0.587 * g + 0.114 * b;
-    sumY += Y[i];
+    Y[i] = yVal;
+    sumY += yVal;
   }
-  // Leaf region (+ a small margin) — everything else is "background"
-  let near: Uint8Array = green;
+
+  // Crop region (+ a small margin) — everything else is "background"
+  let near: Uint8Array = crop;
   for (let k = 0; k < 4; k++) near = morph(near, N, true);
   for (let k = 0; k < 4; k++) near = morph(near, N, false);
   for (let k = 0; k < 3; k++) near = morph(near, N, true);
@@ -241,31 +257,31 @@ export function checkPhotoImage(img: HTMLImageElement): PhotoCheck {
     const sat = mx > 0 ? (mx - mn) / mx : 0;
     const cb = 128 - 0.1687 * r - 0.3313 * g + 0.5 * b;
     const cr = 128 + 0.5 * r - 0.4187 * g - 0.0813 * b;
-    // bare human skin (hand / fingers / arm)
-    if (Y[i] > 110 && cr > 140 && cr < 170 && cb > 85 && cb < 125 && sat > 0.12 && sat < 0.55 && r > 150) skinPx++;
-    // very bright white/grey object (gloves, lab coat, paper, clipboard)
+
+    // bare human skin (hand / fingers / arm) in background
+    if (Y[i] > 100 && cr > 140 && cr < 170 && cb > 85 && cb < 125 && sat > 0.12 && sat < 0.55 && r > 140) skinPx++;
+    // very bright white/grey object (gloves, lab coat, paper, clipboard, tools)
     if (mx > 215 && sat < 0.1) whitePx++;
   }
+
   const skin = skinPx / P;
   const white = whitePx / P;
   const background = bgPx / P;
   const bgMean = bgPx ? bgSum / bgPx : 0;
   const bgStd = bgPx > 50 ? Math.sqrt(Math.max(0, bgSq / bgPx - bgMean * bgMean)) : 0;
   const brightness = sumY / P;
+  const cropFrac = cropCount / P;
   const greenFrac = greenCount / P;
 
   const issues: PhotoIssue[] = [];
-  if (brightness < 40) issues.push("too_dark");
-  if (brightness > 235) issues.push("too_bright");
-  const redFrac = redCount / P;
-  // Mostly red fruit and little leaf -> the AI checks leaves, not fruit
-  if (redFrac > 0.2 && redFrac > greenFrac) issues.push("fruit");
-  else if (greenFrac < 0.02) issues.push("no_leaf");
+  // 1. Multiple objects / foreign items:
   if (skin > 0.05) issues.push("hand");
-  // White object in a busy scene. A plain white/grey sheet behind the leaf is fine:
-  // then the white covers (almost) the whole background and the background is even.
   const whiteShare = background > 0 ? white / background : 0;
-  if (white > 0.04 && whiteShare > 0.15 && whiteShare < 0.75 && bgStd > 40) issues.push("objects");
+  if (white > 0.04 && whiteShare > 0.15 && whiteShare < 0.85 && bgStd > 35) issues.push("objects");
+
+  // 2. Crop did not cover correctly (empty scene, wall, or pitch black):
+  if (cropFrac < 0.03) issues.push("no_leaf");
+  if (brightness < 20) issues.push("too_dark");
 
   const r3 = (v: number) => Math.round(v * 1000) / 1000;
   return {
