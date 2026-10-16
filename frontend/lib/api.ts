@@ -489,6 +489,13 @@ export const STATIC_FALLBACK_CROPS: CropOut[] = [
   { id: "3cd3692b-7fd9-46d1-9ed1-cac888070fbb", slug: "mango", name_key: "crop.mango", icon_emoji: "🥭" },
   { id: "e65ffdcc-4a9c-4411-a373-49a07809c12e", slug: "grape", name_key: "crop.grape", icon_emoji: "🍇" },
   { id: "758cec0e-db2a-479f-9f68-94bedc9b2730", slug: "cabbage", name_key: "crop.cabbage", icon_emoji: "🥬" },
+  { id: "4ad51217-3820-5569-b990-c9d54cb82791", slug: "apple", name_key: "crop.apple", icon_emoji: "🍎" },
+  { id: "c519664a-f54b-5245-a1b0-252eebfb814f", slug: "cherry", name_key: "crop.cherry", icon_emoji: "🍒" },
+  { id: "63ec6989-378c-5c32-aada-bf76f69f7e0e", slug: "orange", name_key: "crop.orange", icon_emoji: "🍊" },
+  { id: "489aef27-949c-5eef-9ce1-b06ec3dbcdc1", slug: "peach", name_key: "crop.peach", icon_emoji: "🍑" },
+  { id: "2168d7ce-fc6b-5ea3-ae7c-28271bbb5a63", slug: "soybean", name_key: "crop.soybean", icon_emoji: "🫘" },
+  { id: "4483a449-7560-582d-ab0b-c6c8ea83f7a7", slug: "squash", name_key: "crop.squash", icon_emoji: "🎃" },
+  { id: "736069a0-24a5-5b26-9b90-77f7206fce9e", slug: "strawberry", name_key: "crop.strawberry", icon_emoji: "🍓" },
 ];
 
 // ─── Crops ───────────────────────────────────────────────────────────────────

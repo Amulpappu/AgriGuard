@@ -10,7 +10,9 @@ field photos (CC BY 4.0). Files:
 The same two files are served to the browser (frontend/public/models/) so the
 website and the laptop backend give identical results.
 
-Crops covered by the model: tomato, potato, pepper, corn, grape.
+Crops covered by the model: listed in the .json file ("crops").
+Crops in "crops_without_healthy_class" (rice) were trained on diseased leaves only:
+a clean leaf is judged by the colour screen, and a disease is only ever "possible".
 For any other crop the adapter does NOT guess a disease: it returns a
 colour-based "no visible problem" / "uncertain" screen (see leaf_screen.py).
 """
@@ -55,6 +57,7 @@ class OnnxClassifier(ModelAdapter):
         self._meta: Dict[str, Any] = json.loads(Path(meta_path).read_text(encoding="utf-8"))
         self._classes: List[str] = self._meta["classes"]
         self._crops: List[str] = self._meta["crops"]
+        self._no_healthy: List[str] = self._meta.get("crops_without_healthy_class", [])
         self._version = self._meta.get("version", "agriguard-leaf-v1")
         self._session = ort.InferenceSession(model_path, providers=["CPUExecutionProvider"])
         self._input = self._session.get_inputs()[0].name
@@ -94,6 +97,10 @@ class OnnxClassifier(ModelAdapter):
                 # Leaf of a crop the model does not know: do not force it into tomato/potato/etc.
                 return screen_only_result(None, screen, self._version, auto_detected=True)
 
+        if crop in self._no_healthy and screen.get("is_leaf") and (screen.get("lesion_pct") or 0) < 1.5:
+            # No healthy class for this crop: a clean leaf is reported by the colour screen
+            return screen_only_result(crop, screen, self._version, auto_detected=auto_detected)
+
         idx = [i for i, k in enumerate(self._classes) if k.startswith(crop + "_")]
         sub = np.array([p[i] for i in idx])
         sub = sub / sub.sum()
@@ -103,6 +110,8 @@ class OnnxClassifier(ModelAdapter):
             reverse=True,
         )
         probs = apply_health_guard(probs, screen)
+        if crop in self._no_healthy and probs[0]["prob"] > 0.79:
+            probs[0] = {**probs[0], "prob": 0.79}  # never a confident claim without a healthy class
         return {
             "probs": probs,
             "model_version": self._version,
@@ -115,9 +124,10 @@ class OnnxClassifier(ModelAdapter):
 
 def not_a_leaf(screen: Dict[str, Any], top_prob: float) -> bool:
     """No plant tissue in the photo (wall, soil, sky, hand): never return a crop result."""
-    if screen.get("green_frac", 0) < 0.02:
+    plant = screen.get("plant_frac", screen.get("green_frac", 0))
+    if plant < 0.02:
         return True
-    return not screen.get("is_leaf") and top_prob < 0.80
+    return not screen.get("is_leaf") and plant < 0.08 and top_prob < 0.80
 
 
 def not_a_leaf_result(crop: Optional[str], screen: Dict[str, Any], version: str, auto_detected: bool) -> Dict[str, Any]:

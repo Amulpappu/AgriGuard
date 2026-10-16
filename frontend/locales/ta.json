@@ -39,7 +39,14 @@
     "mango": "மாங்காய்",
     "grape": "திராட்சை",
     "cabbage": "முட்டைக்கோஸ் & காலிஃபிளவர்",
-    "cucumber": "வெள்ளரி & பூசணி வகை"
+    "cucumber": "வெள்ளரி & பூசணி வகை",
+    "apple": "ஆப்பிள்",
+    "cherry": "செர்ரி",
+    "orange": "ஆரஞ்சு & எலுமிச்சை வகை",
+    "peach": "பீச்",
+    "soybean": "சோயாபீன்",
+    "squash": "பூசணி வகை",
+    "strawberry": "ஸ்ட்ராபெர்ரி"
   },
   "disease": {
     "tomato_healthy": "ஆரோக்கியமான தக்காளி",
@@ -110,7 +117,22 @@
     "corn_gray_leaf_spot": "சாம்பல் இலைப்புள்ளி நோய்",
     "grape_esca": "எஸ்கா தட்டம்மை நோய்",
     "grape_leaf_blight": "இலைக்கருகல் பூஞ்சை நோய்",
-    "unknown_healthy": "பாதிப்பு எதுவும் காணப்படவில்லை"
+    "unknown_healthy": "பாதிப்பு எதுவும் காணப்படவில்லை",
+    "apple_scab": "ஆப்பிள் சொறி நோய்",
+    "apple_black_rot": "கருப்பு அழுகல்",
+    "apple_cedar_rust": "துரு நோய்",
+    "apple_healthy": "ஆரோக்கியமானது",
+    "cherry_powdery_mildew": "சாம்பல் நோய்",
+    "cherry_healthy": "ஆரோக்கியமானது",
+    "orange_citrus_greening": "சிட்ரஸ் பசுமை நோய் (HLB)",
+    "peach_bacterial_spot": "பாக்டீரியா புள்ளி நோய்",
+    "peach_healthy": "ஆரோக்கியமானது",
+    "soybean_healthy": "ஆரோக்கியமானது",
+    "squash_powdery_mildew": "சாம்பல் நோய்",
+    "strawberry_leaf_scorch": "இலை கருகல்",
+    "strawberry_healthy": "ஆரோக்கியமானது",
+    "rice_leaf_smut": "இலை கரிப்பூட்டை நோய்",
+    "cotton_leaf_disease": "இலை நோய் (வகை கண்டறியப்படவில்லை)"
   },
   "persona": {
     "farmer_title": "விவசாயி / நில உரிமையாளர்",

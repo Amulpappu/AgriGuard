@@ -39,7 +39,14 @@
     "mango": "Mango",
     "grape": "Grape",
     "cabbage": "Cabbage & Cauliflower",
-    "cucumber": "Cucumber & Gourds"
+    "cucumber": "Cucumber & Gourds",
+    "apple": "Apple",
+    "cherry": "Cherry",
+    "orange": "Orange & Citrus",
+    "peach": "Peach",
+    "soybean": "Soybean",
+    "squash": "Squash & Pumpkin",
+    "strawberry": "Strawberry"
   },
   "disease": {
     "tomato_healthy": "Healthy Tomato",
@@ -110,7 +117,22 @@
     "corn_gray_leaf_spot": "Gray Leaf Spot",
     "grape_esca": "Esca (Black Measles)",
     "grape_leaf_blight": "Leaf Blight (Isariopsis Leaf Spot)",
-    "unknown_healthy": "No Visible Problem Found"
+    "unknown_healthy": "No Visible Problem Found",
+    "apple_scab": "Apple Scab",
+    "apple_black_rot": "Black Rot",
+    "apple_cedar_rust": "Cedar Apple Rust",
+    "apple_healthy": "Healthy",
+    "cherry_powdery_mildew": "Powdery Mildew",
+    "cherry_healthy": "Healthy",
+    "orange_citrus_greening": "Citrus Greening (HLB)",
+    "peach_bacterial_spot": "Bacterial Spot",
+    "peach_healthy": "Healthy",
+    "soybean_healthy": "Healthy",
+    "squash_powdery_mildew": "Powdery Mildew",
+    "strawberry_leaf_scorch": "Leaf Scorch",
+    "strawberry_healthy": "Healthy",
+    "rice_leaf_smut": "Leaf Smut",
+    "cotton_leaf_disease": "Leaf Disease (type not identified)"
   },
   "persona": {
     "farmer_title": "Farmer / Commercial Grower",

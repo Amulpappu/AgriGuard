@@ -23,8 +23,8 @@ class Settings(BaseSettings):
     MAX_UPLOAD_MB: int = 8
 
     MODEL_BACKEND: str = "onnx"  # "onnx" (real model) | "mock" (tests only)
-    MODEL_PATH: str = "app/ml/weights/agriguard-leaf-v1.onnx"
-    MODEL_META_PATH: str = "app/ml/weights/agriguard-leaf-v1.json"
+    MODEL_PATH: str = "app/ml/weights/agriguard-leaf-v2.onnx"
+    MODEL_META_PATH: str = "app/ml/weights/agriguard-leaf-v2.json"
 
     CONF_CONFIDENT: float = 0.80
     CONF_POSSIBLE: float = 0.55

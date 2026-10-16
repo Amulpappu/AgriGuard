@@ -1,7 +1,7 @@
 """
-Smoke tests for the real ONNX leaf model (agriguard-leaf-v1).
+Smoke tests for the real ONNX leaf model (agriguard-leaf-v2).
 They check behaviour, not accuracy: accuracy is measured separately on
-held-out lab and field photos (see app/ml/weights/agriguard-leaf-v1.json).
+held-out lab and field photos (see app/ml/weights/agriguard-leaf-v2.json).
 """
 import asyncio
 from pathlib import Path
@@ -15,8 +15,8 @@ from app.services.confidence import evaluate_confidence
 
 BASE = Path(__file__).resolve().parents[1]
 FIX = Path(__file__).resolve().parent / "fixtures"
-MODEL = BASE / "app/ml/weights/agriguard-leaf-v1.onnx"
-META = BASE / "app/ml/weights/agriguard-leaf-v1.json"
+MODEL = BASE / "app/ml/weights/agriguard-leaf-v2.onnx"
+META = BASE / "app/ml/weights/agriguard-leaf-v2.json"
 
 pytestmark = pytest.mark.skipif(not MODEL.exists(), reason="model weights not present")
 
@@ -52,9 +52,9 @@ def test_auto_detects_crop(clf):
 
 
 def test_unsupported_crop_never_gets_a_guessed_disease(clf):
-    r = _predict(clf, "potato_healthy.jpg", "rice")
+    r = _predict(clf, "potato_healthy.jpg", "banana")
     assert r.get("screen_only") is True
-    assert all(p["disease_slug"] in ("rice_healthy", "__uncertain__") for p in r["probs"])
+    assert all(p["disease_slug"] in ("banana_healthy", "__uncertain__") for p in r["probs"])
     # clean leaf -> "possible healthy", never a confident claim
     assert evaluate_confidence(r["probs"])["status"] in ("healthy", "uncertain")
     assert r["probs"][0]["prob"] < 0.80
@@ -80,7 +80,7 @@ def test_health_guard_only_overrides_weak_disease_calls():
 def test_photo_without_a_leaf_is_not_sure(clf):
     r = _predict(clf, "grey_wall.jpg", None)
     assert evaluate_confidence(r["probs"])["status"] == "uncertain"
-    r = _predict(clf, "grey_wall.jpg", "rice")
+    r = _predict(clf, "grey_wall.jpg", "banana")
     assert evaluate_confidence(r["probs"])["status"] == "uncertain"
 
 
@@ -117,3 +117,21 @@ def test_photo_without_leaf_asks_for_retake():
 def test_fruit_photo_asks_for_leaf():
     c = photo_check(Image.open(FIX / "tomato_fruit.jpg"))
     assert "fruit" in c["issues"], c
+
+
+# ---- v2: more crops ----
+@pytest.mark.parametrize("name,crop,expected", [("apple_scab.jpg", "apple", "apple_scab"), ("rice_brown_spot.jpg", "rice", "rice_brown_spot")])
+def test_new_crops(clf, name, crop, expected):
+    r = _predict(clf, name, crop)
+    assert r["probs"][0]["disease_slug"] == expected, r["probs"][:3]
+
+
+def test_rice_disease_is_never_a_confident_claim(clf):
+    # no healthy rice photos in the training data -> at most "possible"
+    r = _predict(clf, "rice_brown_spot.jpg", "rice")
+    assert r["probs"][0]["prob"] <= 0.79
+
+
+def test_new_crop_auto_detect(clf):
+    r = _predict(clf, "apple_scab.jpg", None)
+    assert r["detected_crop_slug"] == "apple"

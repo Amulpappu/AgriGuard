@@ -28,6 +28,13 @@ CROPS_EXPANDED = [
     {"slug": "grape",     "name_key": "crop.grape",     "icon_emoji": "🍇"},
     {"slug": "cabbage",   "name_key": "crop.cabbage",   "icon_emoji": "🥬"},
     {"slug": "cucumber",  "name_key": "crop.cucumber",  "icon_emoji": "🥒"},
+    {"slug": "apple", "name_key": "crop.apple", "icon_emoji": "🍎"},
+    {"slug": "cherry", "name_key": "crop.cherry", "icon_emoji": "🍒"},
+    {"slug": "orange", "name_key": "crop.orange", "icon_emoji": "🍊"},
+    {"slug": "peach", "name_key": "crop.peach", "icon_emoji": "🍑"},
+    {"slug": "soybean", "name_key": "crop.soybean", "icon_emoji": "🫘"},
+    {"slug": "squash", "name_key": "crop.squash", "icon_emoji": "🎃"},
+    {"slug": "strawberry", "name_key": "crop.strawberry", "icon_emoji": "🍓"},
     {"slug": "unknown",   "name_key": "crop.unknown",   "icon_emoji": "🌿"},
 ]
 
@@ -117,6 +124,23 @@ DISEASES_EXPANDED = [
     {"slug": "corn_gray_leaf_spot",           "name_key": "disease.corn_gray_leaf_spot",           "crop_slug": "corn",   "class_label": "Corn___Gray_leaf_spot"},
     {"slug": "grape_esca",                    "name_key": "disease.grape_esca",                    "crop_slug": "grape",  "class_label": "Grape___Esca"},
     {"slug": "grape_leaf_blight",             "name_key": "disease.grape_leaf_blight",             "crop_slug": "grape",  "class_label": "Grape___Leaf_blight"},
+    # Leaf model v2 classes
+    {"slug": "apple_scab", "name_key": "disease.apple_scab", "crop_slug": "apple", "class_label": "Apple___Scab"},
+    {"slug": "apple_black_rot", "name_key": "disease.apple_black_rot", "crop_slug": "apple", "class_label": "Apple___Black_Rot"},
+    {"slug": "apple_cedar_rust", "name_key": "disease.apple_cedar_rust", "crop_slug": "apple", "class_label": "Apple___Cedar_Rust"},
+    {"slug": "apple_healthy", "name_key": "disease.apple_healthy", "crop_slug": "apple", "class_label": "Apple___Healthy"},
+    {"slug": "cherry_powdery_mildew", "name_key": "disease.cherry_powdery_mildew", "crop_slug": "cherry", "class_label": "Cherry___Powdery_Mildew"},
+    {"slug": "cherry_healthy", "name_key": "disease.cherry_healthy", "crop_slug": "cherry", "class_label": "Cherry___Healthy"},
+    {"slug": "orange_citrus_greening", "name_key": "disease.orange_citrus_greening", "crop_slug": "orange", "class_label": "Orange___Citrus_Greening"},
+    {"slug": "peach_bacterial_spot", "name_key": "disease.peach_bacterial_spot", "crop_slug": "peach", "class_label": "Peach___Bacterial_Spot"},
+    {"slug": "peach_healthy", "name_key": "disease.peach_healthy", "crop_slug": "peach", "class_label": "Peach___Healthy"},
+    {"slug": "soybean_healthy", "name_key": "disease.soybean_healthy", "crop_slug": "soybean", "class_label": "Soybean___Healthy"},
+    {"slug": "squash_powdery_mildew", "name_key": "disease.squash_powdery_mildew", "crop_slug": "squash", "class_label": "Squash___Powdery_Mildew"},
+    {"slug": "strawberry_leaf_scorch", "name_key": "disease.strawberry_leaf_scorch", "crop_slug": "strawberry", "class_label": "Strawberry___Leaf_Scorch"},
+    {"slug": "strawberry_healthy", "name_key": "disease.strawberry_healthy", "crop_slug": "strawberry", "class_label": "Strawberry___Healthy"},
+    {"slug": "rice_bacterial_leaf_blight", "name_key": "disease.rice_bacterial_leaf_blight", "crop_slug": "rice", "class_label": "Rice___Bacterial_Leaf_Blight"},
+    {"slug": "rice_leaf_smut", "name_key": "disease.rice_leaf_smut", "crop_slug": "rice", "class_label": "Rice___Leaf_Smut"},
+    {"slug": "cotton_leaf_disease", "name_key": "disease.cotton_leaf_disease", "crop_slug": "cotton", "class_label": "Cotton___Leaf_Disease"},
     {"slug": "unknown_healthy",               "name_key": "disease.unknown_healthy",               "crop_slug": "unknown","class_label": "Unknown___healthy"},
 ]
 

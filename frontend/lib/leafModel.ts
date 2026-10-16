@@ -2,23 +2,26 @@
  * In-browser AgriGuard leaf model (onnxruntime-web).
  *
  * Same model files as the Python backend (backend/app/ml/weights/):
- *   /models/agriguard-leaf-v1.onnx   MobileNetV2 + AgriGuard head (logits)
- *   /models/agriguard-leaf-v1.json   classes, crops, metrics
+ *   /models/agriguard-leaf-v2.onnx   MobileNetV2 + AgriGuard head (logits)
+ *   /models/agriguard-leaf-v2.json   classes, crops, metrics
  *
- * Crops covered: tomato, potato, pepper, corn, grape.
+ * Crops covered: see "crops" in the .json file. Crops in "crops_without_healthy_class"
+ * (rice) have no healthy training photos: a clean leaf is judged by the colour screen
+ * and a disease is only ever "possible".
  * Other crops get a leaf-only colour screen and never a guessed disease name.
  * Keep screenLeaf() in sync with backend/app/ml/leaf_screen.py.
  */
 "use client";
 
-const MODEL_URL = "/models/agriguard-leaf-v1.onnx";
-const META_URL = "/models/agriguard-leaf-v1.json";
+const MODEL_URL = "/models/agriguard-leaf-v2.onnx";
+const META_URL = "/models/agriguard-leaf-v2.json";
 const MEAN = [0.485, 0.456, 0.406];
 const STD = [0.229, 0.224, 0.225];
 
 export interface LeafScreen {
   is_leaf: boolean;
   green_frac: number;
+  plant_frac: number; // incl. yellow-green leaves (rice, maize); only used to decide "is there a leaf"
   leaf_frac: number;
   lesion_pct: number | null;
 }
@@ -36,6 +39,7 @@ interface Meta {
   version: string;
   classes: string[];
   crops: string[];
+  crops_without_healthy_class?: string[];
 }
 
 let sessionPromise: Promise<{ session: any; ort: any; meta: Meta }> | null = null;
@@ -115,12 +119,13 @@ export function screenLeaf(img: HTMLImageElement): LeafScreen {
   const d = ctx.getImageData(0, 0, N, N).data;
   const green = new Uint8Array(N * N);
   const sym = new Uint8Array(N * N);
-  let greenCount = 0;
+  let greenCount = 0, plantCount = 0;
   for (let i = 0; i < N * N; i++) {
     const r = d[i * 4], g = d[i * 4 + 1], b = d[i * 4 + 2];
     const mx = Math.max(r, g, b), mn = Math.min(r, g, b);
     const sat = mx > 0 ? (mx - mn) / mx : 0;
     const isGreen = g > r * 1.05 && g > b * 1.05 && g > 45 && sat > 0.15;
+    if (isGreen || (g >= r * 0.9 && g > b * 1.25 && g > 60 && sat > 0.2)) plantCount++;
     if (isGreen) {
       green[i] = 1;
       greenCount++;
@@ -157,6 +162,7 @@ export function screenLeaf(img: HTMLImageElement): LeafScreen {
   return {
     is_leaf: greenFrac >= 0.08 && leafPx >= 400,
     green_frac: Math.round(greenFrac * 1000) / 1000,
+    plant_frac: Math.round((plantCount / (N * N)) * 1000) / 1000,
     leaf_frac: Math.round((leafPx / (N * N)) * 1000) / 1000,
     lesion_pct: leafPx ? Math.round((10000 * lesionPx) / leafPx) / 100 : null,
   };
@@ -208,7 +214,8 @@ export function checkPhotoImage(img: HTMLImageElement): PhotoCheck {
     const r = d[i * 4], g = d[i * 4 + 1], b = d[i * 4 + 2];
     const mx = Math.max(r, g, b), mn = Math.min(r, g, b);
     const sat = mx > 0 ? (mx - mn) / mx : 0;
-    if (g > r * 1.05 && g > b * 1.05 && g > 45 && sat > 0.15) {
+    // green plant tissue, including yellow-green leaves (rice, maize, older leaves)
+    if ((g > r * 1.05 && g > b * 1.05 && g > 45 && sat > 0.15) || (g >= r * 0.9 && g > b * 1.25 && g > 60 && sat > 0.2)) {
       green[i] = 1;
       greenCount++;
     }
@@ -321,7 +328,8 @@ export async function predictLeaf(file: File, cropSlug: string | null): Promise<
   const { session, ort, meta } = await loadModel();
   const crop = cropSlug && cropSlug !== "auto" ? cropSlug : null;
 
-  const notLeaf = (topProb: number) => screen.green_frac < 0.02 || (!screen.is_leaf && topProb < 0.8);
+  const notLeaf = (topProb: number) =>
+    screen.plant_frac < 0.02 || (!screen.is_leaf && screen.plant_frac < 0.08 && topProb < 0.8);
   const notLeafResult = (): LeafPrediction => ({
     probs: [{ disease_slug: "__uncertain__", prob: 1 }],
     crop,
@@ -359,12 +367,20 @@ export async function predictLeaf(file: File, cropSlug: string | null): Promise<
     chosen = best;
   }
 
+  const noHealthy = meta.crops_without_healthy_class || [];
+  if (noHealthy.includes(chosen) && screen.is_leaf && (screen.lesion_pct ?? 0) < 1.5) {
+    return screenOnly(chosen, screen, meta.version, !crop);
+  }
+
   const idx = cls.map((k, i) => (k.startsWith(chosen + "_") ? i : -1)).filter((i) => i >= 0);
   const total = idx.reduce((a, i) => a + p[i], 0);
   let probs = idx
     .map((i) => ({ disease_slug: cls[i], prob: p[i] / total }))
     .sort((a, b) => b.prob - a.prob);
   probs = healthGuard(probs, screen);
+  if (noHealthy.includes(chosen) && probs[0].prob > 0.79) {
+    probs[0] = { ...probs[0], prob: 0.79 }; // never a confident claim without a healthy class
+  }
   return { probs, crop: chosen, autoDetected: !crop, screenOnly: false, screen, modelVersion: meta.version };
 }
 

@@ -53,6 +53,8 @@ def screen_leaf(img: Image.Image) -> Dict[str, Any]:
     # Healthy green tissue: green clearly dominant, not too dark
     green = (g > r * 1.05) & (g > b * 1.05) & (g > 45) & (sat > 0.15)
     green_frac = float(green.mean())
+    # plant tissue incl. yellow-green leaves (rice, maize) - used only to decide "is there a leaf"
+    plant_frac = float((green | ((g >= r * 0.9) & (g > b * 1.25) & (g > 60) & (sat > 0.2))).mean())
 
     # Leaf region = green tissue with small holes (spots/lesions) closed in.
     leaf = _close(green, 4)
@@ -68,6 +70,7 @@ def screen_leaf(img: Image.Image) -> Dict[str, Any]:
     return {
         "is_leaf": bool(is_leaf),
         "green_frac": round(green_frac, 3),
+        "plant_frac": round(plant_frac, 3),
         "leaf_frac": round(leaf_px / float(SIZE * SIZE), 3),
         "lesion_pct": lesion_pct,
     }
@@ -86,6 +89,8 @@ def photo_check(img: Image.Image) -> Dict[str, Any]:
     mn = a.min(axis=2)
     sat = np.where(mx > 0, (mx - mn) / np.maximum(mx, 1), 0)
     green = (g > r * 1.05) & (g > b * 1.05) & (g > 45) & (sat > 0.15)
+    # also yellow-green plant tissue (rice, maize and older leaves)
+    green = green | ((g >= r * 0.9) & (g > b * 1.25) & (g > 60) & (sat > 0.2))
     near = _close(green, 4)
     for _ in range(3):
         near = _shift_max(near)
