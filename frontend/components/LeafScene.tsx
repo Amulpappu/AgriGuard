@@ -3,29 +3,42 @@
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
 
+interface Props {
+  /** Called after the first frame is drawn, so the static poster can fade out. */
+  onReady?: () => void;
+}
+
+const clamp01 = (v: number) => Math.max(0, Math.min(1, v));
+const smooth = (a: number, b: number, v: number) => {
+  const t = clamp01((v - a) / (b - a));
+  return t * t * (3 - 2 * t);
+};
+
 /**
- * Procedural 3D leaf that reacts to the pointer and to scroll progress through
- * the #lp-story section. No external model files. Falls back silently if WebGL
- * is unavailable (the page adds a CSS gradient instead).
+ * Procedural 3D leaf for the landing hero (no model files).
+ * Fills its parent. Scroll drives a slow turn; as "How it works" (#how) comes into
+ * view a scan line sweeps the leaf and early disease spots fade in, to suggest
+ * the AI check. Rendering pauses while the hero is off screen.
+ * Only loaded on tablet/desktop with motion allowed (see HeroLeaf).
  */
-export default function LeafScene() {
+export default function LeafScene({ onReady }: Props) {
   const ref = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
     const cv = ref.current;
-    if (!cv) return;
-    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const host = cv?.parentElement;
+    if (!cv || !host) return;
     let R: THREE.WebGLRenderer;
     try {
-      R = new THREE.WebGLRenderer({ canvas: cv, antialias: true, alpha: true });
+      R = new THREE.WebGLRenderer({ canvas: cv, antialias: true, alpha: true, powerPreference: "low-power" });
     } catch {
-      document.documentElement.classList.add("lp-nogl");
-      return;
+      return; // no WebGL: the SVG poster simply stays
     }
     R.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    R.outputColorSpace = THREE.SRGBColorSpace;
     const S = new THREE.Scene();
-    const C = new THREE.PerspectiveCamera(32, 1, 0.1, 50);
-    C.position.set(0, 0, 9);
+    const C = new THREE.PerspectiveCamera(30, 1, 0.1, 50);
+    C.position.set(0, 0, 9.5);
 
     function tex(spots: boolean) {
       const c = document.createElement("canvas");
@@ -33,16 +46,18 @@ export default function LeafScene() {
       c.height = 1024;
       const x = c.getContext("2d")!;
       if (!spots) {
+        // AgriGuard greens around primary #2E7D32
         const g = x.createLinearGradient(0, 0, 0, 1024);
-        g.addColorStop(0, "#5E8F3A");
-        g.addColorStop(0.5, "#3E7A32");
-        g.addColorStop(1, "#2B5A28");
+        g.addColorStop(0, "#5FA357");
+        g.addColorStop(0.5, "#2E7D32");
+        g.addColorStop(1, "#1D4F20");
         x.fillStyle = g;
         x.fillRect(0, 0, 512, 1024);
-        x.strokeStyle = "rgba(200,230,150,.55)";
+        x.strokeStyle = "rgba(230,239,224,.6)";
         x.lineWidth = 7;
         x.beginPath(); x.moveTo(256, 0); x.lineTo(256, 1024); x.stroke();
         x.lineWidth = 2.5;
+        x.strokeStyle = "rgba(230,239,224,.38)";
         for (let i = 0; i < 14; i++) {
           const y = 90 + i * 66;
           x.beginPath();
@@ -55,12 +70,13 @@ export default function LeafScene() {
           const g = x.createRadialGradient(p[0], p[1], 2, p[0], p[1], p[2] * 1.8);
           g.addColorStop(0, "rgba(70,32,10,.95)");
           g.addColorStop(0.55, "rgba(120,70,20,.75)");
-          g.addColorStop(1, "rgba(200,170,40,0)");
+          g.addColorStop(1, "rgba(233,162,59,0)");
           x.fillStyle = g;
           x.beginPath(); x.arc(p[0], p[1], p[2] * 1.8, 0, 7); x.fill();
         });
       }
       const t = new THREE.CanvasTexture(c);
+      t.colorSpace = THREE.SRGBColorSpace;
       t.anisotropy = 4;
       return t;
     }
@@ -92,80 +108,89 @@ export default function LeafScene() {
     }
 
     const G = geometry();
-    const leafMat = new THREE.MeshStandardMaterial({ map: tex(false), roughness: 0.5, side: THREE.DoubleSide });
+    const leafMat = new THREE.MeshStandardMaterial({ map: tex(false), roughness: 0.55, side: THREE.DoubleSide });
     const lesionMat = new THREE.MeshStandardMaterial({
       map: tex(true), transparent: true, opacity: 0, roughness: 0.8, side: THREE.DoubleSide,
       depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2,
     });
     const leaf = new THREE.Mesh(G, leafMat);
     const lesion = new THREE.Mesh(G, lesionMat);
-    const beamMat = new THREE.MeshBasicMaterial({ color: 0x3ea094, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
-    const beam = new THREE.Mesh(new THREE.PlaneGeometry(3.4, 0.035), beamMat);
+    // Scan line: pale leaf-green so it reads over the dark leaf and stays quiet on the cream page
+    const beamMat = new THREE.MeshBasicMaterial({ color: 0xf1f7ee, transparent: true, opacity: 0, depthWrite: false });
+    const beam = new THREE.Mesh(new THREE.PlaneGeometry(3.2, 0.045), beamMat);
     const grp = new THREE.Group();
-    grp.add(leaf, lesion);
-    S.add(grp, beam);
-    S.add(new THREE.HemisphereLight(0xeaf4e6, 0x14151d, 0.85));
-    const d = new THREE.DirectionalLight(0xffffff, 1.1); d.position.set(3, 4, 5); S.add(d);
-    const rim = new THREE.DirectionalLight(0x3ea094, 1.2); rim.position.set(-4, 1, -3); S.add(rim);
+    grp.add(leaf, lesion, beam);
+    beam.position.z = 0.6;
+    S.add(grp);
+    // Daylight: bright sky, warm cream bounce from the page, soft key light
+    S.add(new THREE.HemisphereLight(0xffffff, 0xd9d2bf, 1.1));
+    const key = new THREE.DirectionalLight(0xffffff, 1.4); key.position.set(3, 4, 5); S.add(key);
+    const fill = new THREE.DirectionalLight(0xe6efe0, 0.5); fill.position.set(-4, 1, 2); S.add(fill);
 
     const size = () => {
-      R.setSize(window.innerWidth, window.innerHeight, false);
-      C.aspect = window.innerWidth / window.innerHeight;
+      const w = host.clientWidth, h = host.clientHeight;
+      if (!w || !h) return;
+      R.setSize(w, h, false);
+      C.aspect = w / h;
       C.updateProjectionMatrix();
     };
-    window.addEventListener("resize", size);
+    const ro = new ResizeObserver(size);
+    ro.observe(host);
     size();
 
-    let mx = 0, my = 0, smx = 0, smy = 0, p = 0, raf = 0;
+    let mx = 0, my = 0, smx = 0, smy = 0, p = 0, q = 0, raf = 0, visible = true, readySent = false;
     const onMove = (e: PointerEvent) => { mx = e.clientX / window.innerWidth - 0.5; my = e.clientY / window.innerHeight - 0.5; };
-    window.addEventListener("pointermove", onMove);
-    const ss = (a: number, b: number, v: number) => { v = Math.max(0, Math.min(1, (v - a) / (b - a))); return v * v * (3 - 2 * v); };
+    window.addEventListener("pointermove", onMove, { passive: true });
+
+    const hero = cv.closest("section");
+    const how = document.getElementById("how");
 
     const frame = () => {
-      const st = document.getElementById("lp-story");
+      raf = 0;
+      // p: how far the hero has scrolled away (0 → 1)
       let tp = 0;
-      if (st) {
-        const r = st.getBoundingClientRect();
-        tp = Math.max(0, Math.min(1, -r.top / (r.height - window.innerHeight)));
-      }
-      p += (tp - p) * (reduce ? 1 : 0.08);
-      smx += (mx - smx) * 0.06; smy += (my - smy) * 0.06;
-      const wide = window.innerWidth > 760;
-      const tx = wide ? (1 - ss(0, 0.25, p) * 0.55) * 2.3 : 0;
-      const after = ss(0.92, 1, p);
-      grp.position.x += (tx - grp.position.x) * 0.08;
-      grp.position.y = (wide ? 0 : 1.1) - after * 3;
-      const sc = wide ? 1 : 0.8;
-      grp.scale.setScalar(sc);
-      grp.rotation.set(-0.35 + smy * 0.3 + p * 0.5, -0.7 + smx * 0.5 + p * Math.PI * 1.1, 0.28 - p * 0.25);
-      if (!reduce) grp.rotation.y += Math.sin(performance.now() / 2600) * 0.05;
-      lesionMat.opacity = ss(0.38, 0.58, p);
-      beam.position.set(grp.position.x, (-2 + ss(0.3, 0.75, p) * 4.2) * sc * 0.9 + grp.position.y, 0.6);
-      beamMat.opacity = p > 0.3 && p < 0.78 ? 0.9 * Math.sin(Math.PI * ss(0.3, 0.78, p)) : 0;
-      R.render(S, C);
+      if (hero) { const r = hero.getBoundingClientRect(); tp = clamp01(-r.top / (r.height * 0.9)); }
+      // q: how far "How it works" has come into view (0 → 1)
+      let tq = 0;
+      // Completes over the first ~45% of the viewport so the sweep finishes while the leaf is still in view
+      if (how) { const r = how.getBoundingClientRect(); tq = clamp01((window.innerHeight - r.top) / (window.innerHeight * 0.45)); }
+      p += (tp - p) * 0.08;
+      q += (tq - q) * 0.08;
+      smx += (mx - smx) * 0.05; smy += (my - smy) * 0.05;
 
-      const idx = p < 0.34 ? 0 : p < 0.7 ? 1 : 2;
-      document.querySelectorAll<HTMLElement>(".lp-step").forEach((el, i) => {
-        const on = i === idx;
-        el.style.opacity = on ? "1" : "0";
-        el.style.transform = on ? "none" : "translateY(14px)";
-        el.style.pointerEvents = on ? "auto" : "none";
-      });
-      const bar = document.getElementById("lp-bar");
-      if (bar) bar.style.height = `${p * 100}%`;
-      raf = requestAnimationFrame(frame);
+      // Slow, subtle turn: under one radian across the whole hero scroll
+      const sway = Math.sin(performance.now() / 2800) * 0.04;
+      grp.rotation.set(-0.3 + smy * 0.2 + p * 0.35, -0.6 + smx * 0.35 + p * 0.9 + sway, 0.25 - p * 0.2);
+
+      // AI check: one sweep of the scan line, spots appear behind it
+      const sweep = smooth(0.15, 0.85, q);
+      beam.position.y = 2.1 - sweep * 4.3;
+      beamMat.opacity = q > 0.12 && q < 0.9 ? 0.85 * Math.sin(Math.PI * sweep) : 0;
+      lesionMat.opacity = smooth(0.35, 0.8, q);
+
+      R.render(S, C);
+      if (!readySent) { readySent = true; onReady?.(); }
+      if (visible) raf = requestAnimationFrame(frame);
     };
-    frame();
+
+    // Stop drawing while the hero is off screen (battery, cheap GPUs)
+    const io = new IntersectionObserver(([e]) => {
+      visible = e.isIntersecting;
+      if (visible && !raf) raf = requestAnimationFrame(frame);
+    });
+    io.observe(host);
+    raf = requestAnimationFrame(frame);
 
     return () => {
       cancelAnimationFrame(raf);
-      window.removeEventListener("resize", size);
+      io.disconnect();
+      ro.disconnect();
       window.removeEventListener("pointermove", onMove);
       G.dispose(); leafMat.map?.dispose(); lesionMat.map?.dispose();
-      leafMat.dispose(); lesionMat.dispose(); beamMat.dispose();
+      leafMat.dispose(); lesionMat.dispose(); beamMat.dispose(); beam.geometry.dispose();
       R.dispose();
     };
-  }, []);
+  }, [onReady]);
 
-  return <canvas id="lp-gl" ref={ref} aria-hidden="true" />;
+  return <canvas ref={ref} className="absolute inset-0 h-full w-full" aria-hidden="true" />;
 }

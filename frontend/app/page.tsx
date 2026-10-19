@@ -9,6 +9,7 @@ import { useI18n } from "@/lib/i18n";
 import AuthModal, { AuthMode } from "@/components/AuthModal";
 import SpotlightCard from "@/components/SpotlightCard";
 import HeroBackdrop from "@/components/landing/HeroBackdrop";
+import HeroLeaf from "@/components/landing/HeroLeaf";
 import HeroHeadline from "@/components/landing/HeroHeadline";
 import StatNumber from "@/components/landing/StatNumber";
 
@@ -97,7 +98,12 @@ export default function LandingPage() {
         {/* ─── Hero ────────────────────────────────────────────────── */}
         <section className="relative isolate">
           <HeroBackdrop />
-          <div className="mx-auto max-w-6xl px-4 sm:px-6 pt-12 pb-16 sm:pt-24 sm:pb-28">
+          <div className="mx-auto max-w-6xl px-4 sm:px-6 pt-6 pb-16 sm:pt-16 lg:pt-20 sm:pb-28 grid lg:grid-cols-[minmax(0,1.3fr)_minmax(0,0.7fr)] lg:items-center lg:gap-10">
+            {/* Leaf: above the headline on phones/tablets, right column on desktop */}
+            <div className="-mb-4 sm:mb-0 lg:order-last">
+              <HeroLeaf />
+            </div>
+            <div>
             <HeroHeadline text={t("home.h1")} />
             <p className="mt-5 max-w-[38ch] text-body-lg text-ink/85">{t("home.sub")}</p>
             <div className="mt-8 flex flex-col sm:flex-row sm:items-center gap-3">
@@ -110,6 +116,7 @@ export default function LandingPage() {
               </a>
             </div>
             <p className="mt-6 text-[15px] text-muted">{t("home.screening_note")}</p>
+            </div>
           </div>
         </section>
 
