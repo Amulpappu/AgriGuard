@@ -313,7 +313,7 @@ export default function DashboardPage() {
             ) : (
               <div className="text-center py-4">
                 <p className="text-xs text-muted">Agricultural Microclimate Station</p>
-                <p className="text-[10px] text-primary-strong mt-1">Connect ESP32 field node or view Bio-Shield 360° radar.</p>
+                <p className="text-[10px] text-primary-strong mt-1">Connect an ESP32 field node or open My Field.</p>
               </div>
             )}
           </div>

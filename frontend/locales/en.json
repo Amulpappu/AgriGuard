@@ -9,7 +9,7 @@
     "scan": "New Scan",
     "history": "History",
     "compare": "Compare",
-    "field": "Bio-Shield 360°",
+    "field": "My Field",
     "database": "Database",
     "logout": "Logout",
     "main": "Main"
@@ -335,7 +335,7 @@
     "no_change": "No status change"
   },
   "field": {
-    "title": "Field Monitor",
+    "title": "My Field",
     "soil_moisture": "Soil Moisture",
     "temperature": "Temperature",
     "humidity": "Humidity",
@@ -456,7 +456,7 @@
     "spec_sample": "Sample result",
     "supported": "Also screened",
     "feat_h": "One platform, field to mandi.",
-    "f1h": "Bio-Shield 360° Epidemic Radar",
+    "f1h": "My Field disease radar",
     "f1p": "Tracks airborne spore drift across neighbouring farms using wind vectors and live microclimate data, so a cluster can act before lesions appear.",
     "f2h": "Mandi PHI Calculator",
     "f2p": "Weighs pre-harvest intervals, residue limits and mandi prices to compare treat-now against harvest-clean scenarios in rupees.",
@@ -491,15 +491,16 @@
     "f2_p": "Field sensors send an alert to the land owner's phone when conditions turn risky. No app is needed to receive it.",
     "f3_h": "Sensor monitoring",
     "f3_p": "ESP32 sensors track soil moisture, temperature and humidity, so you can spot disease-friendly weather early.",
-    "stats_h": "AgriGuard so far",
-    "stats_note": "Sample figures for now. Real numbers will be added soon.",
-    "stat1": "leaf photos checked",
-    "stat2": "farmers using AgriGuard",
-    "stat3": "crops supported",
-    "stat4": "field sensors installed",
     "end_h": "Worried about a leaf? Check it now.",
     "foot_tagline": "AI crop health screening for Indian farmers.",
-    "language": "Language"
+    "language": "Language",
+    "facts_h": "AgriGuard at a glance",
+    "fact_crops": "crops supported",
+    "fact_langs": "languages: English, தமிழ்",
+    "fact_alerts_big": "WhatsApp + SMS",
+    "fact_alerts": "field alerts to the land owner",
+    "fact_fast_big": "In seconds",
+    "fact_fast": "results from one leaf photo"
   },
   "upload": {
     "title": "Check a leaf",
@@ -552,6 +553,13 @@
     "share_title": "AgriGuard leaf check (AI screening, not a final diagnosis)",
     "share_crop": "Crop",
     "share_result": "Result",
-    "share_link": "See the full result"
+    "share_link": "See the full result",
+    "guest_save_title": "Sign in to save this scan to your history",
+    "guest_save_body": "Right now this result is only on this phone. It will be gone when you close this page.",
+    "guest_save_btn": "Sign in to save",
+    "saving": "Saving to your history…",
+    "saved": "Saved to your history.",
+    "save_failed": "Could not save this scan. Check your internet and try again.",
+    "retry": "Try again"
   }
 }

@@ -222,7 +222,7 @@ export default function FieldPage() {
         </button>
       </div>
 
-      {/* Bio-Shield 360° Epidemic Radar & Mandi Economics */}
+      {/* My Field: epidemic radar & mandi economics */}
       <BioShieldRadar />
 
       {/* ⚡ ESP32 USB Cable Direct Stream Card */}
