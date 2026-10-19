@@ -330,7 +330,13 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <footer className="lp-foot"><p>{t("scan.footer_disclaimer")}</p></footer>
+      <footer className="lp-foot">
+        <p>{t("scan.footer_disclaimer")}</p>
+        <p style={{ marginTop: 10 }}>
+          {t("support.issue")}{" "}
+          <a href="mailto:lohithgamer12@gmail.com?subject=AgriGuard%20website%20issue" style={{ color: "#5eead4", textDecoration: "underline" }}>lohithgamer12@gmail.com</a>
+        </p>
+      </footer>
 
       {/* ─── Interactive Auth Modal (Log In & Sign Up) ─────────────────────────── */}
       {authModalOpen && (

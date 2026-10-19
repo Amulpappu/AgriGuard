@@ -438,5 +438,8 @@
     "f3p": "Every screen and voice read-out in English and Tamil, switchable in one tap.",
     "f4h": "Live field telemetry",
     "f4p": "Soil moisture, temperature, humidity and a DSV disease-risk index beside your scans."
+  },
+  "support": {
+    "issue": "Facing any issue with the website? Email us at"
   }
 }
