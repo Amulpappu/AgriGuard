@@ -9,6 +9,12 @@ AGRIGUARD is an AI crop disease screening tool for small and medium farmers in I
 
 **It is a screening tool, not a final diagnosis.** Every result says "AI-assisted screening, not a final diagnosis". The product should never sound more certain than the model is.
 
+## Platform
+
+web
+
+The product UI is the Next.js web app in `frontend/`. `android/` is a WebView wrapper that loads the same web app, so design and review it as web. Mobile-first, tested at 360px.
+
 ## Who it's for
 
 - Small and medium Indian farmers. Many are first-time smartphone users, and literacy and English fluency vary.
