@@ -185,7 +185,8 @@
     "potato_common_scab": "Common Scab",
     "potato_blackleg": "Blackleg / Soft Rot",
     "potato_pink_rot": "Pink Rot",
-    "potato_black_scurf": "Black Scurf"
+    "potato_black_scurf": "Black Scurf",
+    "tomato_bacterial_spot": "Bacterial Spot"
   },
   "persona": {
     "farmer_title": "Farmer / Commercial Grower",
