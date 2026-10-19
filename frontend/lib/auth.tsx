@@ -25,6 +25,8 @@ interface AuthContext {
   ready: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, fullName?: string) => Promise<void>;
+  /** Opens Google sign-in; the browser comes back to /dashboard signed in. */
+  loginWithGoogle: () => Promise<void>;
   logout: () => void;
 }
 
@@ -45,8 +47,41 @@ const Ctx = createContext<AuthContext>({
   ready: false,
   login: async () => {},
   register: async () => {},
+  loginWithGoogle: async () => {},
   logout: () => {},
 });
+
+/**
+ * Google (and other OAuth) sign-ins create an account in Supabase Auth only.
+ * scans.user_id points at public.users, so make sure a matching row exists.
+ * Runs once per user per browser; errors are ignored so sign-in never breaks.
+ */
+async function ensureUserRow(s: Session) {
+  const u = s.user;
+  const provider = (u.app_metadata?.provider as string | undefined) || "email";
+  if (provider === "email" || !u.email) return;
+  const key = `agriguard_user_row_${u.id}`;
+  if (typeof window === "undefined" || localStorage.getItem(key)) return;
+  try {
+    const { data: existing } = await supabase.from("users").select("id").eq("id", u.id).maybeSingle();
+    if (!existing) {
+      const name =
+        (u.user_metadata?.full_name as string | undefined) ||
+        (u.user_metadata?.name as string | undefined) ||
+        u.email.split("@")[0];
+      await supabase.from("users").insert({
+        id: u.id,
+        email: u.email.toLowerCase(),
+        hashed_password: "managed_by_supabase_auth",
+        full_name: name,
+        is_active: true,
+      });
+    }
+    localStorage.setItem(key, "1");
+  } catch {
+    // ignore: the account still works; scans may not save until the row exists
+  }
+}
 
 /** Admin clearance for Lohith: authorised email or admin role. */
 function checkLohithClearance(session: Session | null): boolean {
@@ -71,6 +106,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (s) localStorage.setItem(TOKEN_KEY, s.access_token);
     else localStorage.removeItem(TOKEN_KEY);
     setSession(s);
+    if (s && s.user) void ensureUserRow(s);
   }, []);
 
   useEffect(() => {
@@ -140,6 +176,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     applySession(data.session);
   }, [applySession]);
 
+  const loginWithGoogle = useCallback(async () => {
+    // A stale demo/admin session must not shadow the real Google session.
+    localStorage.removeItem("agriguard_synthetic_session");
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}/dashboard`,
+        queryParams: { prompt: "select_account" },
+      },
+    });
+    if (error) throw { code: "google_failed", message: error.message || "Google sign-in failed." };
+  }, []);
+
   const logout = useCallback(() => {
     sessionStorage.removeItem(ADMIN_PASSKEY_KEY);
     localStorage.removeItem(LEGACY_USER_KEY);
@@ -168,6 +217,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         ready,
         login,
         register,
+        loginWithGoogle,
         logout,
       }}
     >
