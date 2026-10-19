@@ -45,6 +45,11 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     if (stored && STRINGS[stored]) setLangState(stored);
   }, []);
 
+  // Keep <html lang> in sync so screen readers and Tamil-specific CSS follow the choice.
+  useEffect(() => {
+    document.documentElement.lang = lang;
+  }, [lang]);
+
   const setLang = useCallback((l: Lang) => {
     setLangState(l);
     localStorage.setItem(STORAGE_KEY, l);

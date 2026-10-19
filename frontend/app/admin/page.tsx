@@ -533,48 +533,48 @@ export default function AdminDatabasePage() {
   if (!isLohith) {
     return (
       <div className="max-w-xl mx-auto px-4 py-16">
-        <div className="glass p-8 rounded-3xl border border-red-500/20 shadow-2xl bg-gradient-to-b from-slate-900/90 via-slate-900/95 to-black text-center space-y-6">
-          <div className="mx-auto w-16 h-16 rounded-2xl bg-red-500/10 border border-red-500/30 flex items-center justify-center text-red-400 shadow-lg shadow-red-950/40">
+        <div className="glass p-8 rounded-3xl border border-danger/40 shadow-2xl text-center space-y-6">
+          <div className="mx-auto w-16 h-16 rounded-2xl bg-danger-soft border border-danger/40 flex items-center justify-center text-danger shadow-lg ">
             <ShieldAlert size={32} />
           </div>
 
           <div className="space-y-2">
-            <span className="inline-block text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-red-500/10 text-red-300 border border-red-500/20">
+            <span className="inline-block text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-danger-soft text-danger border border-danger/40">
               Administrative Clearance Restricted
             </span>
-            <h1 className="text-2xl font-bold text-white tracking-tight">
+            <h1 className="text-2xl font-bold text-ink tracking-tight">
               AgriGuard Central Database
             </h1>
-            <p className="text-xs text-gray-400 max-w-md mx-auto leading-relaxed">
-              Database access has been revoked for all users. Direct table inspection, raw SQL queries, user record audits, and cloud database migrations are restricted strictly to <span className="text-white font-medium">Lohith</span>.
+            <p className="text-xs text-muted max-w-md mx-auto leading-relaxed">
+              Database access has been revoked for all users. Direct table inspection, raw SQL queries, user record audits, and cloud database migrations are restricted strictly to <span className="text-ink font-medium">Lohith</span>.
             </p>
           </div>
 
           {/* Current session info */}
-          <div className="glass p-3.5 rounded-xl border border-white/5 text-xs text-gray-400 flex items-center justify-between">
-            <span className="text-gray-400">Current User:</span>
-            <span className="font-semibold text-gray-200">
+          <div className="glass p-3.5 rounded-xl border border-line text-xs text-muted flex items-center justify-between">
+            <span className="text-muted">Current User:</span>
+            <span className="font-semibold text-ink">
               {fullName || "Demo Farmer / Guest"} {email ? `(${email})` : ""}
             </span>
-            <span className="px-2 py-0.5 rounded text-[10px] bg-red-500/20 text-red-300 font-semibold border border-red-500/30">
+            <span className="px-2 py-0.5 rounded text-[10px] bg-danger-soft text-danger font-semibold border border-danger/40">
               No DB Access
             </span>
           </div>
 
-          <p className="text-xs text-gray-500 leading-relaxed">
+          <p className="text-xs text-muted leading-relaxed">
             Administrative clearance is bound to the authorised administrator account. Sign in with that account to continue.
           </p>
 
-          <div className="pt-2 border-t border-white/5 flex items-center justify-between text-xs">
+          <div className="pt-2 border-t border-line flex items-center justify-between text-xs">
             <Link
               href="/dashboard"
-              className="text-gray-400 hover:text-white transition inline-flex items-center gap-1"
+              className="text-muted hover:text-ink transition inline-flex items-center gap-1"
             >
               ← Return to Farmer Dashboard
             </Link>
             <Link
               href="/"
-              className="text-emerald-400 hover:text-emerald-300 transition"
+              className="text-primary-strong hover:text-primary-strong transition"
             >
               Switch Account →
             </Link>
@@ -588,30 +588,30 @@ export default function AdminDatabasePage() {
   return (
     <div className="max-w-6xl mx-auto px-4 py-6 space-y-6">
       {/* Top Banner */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 glass p-6 rounded-2xl border border-emerald-500/20 shadow-xl bg-gradient-to-r from-emerald-950/30 to-slate-900/60">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 glass p-6 rounded-2xl border border-primary/40 shadow-xl ">
         <div>
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+            <div className="p-2.5 rounded-xl bg-leaf text-primary-strong border border-primary/40">
               <Database size={24} />
             </div>
             <div>
-              <h1 className="text-xl md:text-2xl font-bold text-white flex items-center gap-2 flex-wrap">
+              <h1 className="text-xl md:text-2xl font-bold text-ink flex items-center gap-2 flex-wrap">
                 Database Control Center
-                <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-leaf text-primary-strong border border-primary/40">
                   {providerInfo?.engine || providerInfo?.name || "Supabase Cloud (PostgreSQL)"}
                 </span>
-                <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center gap-1">
+                <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-accent-soft text-accent-ink border border-accent/60 flex items-center gap-1">
                   <ShieldCheck size={12} />
                   Lohith Clearance
                 </span>
               </h1>
               <div className="flex items-center gap-2 mt-0.5">
-                <p className="text-xs text-gray-400">
+                <p className="text-xs text-muted">
                   Full control over users, tables, custom queries, backups, and cloud database.
                 </p>
                 <button
                   onClick={() => { logout(); router.replace("/"); }}
-                  className="text-[11px] text-amber-400/80 hover:text-red-400 underline underline-offset-2 ml-2 transition"
+                  className="text-[11px] text-accent-ink hover:text-danger underline underline-offset-2 ml-2 transition"
                 >
                   (Sign out)
                 </button>
@@ -625,7 +625,7 @@ export default function AdminDatabasePage() {
           <button
             onClick={fetchStats}
             disabled={loading}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-white/5 hover:bg-white/10 text-gray-200 border border-white/10 transition"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-surface hover:bg-ink/5 text-ink border border-line transition"
           >
             <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
             Refresh
@@ -633,7 +633,7 @@ export default function AdminDatabasePage() {
           <button
             onClick={handleBackup}
             disabled={operating}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-900/40 transition"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-primary hover:bg-primary-strong text-white shadow-lg transition"
           >
             <Download size={14} />
             Backup .db
@@ -641,14 +641,14 @@ export default function AdminDatabasePage() {
           <button
             onClick={handleVacuum}
             disabled={operating}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-cyan-950/60 hover:bg-cyan-900/80 text-cyan-300 border border-cyan-500/30 transition"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-leaf hover:bg-leaf text-primary-strong border border-primary/40 transition"
           >
             <Sparkles size={14} />
             Vacuum DB
           </button>
           <button
             onClick={() => setShowAddUser(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-900/40 transition"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-primary hover:bg-primary-strong text-white shadow-lg transition"
           >
             <UserPlus size={14} />
             Add User
@@ -660,23 +660,23 @@ export default function AdminDatabasePage() {
       {actionMsg && (
         <div className={`p-4 rounded-xl text-xs flex items-center gap-3 border ${
           actionMsg.type === "success" 
-            ? "bg-emerald-950/40 border-emerald-500/40 text-emerald-200" 
-            : "bg-red-950/40 border-red-500/40 text-red-200"
+            ? "bg-leaf border-primary/40 text-primary-strong" 
+            : "bg-danger-soft border-danger/40 text-danger"
         }`}>
-          {actionMsg.type === "success" ? <CheckCircle2 size={16} className="text-emerald-400 shrink-0" /> : <AlertCircle size={16} className="text-red-400 shrink-0" />}
+          {actionMsg.type === "success" ? <CheckCircle2 size={16} className="text-primary-strong shrink-0" /> : <AlertCircle size={16} className="text-danger shrink-0" />}
           <span className="font-medium">{actionMsg.text}</span>
-          <button onClick={() => setActionMsg(null)} className="ml-auto text-gray-400 hover:text-white text-xs">✕</button>
+          <button onClick={() => setActionMsg(null)} className="ml-auto text-muted hover:text-ink text-xs">✕</button>
         </div>
       )}
 
       {/* Navigation Tabs (Supabase Studio Style) */}
-      <div className="flex items-center gap-2 border-b border-white/10 pb-2 overflow-x-auto">
+      <div className="flex items-center gap-2 border-b border-line pb-2 overflow-x-auto">
         <button
           onClick={() => setActiveTab("overview")}
           className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition ${
             activeTab === "overview"
-              ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
-              : "text-gray-400 hover:text-white hover:bg-white/5"
+              ? "bg-leaf text-primary-strong border border-primary/40"
+              : "text-muted hover:text-ink hover:bg-ink/5"
           }`}
         >
           <Activity size={14} />
@@ -686,8 +686,8 @@ export default function AdminDatabasePage() {
           onClick={() => setActiveTab("tables")}
           className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition ${
             activeTab === "tables"
-              ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
-              : "text-gray-400 hover:text-white hover:bg-white/5"
+              ? "bg-leaf text-primary-strong border border-primary/40"
+              : "text-muted hover:text-ink hover:bg-ink/5"
           }`}
         >
           <Table size={14} />
@@ -697,8 +697,8 @@ export default function AdminDatabasePage() {
           onClick={() => setActiveTab("sql")}
           className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition ${
             activeTab === "sql"
-              ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
-              : "text-gray-400 hover:text-white hover:bg-white/5"
+              ? "bg-leaf text-primary-strong border border-primary/40"
+              : "text-muted hover:text-ink hover:bg-ink/5"
           }`}
         >
           <Terminal size={14} />
@@ -711,8 +711,8 @@ export default function AdminDatabasePage() {
           }}
           className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition ${
             activeTab === "supabase"
-              ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
-              : "text-gray-400 hover:text-white hover:bg-white/5"
+              ? "bg-leaf text-primary-strong border border-primary/40"
+              : "text-muted hover:text-ink hover:bg-ink/5"
           }`}
         >
           <Cloud size={14} />
@@ -726,84 +726,84 @@ export default function AdminDatabasePage() {
           {/* KPI Cards */}
           {stats && (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-              <div className="glass p-4 rounded-xl border border-white/5">
-                <div className="flex items-center justify-between text-gray-400 mb-1">
+              <div className="glass p-4 rounded-xl border border-line">
+                <div className="flex items-center justify-between text-muted mb-1">
                   <span className="text-[11px] font-medium">Total Users</span>
-                  <Users size={15} className="text-emerald-400" />
+                  <Users size={15} className="text-primary-strong" />
                 </div>
-                <div className="text-2xl font-bold text-white">{stats.total_users}</div>
-                <div className="text-[10px] text-gray-500 mt-1">Separate Accounts</div>
+                <div className="text-2xl font-bold text-ink">{stats.total_users}</div>
+                <div className="text-[10px] text-muted mt-1">Separate Accounts</div>
               </div>
 
-              <div className="glass p-4 rounded-xl border border-white/5">
-                <div className="flex items-center justify-between text-gray-400 mb-1">
+              <div className="glass p-4 rounded-xl border border-line">
+                <div className="flex items-center justify-between text-muted mb-1">
                   <span className="text-[11px] font-medium">Total Scans</span>
-                  <Activity size={15} className="text-blue-400" />
+                  <Activity size={15} className="text-primary-strong" />
                 </div>
-                <div className="text-2xl font-bold text-white">{stats.total_scans}</div>
-                <div className="text-[10px] text-gray-500 mt-1">AI Crop Screenings</div>
+                <div className="text-2xl font-bold text-ink">{stats.total_scans}</div>
+                <div className="text-[10px] text-muted mt-1">AI Crop Screenings</div>
               </div>
 
-              <div className="glass p-4 rounded-xl border border-white/5">
-                <div className="flex items-center justify-between text-gray-400 mb-1">
+              <div className="glass p-4 rounded-xl border border-line">
+                <div className="flex items-center justify-between text-muted mb-1">
                   <span className="text-[11px] font-medium">Database File</span>
-                  <HardDrive size={15} className="text-amber-400" />
+                  <HardDrive size={15} className="text-accent-ink" />
                 </div>
-                <div className="text-xl font-bold text-white">{stats.database_size_formatted}</div>
-                <div className="text-[10px] text-gray-500 mt-1 truncate" title={stats.database_path}>
+                <div className="text-xl font-bold text-ink">{stats.database_size_formatted}</div>
+                <div className="text-[10px] text-muted mt-1 truncate" title={stats.database_path}>
                   {stats.database_path?.includes("Supabase") ? "Supabase Cloud PostgreSQL" : "agriguard.db"}
                 </div>
               </div>
 
-              <div className="glass p-4 rounded-xl border border-white/5">
-                <div className="flex items-center justify-between text-gray-400 mb-1">
+              <div className="glass p-4 rounded-xl border border-line">
+                <div className="flex items-center justify-between text-muted mb-1">
                   <span className="text-[11px] font-medium">Uploads Storage</span>
-                  <ImageIcon size={15} className="text-purple-400" />
+                  <ImageIcon size={15} className="text-primary-strong" />
                 </div>
-                <div className="text-xl font-bold text-white">{stats.total_uploads_formatted}</div>
-                <div className="text-[10px] text-gray-500 mt-1">All Crop Images</div>
+                <div className="text-xl font-bold text-ink">{stats.total_uploads_formatted}</div>
+                <div className="text-[10px] text-muted mt-1">All Crop Images</div>
               </div>
 
-              <div className="glass p-4 rounded-xl border border-white/5">
-                <div className="flex items-center justify-between text-gray-400 mb-1">
+              <div className="glass p-4 rounded-xl border border-line">
+                <div className="flex items-center justify-between text-muted mb-1">
                   <span className="text-[11px] font-medium">Crop Catalog</span>
-                  <ShieldCheck size={15} className="text-green-400" />
+                  <ShieldCheck size={15} className="text-primary-strong" />
                 </div>
-                <div className="text-2xl font-bold text-white">{stats.total_crops}</div>
-                <div className="text-[10px] text-gray-500 mt-1">{stats.total_diseases} Plant Diseases</div>
+                <div className="text-2xl font-bold text-ink">{stats.total_crops}</div>
+                <div className="text-[10px] text-muted mt-1">{stats.total_diseases} Plant Diseases</div>
               </div>
 
-              <div className="glass p-4 rounded-xl border border-white/5">
-                <div className="flex items-center justify-between text-gray-400 mb-1">
+              <div className="glass p-4 rounded-xl border border-line">
+                <div className="flex items-center justify-between text-muted mb-1">
                   <span className="text-[11px] font-medium">IoT Sensors</span>
-                  <Server size={15} className="text-cyan-400" />
+                  <Server size={15} className="text-primary-strong" />
                 </div>
-                <div className="text-2xl font-bold text-white">{stats.total_sensor_readings}</div>
-                <div className="text-[10px] text-gray-500 mt-1">Telemetry Points</div>
+                <div className="text-2xl font-bold text-ink">{stats.total_sensor_readings}</div>
+                <div className="text-[10px] text-muted mt-1">Telemetry Points</div>
               </div>
             </div>
           )}
 
           {/* Users Directory Table */}
-          <div className="glass rounded-2xl border border-white/10 overflow-hidden shadow-2xl">
-            <div className="p-4 border-b border-white/5 flex items-center justify-between">
+          <div className="glass rounded-2xl border border-line overflow-hidden shadow-2xl">
+            <div className="p-4 border-b border-line flex items-center justify-between">
               <div>
-                <h2 className="text-sm font-bold text-white flex items-center gap-2">
-                  <Users size={16} className="text-emerald-400" />
+                <h2 className="text-sm font-bold text-ink flex items-center gap-2">
+                  <Users size={16} className="text-primary-strong" />
                   Registered User Accounts ({stats?.users.length || 0})
                 </h2>
-                <p className="text-[11px] text-gray-400">
-                  Every user has isolated data and their own encrypted scans in <code className="text-emerald-300">Supabase Cloud &amp; Storage</code>
+                <p className="text-[11px] text-muted">
+                  Every user has isolated data and their own encrypted scans in <code className="text-primary-strong">Supabase Cloud &amp; Storage</code>
                 </p>
               </div>
-              <span className="text-[11px] text-gray-500 hidden sm:inline">
-                Status: <span className="bg-black/40 px-2 py-0.5 rounded text-emerald-400 font-semibold">Active & Secured</span>
+              <span className="text-[11px] text-muted hidden sm:inline">
+                Status: <span className="bg-surface px-2 py-0.5 rounded text-primary-strong font-semibold">Active & Secured</span>
               </span>
             </div>
 
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
-                <thead className="bg-white/5 text-gray-400 uppercase text-[10px] tracking-wider border-b border-white/5">
+                <thead className="bg-surface text-muted uppercase text-[10px] tracking-wider border-b border-line">
                   <tr>
                     <th className="py-3 px-4">User</th>
                     <th className="py-3 px-4">Email</th>
@@ -814,44 +814,44 @@ export default function AdminDatabasePage() {
                     <th className="py-3 px-4 text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-white/5 text-gray-300">
+                <tbody className="divide-y divide-line text-ink">
                   {stats?.users.map((u) => (
                     <tr key={u.id} className="hover:bg-white/[0.02] transition">
-                      <td className="py-3 px-4 font-medium text-white flex items-center gap-2.5">
-                        <div className="w-7 h-7 rounded-full bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-xs font-bold text-emerald-300">
+                      <td className="py-3 px-4 font-medium text-ink flex items-center gap-2.5">
+                        <div className="w-7 h-7 rounded-full bg-leaf border border-primary/40 flex items-center justify-center text-xs font-bold text-primary-strong">
                           {u.username.charAt(0).toUpperCase()}
                         </div>
                         <div>
                           <div className="font-semibold">{u.full_name}</div>
-                          <div className="text-[10px] text-gray-500 font-mono">@{u.username}</div>
+                          <div className="text-[10px] text-muted font-mono">@{u.username}</div>
                         </div>
                       </td>
-                      <td className="py-3 px-4 font-mono text-[11px] text-gray-300">
+                      <td className="py-3 px-4 font-mono text-[11px] text-ink">
                         {u.email}
                       </td>
                       <td className="py-3 px-4 text-center">
-                        <span className="inline-block px-2.5 py-0.5 rounded-full font-bold bg-white/5 text-white">
+                        <span className="inline-block px-2.5 py-0.5 rounded-full font-bold bg-surface text-ink">
                           {u.total_scans}
                         </span>
                       </td>
                       <td className="py-3 px-4 text-center">
                         <div className="flex items-center justify-center gap-1.5 text-[10px]">
-                          <span className="px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                          <span className="px-1.5 py-0.5 rounded bg-leaf text-primary-strong border border-primary/40">
                             {u.scans_healthy} Healthy
                           </span>
-                          <span className="px-1.5 py-0.5 rounded bg-red-500/10 text-red-400 border border-red-500/20">
+                          <span className="px-1.5 py-0.5 rounded bg-danger-soft text-danger border border-danger/40">
                             {u.scans_diseased} Disease
                           </span>
-                          <span className="px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                          <span className="px-1.5 py-0.5 rounded bg-accent-soft text-accent-ink border border-accent/60">
                             {u.scans_uncertain} Uncertain
                           </span>
                         </div>
                       </td>
                       <td className="py-3 px-4">
-                        <div className="font-medium text-white">{u.storage_formatted}</div>
-                        <div className="text-[10px] text-gray-500">{u.files_count} photo file{u.files_count === 1 ? "" : "s"}</div>
+                        <div className="font-medium text-ink">{u.storage_formatted}</div>
+                        <div className="text-[10px] text-muted">{u.files_count} photo file{u.files_count === 1 ? "" : "s"}</div>
                       </td>
-                      <td className="py-3 px-4 text-gray-400 text-[11px]">
+                      <td className="py-3 px-4 text-muted text-[11px]">
                         {u.created_at.split(".")[0]}
                       </td>
                       <td className="py-3 px-4 text-right space-x-1.5 whitespace-nowrap">
@@ -860,14 +860,14 @@ export default function AdminDatabasePage() {
                             setResetEmail(u.email);
                             setNewPassword("");
                           }}
-                          className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white transition"
+                          className="p-1.5 rounded-lg bg-surface hover:bg-ink/5 text-ink hover:text-ink transition"
                           title="Reset Password"
                         >
                           <KeyRound size={13} />
                         </button>
                         <button
                           onClick={() => setDeleteEmail(u.email)}
-                          className="p-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 transition"
+                          className="p-1.5 rounded-lg bg-danger-soft hover:bg-danger-soft text-danger hover:text-danger transition"
                           title="Delete User"
                         >
                           <Trash2 size={13} />
@@ -884,17 +884,17 @@ export default function AdminDatabasePage() {
 
       {/* TAB 2: SUPABASE-STYLE TABLE EDITOR */}
       {activeTab === "tables" && (
-        <div className="glass rounded-2xl border border-white/10 overflow-hidden shadow-2xl p-6 space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/5 pb-4">
+        <div className="glass rounded-2xl border border-line overflow-hidden shadow-2xl p-6 space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-line pb-4">
             <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold text-gray-400">Select Table:</span>
+              <span className="text-xs font-semibold text-muted">Select Table:</span>
               <select
                 value={selectedTable}
                 onChange={(e) => {
                   setSelectedTable(e.target.value);
                   fetchTableContent(e.target.value, tableSearch);
                 }}
-                className="px-3 py-1.5 rounded-xl bg-black/40 border border-white/10 text-white text-xs font-semibold outline-none focus:border-emerald-500"
+                className="px-3 py-1.5 rounded-xl bg-surface border border-line text-ink text-xs font-semibold outline-none focus:border-primary"
               >
                 {tablesList.map((t) => (
                   <option key={t.name} value={t.name}>
@@ -906,7 +906,7 @@ export default function AdminDatabasePage() {
 
             <div className="flex items-center gap-2">
               <div className="relative">
-                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
                 <input
                   type="text"
                   placeholder="Filter rows..."
@@ -915,12 +915,12 @@ export default function AdminDatabasePage() {
                   onKeyDown={(e) => {
                     if (e.key === "Enter") fetchTableContent(selectedTable, tableSearch);
                   }}
-                  className="pl-9 pr-3 py-1.5 rounded-xl bg-black/40 border border-white/10 text-white text-xs outline-none focus:border-emerald-500 w-48 sm:w-64"
+                  className="pl-9 pr-3 py-1.5 rounded-xl bg-surface border border-line text-ink text-xs outline-none focus:border-primary w-48 sm:w-64"
                 />
               </div>
               <button
                 onClick={() => fetchTableContent(selectedTable, tableSearch)}
-                className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold transition"
+                className="px-3 py-1.5 rounded-xl bg-primary hover:bg-primary-strong text-white text-xs font-semibold transition"
               >
                 Search
               </button>
@@ -928,11 +928,11 @@ export default function AdminDatabasePage() {
           </div>
 
           {tableLoading ? (
-            <div className="py-12 text-center text-gray-400 text-xs">Loading table data...</div>
+            <div className="py-12 text-center text-muted text-xs">Loading table data...</div>
           ) : tableData && tableData.rows.length > 0 ? (
-            <div className="overflow-x-auto border border-white/5 rounded-xl max-h-[500px]">
+            <div className="overflow-x-auto border border-line rounded-xl max-h-[500px]">
               <table className="w-full text-left text-xs">
-                <thead className="bg-white/5 sticky top-0 text-gray-400 uppercase text-[10px] tracking-wider border-b border-white/5">
+                <thead className="bg-surface sticky top-0 text-muted uppercase text-[10px] tracking-wider border-b border-line">
                   <tr>
                     {tableData.columns.map((c) => (
                       <th key={c} className="py-2.5 px-3 whitespace-nowrap">
@@ -941,15 +941,15 @@ export default function AdminDatabasePage() {
                     ))}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-white/5 text-gray-300 font-mono text-[11px]">
+                <tbody className="divide-y divide-line text-ink font-mono text-[11px]">
                   {tableData.rows.map((row, rIdx) => (
                     <tr key={rIdx} className="hover:bg-white/[0.02]">
                       {tableData.columns.map((col) => (
                         <td key={col} className="py-2 px-3 whitespace-nowrap max-w-xs truncate" title={String(row[col])}>
                           {row[col] === null ? (
-                            <span className="text-gray-600 italic">null</span>
+                            <span className="text-muted italic">null</span>
                           ) : typeof row[col] === "boolean" ? (
-                            <span className={row[col] ? "text-emerald-400" : "text-gray-500"}>
+                            <span className={row[col] ? "text-primary-strong" : "text-muted"}>
                               {String(row[col])}
                             </span>
                           ) : (
@@ -963,20 +963,20 @@ export default function AdminDatabasePage() {
               </table>
             </div>
           ) : (
-            <div className="py-12 text-center text-gray-500 text-xs">No records found for table &apos;{selectedTable}&apos;.</div>
+            <div className="py-12 text-center text-muted text-xs">No records found for table &apos;{selectedTable}&apos;.</div>
           )}
         </div>
       )}
 
       {/* TAB 3: SQL QUERY EDITOR */}
       {activeTab === "sql" && (
-        <div className="glass rounded-2xl border border-white/10 overflow-hidden shadow-2xl p-6 space-y-4">
+        <div className="glass rounded-2xl border border-line overflow-hidden shadow-2xl p-6 space-y-4">
           <div>
-            <h2 className="text-sm font-bold text-white flex items-center gap-2">
-              <Terminal size={16} className="text-emerald-400" />
+            <h2 className="text-sm font-bold text-ink flex items-center gap-2">
+              <Terminal size={16} className="text-primary-strong" />
               Interactive SQL Console
             </h2>
-            <p className="text-[11px] text-gray-400">
+            <p className="text-[11px] text-muted">
               Run raw SQL queries against your database engine (like in Supabase SQL Editor).
             </p>
           </div>
@@ -986,7 +986,7 @@ export default function AdminDatabasePage() {
               rows={4}
               value={sqlQuery}
               onChange={(e) => setSqlQuery(e.target.value)}
-              className="w-full p-3 rounded-xl bg-black/60 border border-white/10 font-mono text-xs text-emerald-300 outline-none focus:border-emerald-500"
+              className="w-full p-3 rounded-xl bg-surface border border-line font-mono text-xs text-primary-strong outline-none focus:border-primary"
               placeholder="SELECT * FROM crops LIMIT 5;"
             />
             <div className="flex items-center justify-between">
@@ -994,21 +994,21 @@ export default function AdminDatabasePage() {
                 <button
                   type="button"
                   onClick={() => setSqlQuery("SELECT id, email, full_name, created_at FROM users;")}
-                  className="px-2.5 py-1 rounded-lg bg-white/5 text-[10px] text-gray-400 hover:text-white"
+                  className="px-2.5 py-1 rounded-lg bg-surface text-[10px] text-muted hover:text-ink"
                 >
                   Quick: Users
                 </button>
                 <button
                   type="button"
                   onClick={() => setSqlQuery("SELECT id, user_id, crop_id, is_healthy, status FROM scans LIMIT 10;")}
-                  className="px-2.5 py-1 rounded-lg bg-white/5 text-[10px] text-gray-400 hover:text-white"
+                  className="px-2.5 py-1 rounded-lg bg-surface text-[10px] text-muted hover:text-ink"
                 >
                   Quick: Scans
                 </button>
                 <button
                   type="button"
                   onClick={() => setSqlQuery("SELECT * FROM crops;")}
-                  className="px-2.5 py-1 rounded-lg bg-white/5 text-[10px] text-gray-400 hover:text-white"
+                  className="px-2.5 py-1 rounded-lg bg-surface text-[10px] text-muted hover:text-ink"
                 >
                   Quick: Crops
                 </button>
@@ -1017,7 +1017,7 @@ export default function AdminDatabasePage() {
               <button
                 onClick={handleRunSql}
                 disabled={sqlLoading}
-                className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold shadow-lg shadow-emerald-900/40 transition"
+                className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-primary hover:bg-primary-strong text-white text-xs font-semibold shadow-lg transition"
               >
                 <Play size={13} />
                 Run Query
@@ -1027,21 +1027,21 @@ export default function AdminDatabasePage() {
 
           {/* Results Box */}
           {sqlResult && (
-            <div className="space-y-2 border-t border-white/5 pt-4">
-              <div className="text-xs font-semibold text-gray-300">
+            <div className="space-y-2 border-t border-line pt-4">
+              <div className="text-xs font-semibold text-ink">
                 {sqlResult.status === "success" ? (
-                  <span className="text-emerald-400">
+                  <span className="text-primary-strong">
                     Query completed successfully ({sqlResult.count || sqlResult.rows_affected || 0} rows)
                   </span>
                 ) : (
-                  <span className="text-red-400">SQL Error: {sqlResult.error}</span>
+                  <span className="text-danger">SQL Error: {sqlResult.error}</span>
                 )}
               </div>
 
               {sqlResult.rows && sqlResult.rows.length > 0 && (
-                <div className="overflow-x-auto border border-white/5 rounded-xl max-h-[400px]">
+                <div className="overflow-x-auto border border-line rounded-xl max-h-[400px]">
                   <table className="w-full text-left text-xs font-mono">
-                    <thead className="bg-white/5 sticky top-0 text-gray-400 text-[10px] uppercase">
+                    <thead className="bg-surface sticky top-0 text-muted text-[10px] uppercase">
                       <tr>
                         {sqlResult.columns.map((c: string) => (
                           <th key={c} className="py-2 px-3 whitespace-nowrap">
@@ -1050,7 +1050,7 @@ export default function AdminDatabasePage() {
                         ))}
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-white/5 text-gray-200 text-[11px]">
+                    <tbody className="divide-y divide-line text-ink text-[11px]">
                       {sqlResult.rows.map((r: any, idx: number) => (
                         <tr key={idx} className="hover:bg-white/[0.02]">
                           {sqlResult.columns.map((col: string) => (
@@ -1071,18 +1071,18 @@ export default function AdminDatabasePage() {
 
       {/* TAB 4: FREE SUPABASE CLOUD INTEGRATION */}
       {activeTab === "supabase" && (
-        <div className="glass rounded-2xl border border-white/10 overflow-hidden shadow-2xl p-6 space-y-6">
+        <div className="glass rounded-2xl border border-line overflow-hidden shadow-2xl p-6 space-y-6">
           {/* Header & Project Info */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/5 pb-4">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-line pb-4">
             <div>
               <div className="flex items-center gap-2">
-                <Cloud size={20} className="text-emerald-400" />
-                <h2 className="text-base font-bold text-white">AgriGuard Project (Supabase)</h2>
-                <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-mono">
+                <Cloud size={20} className="text-primary-strong" />
+                <h2 className="text-base font-bold text-ink">AgriGuard Project (Supabase)</h2>
+                <span className="px-2 py-0.5 rounded-full bg-leaf text-primary-strong border border-primary/40 text-[10px] font-mono">
                   Ref: todwosflbwzuizvedouy
                 </span>
               </div>
-              <p className="text-xs text-gray-400 mt-1">
+              <p className="text-xs text-muted mt-1">
                 Connected to project dashboard. You can keep your laptop as the server while storing data in Supabase free cloud PostgreSQL!
               </p>
             </div>
@@ -1092,7 +1092,7 @@ export default function AdminDatabasePage() {
                 href="https://supabase.com/dashboard/project/todwosflbwzuizvedouy/sql/new"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 text-xs font-semibold border border-emerald-500/30 transition"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-leaf hover:bg-leaf text-primary-strong text-xs font-semibold border border-primary/40 transition"
               >
                 <Terminal size={12} />
                 Open SQL Editor
@@ -1102,7 +1102,7 @@ export default function AdminDatabasePage() {
                 href="https://supabase.com/dashboard/project/todwosflbwzuizvedouy/settings/database"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-gray-200 text-xs font-medium border border-white/10 transition"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surface hover:bg-ink/5 text-ink text-xs font-medium border border-line transition"
               >
                 Database Settings
                 <ExternalLink size={11} />
@@ -1111,12 +1111,12 @@ export default function AdminDatabasePage() {
           </div>
 
           {/* Active Engine Badge */}
-          <div className="flex items-center justify-between p-3.5 rounded-xl bg-white/[0.02] border border-white/5 text-xs">
+          <div className="flex items-center justify-between p-3.5 rounded-xl bg-white/[0.02] border border-line text-xs">
             <div className="flex items-center gap-2.5">
-              <div className={`w-2.5 h-2.5 rounded-full ${providerInfo?.is_cloud ? "bg-emerald-400 animate-pulse" : "bg-blue-400"}`} />
+              <div className={`w-2.5 h-2.5 rounded-full ${providerInfo?.is_cloud ? "bg-primary animate-pulse" : "bg-primary"}`} />
               <div>
-                <span className="text-gray-400 text-[11px] block">Current Active Database Engine:</span>
-                <span className="font-bold text-white text-xs">
+                <span className="text-muted text-[11px] block">Current Active Database Engine:</span>
+                <span className="font-bold text-ink text-xs">
                   {providerInfo?.engine || providerInfo?.name || "Supabase Cloud (PostgreSQL)"}
                 </span>
               </div>
@@ -1126,12 +1126,12 @@ export default function AdminDatabasePage() {
               <button
                 onClick={() => handleSwitchProvider("local")}
                 disabled={operating}
-                className="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-amber-300 text-xs font-medium border border-amber-500/20 transition"
+                className="px-3 py-1.5 rounded-lg bg-surface hover:bg-ink/5 text-accent-ink text-xs font-medium border border-accent/60 transition"
               >
                 Switch back to Local SQLite
               </button>
             ) : (
-              <span className="text-[11px] text-gray-500">
+              <span className="text-[11px] text-muted">
                 Laptop is primary server & database
               </span>
             )}
@@ -1139,54 +1139,54 @@ export default function AdminDatabasePage() {
 
           {/* 3-Step Supabase Setup Card */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
-            <div className="p-4 rounded-xl bg-black/40 border border-white/5 space-y-1.5">
+            <div className="p-4 rounded-xl bg-surface border border-line space-y-1.5">
               <div className="flex items-center justify-between">
-                <span className="font-bold text-emerald-400">Step 1: SQL Migration</span>
+                <span className="font-bold text-primary-strong">Step 1: SQL Migration</span>
                 <a 
                   href="https://supabase.com/dashboard/project/todwosflbwzuizvedouy/sql/new"
                   target="_blank"
                   rel="noreferrer"
-                  className="text-[10px] text-emerald-400 underline flex items-center gap-0.5"
+                  className="text-[10px] text-primary-strong underline flex items-center gap-0.5"
                 >
                   Open SQL Editor <ExternalLink size={9} />
                 </a>
               </div>
-              <p className="text-gray-400 text-[11px]">
+              <p className="text-muted text-[11px]">
                 Copy the pre-generated migration script below and run it in the Supabase SQL Editor to create all 6 tables and populate current data.
               </p>
             </div>
-            <div className="p-4 rounded-xl bg-black/40 border border-white/5 space-y-1.5">
+            <div className="p-4 rounded-xl bg-surface border border-line space-y-1.5">
               <div className="flex items-center justify-between">
-                <span className="font-bold text-emerald-400">Step 2: Get Connection URI</span>
+                <span className="font-bold text-primary-strong">Step 2: Get Connection URI</span>
                 <a 
                   href="https://supabase.com/dashboard/project/todwosflbwzuizvedouy/settings/database"
                   target="_blank"
                   rel="noreferrer"
-                  className="text-[10px] text-emerald-400 underline flex items-center gap-0.5"
+                  className="text-[10px] text-primary-strong underline flex items-center gap-0.5"
                 >
                   Settings <ExternalLink size={9} />
                 </a>
               </div>
-              <p className="text-gray-400 text-[11px]">
+              <p className="text-muted text-[11px]">
                 Go to Database Settings, scroll down to <strong>Connection string &rarr; URI</strong> and copy your connection string with your password.
               </p>
             </div>
-            <div className="p-4 rounded-xl bg-black/40 border border-white/5 space-y-1.5">
-              <span className="font-bold text-emerald-400">Step 3: Connect With 1-Click</span>
-              <p className="text-gray-400 text-[11px]">
+            <div className="p-4 rounded-xl bg-surface border border-line space-y-1.5">
+              <span className="font-bold text-primary-strong">Step 3: Connect With 1-Click</span>
+              <p className="text-muted text-[11px]">
                 Paste your Supabase URI into the connection box below and click <strong>Verify & Connect</strong>. AgriGuard connects instantly!
               </p>
             </div>
           </div>
 
           {/* Switch Connection Form */}
-          <div className="p-4 rounded-xl bg-black/50 border border-white/10 space-y-3">
+          <div className="p-4 rounded-xl bg-surface border border-line space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-white flex items-center gap-1.5">
-                <Server size={13} className="text-emerald-400" />
+              <span className="text-xs font-semibold text-ink flex items-center gap-1.5">
+                <Server size={13} className="text-primary-strong" />
                 Connect AgriGuard Directly to Supabase
               </span>
-              <span className="text-[10px] text-gray-400">
+              <span className="text-[10px] text-muted">
                 Supports Direct URI or Session Pooler
               </span>
             </div>
@@ -1197,19 +1197,19 @@ export default function AdminDatabasePage() {
                 placeholder="postgresql://postgres:[YOUR-PASSWORD]@db.todwosflbwzuizvedouy.supabase.co:5432/postgres"
                 value={supabaseUri}
                 onChange={(e) => setSupabaseUri(e.target.value)}
-                className="flex-1 px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-xs text-white placeholder-gray-500 font-mono outline-none focus:border-emerald-500"
+                className="flex-1 px-3 py-2 rounded-xl bg-surface border border-line text-xs text-ink placeholder-muted font-mono outline-none focus:border-primary"
               />
               <button
                 type="button"
                 onClick={() => handleSwitchProvider("supabase")}
                 disabled={operating || !supabaseUri.trim()}
-                className="flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white text-xs font-semibold shadow-lg shadow-emerald-900/40 transition whitespace-nowrap"
+                className="flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-primary hover:bg-primary-strong disabled:opacity-50 text-white text-xs font-semibold shadow-lg transition whitespace-nowrap"
               >
                 <CheckCircle2 size={13} />
                 Verify &amp; Switch
               </button>
             </div>
-            <p className="text-[10px] text-gray-500">
+            <p className="text-[10px] text-muted">
               Note: The database password is never exposed in client requests. Testing happens securely on your backend server.
             </p>
           </div>
@@ -1218,10 +1218,10 @@ export default function AdminDatabasePage() {
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <div>
-                <span className="text-xs font-semibold text-gray-300 block">
+                <span className="text-xs font-semibold text-ink block">
                   One-Click Supabase DDL &amp; Data Migration Script
                 </span>
-                <span className="text-[10px] text-gray-500">
+                <span className="text-[10px] text-muted">
                   Contains all 5 users, 14 crops, 48 disease classes, 26 scans, 117 sensor readings
                 </span>
               </div>
@@ -1231,7 +1231,7 @@ export default function AdminDatabasePage() {
                   setCopiedSql(true);
                   setTimeout(() => setCopiedSql(false), 2000);
                 }}
-                className="flex items-center gap-1 text-xs text-emerald-400 hover:text-emerald-300 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20"
+                className="flex items-center gap-1 text-xs text-primary-strong hover:text-primary-strong px-3 py-1.5 rounded-lg bg-leaf border border-primary/40"
               >
                 <Copy size={13} />
                 {copiedSql ? "Copied!" : "Copy SQL Script"}
@@ -1242,92 +1242,92 @@ export default function AdminDatabasePage() {
               readOnly
               rows={8}
               value={supabaseSql || "Generating script..."}
-              className="w-full p-3 rounded-xl bg-black/70 border border-white/10 font-mono text-[11px] text-gray-300 outline-none"
+              className="w-full p-3 rounded-xl bg-ink/50 border border-line font-mono text-[11px] text-ink outline-none"
             />
           </div>
         </div>
       )}
 
       {/* Cloud Database Operations Box */}
-      <div className="glass p-5 rounded-2xl border border-white/5 space-y-3">
-        <div className="flex items-center gap-2 text-xs font-bold text-gray-200 uppercase tracking-wider">
-          <Server size={14} className="text-emerald-400" />
+      <div className="glass p-5 rounded-2xl border border-line space-y-3">
+        <div className="flex items-center gap-2 text-xs font-bold text-ink uppercase tracking-wider">
+          <Server size={14} className="text-primary-strong" />
           Enterprise Cloud Database Controls
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-[11px] font-mono text-gray-400">
-          <div className="p-2.5 rounded-lg bg-black/40 border border-white/5">
-            <span className="text-emerald-400 font-bold">1-Click Live Telemetry Audit</span>
-            <p className="text-[10px] text-gray-400 mt-0.5">Real-time table counts, users, and cloud storage allocation</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-[11px] font-mono text-muted">
+          <div className="p-2.5 rounded-lg bg-surface border border-line">
+            <span className="text-primary-strong font-bold">1-Click Live Telemetry Audit</span>
+            <p className="text-[10px] text-muted mt-0.5">Real-time table counts, users, and cloud storage allocation</p>
           </div>
-          <div className="p-2.5 rounded-lg bg-black/40 border border-white/5">
-            <span className="text-emerald-400 font-bold">Encrypted Automated Snapshots</span>
-            <p className="text-[10px] text-gray-400 mt-0.5">Automated backups with instant point-in-time recovery</p>
+          <div className="p-2.5 rounded-lg bg-surface border border-line">
+            <span className="text-primary-strong font-bold">Encrypted Automated Snapshots</span>
+            <p className="text-[10px] text-muted mt-0.5">Automated backups with instant point-in-time recovery</p>
           </div>
-          <div className="p-2.5 rounded-lg bg-black/40 border border-white/5">
-            <span className="text-emerald-400 font-bold">Zero-Trust Credential Vault</span>
-            <p className="text-[10px] text-gray-400 mt-0.5">Secure authentication strictly bound to Lohith</p>
+          <div className="p-2.5 rounded-lg bg-surface border border-line">
+            <span className="text-primary-strong font-bold">Zero-Trust Credential Vault</span>
+            <p className="text-[10px] text-muted mt-0.5">Secure authentication strictly bound to Lohith</p>
           </div>
-          <div className="p-2.5 rounded-lg bg-black/40 border border-white/5">
-            <span className="text-emerald-400 font-bold">Export Certified Data Records</span>
-            <p className="text-[10px] text-gray-400 mt-0.5">Export verified scans and epidemiology tables to CSV format</p>
+          <div className="p-2.5 rounded-lg bg-surface border border-line">
+            <span className="text-primary-strong font-bold">Export Certified Data Records</span>
+            <p className="text-[10px] text-muted mt-0.5">Export verified scans and epidemiology tables to CSV format</p>
           </div>
         </div>
       </div>
 
       {/* Modal: Add User */}
       {showAddUser && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="glass p-6 rounded-2xl border border-emerald-500/30 max-w-md w-full space-y-4 shadow-2xl">
-            <h3 className="text-base font-bold text-white flex items-center gap-2">
-              <UserPlus size={18} className="text-emerald-400" />
+        <div className="fixed inset-0 z-50 bg-ink/50 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="glass p-6 rounded-2xl border border-primary/40 max-w-md w-full space-y-4 shadow-2xl">
+            <h3 className="text-base font-bold text-ink flex items-center gap-2">
+              <UserPlus size={18} className="text-primary-strong" />
               Create New User Account
             </h3>
             <form onSubmit={handleCreateUser} className="space-y-3">
               <div>
-                <label className="text-[11px] font-medium text-gray-400">Email Address</label>
+                <label className="text-[11px] font-medium text-muted">Email Address</label>
                 <input
                   type="email"
                   required
                   value={newUserEmail}
                   onChange={(e) => setNewUserEmail(e.target.value)}
                   placeholder="farmer@agriguard.in"
-                  className="w-full mt-1 px-3 py-2 rounded-xl bg-black/40 border border-white/10 text-white text-xs focus:border-emerald-500 outline-none"
+                  className="w-full mt-1 px-3 py-2 rounded-xl bg-surface border border-line text-ink text-xs focus:border-primary outline-none"
                 />
               </div>
               <div>
-                <label className="text-[11px] font-medium text-gray-400">Full Name</label>
+                <label className="text-[11px] font-medium text-muted">Full Name</label>
                 <input
                   type="text"
                   required
                   value={newUserName}
                   onChange={(e) => setNewUserName(e.target.value)}
                   placeholder="Ramesh Patel"
-                  className="w-full mt-1 px-3 py-2 rounded-xl bg-black/40 border border-white/10 text-white text-xs focus:border-emerald-500 outline-none"
+                  className="w-full mt-1 px-3 py-2 rounded-xl bg-surface border border-line text-ink text-xs focus:border-primary outline-none"
                 />
               </div>
               <div>
-                <label className="text-[11px] font-medium text-gray-400">Password</label>
+                <label className="text-[11px] font-medium text-muted">Password</label>
                 <input
                   type="password"
                   required
                   value={newUserPassword}
                   onChange={(e) => setNewUserPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full mt-1 px-3 py-2 rounded-xl bg-black/40 border border-white/10 text-white text-xs focus:border-emerald-500 outline-none"
+                  className="w-full mt-1 px-3 py-2 rounded-xl bg-surface border border-line text-ink text-xs focus:border-primary outline-none"
                 />
               </div>
               <div className="flex items-center justify-end gap-2 pt-2">
                 <button
                   type="button"
                   onClick={() => setShowAddUser(false)}
-                  className="px-3 py-1.5 rounded-xl text-xs text-gray-400 hover:text-white"
+                  className="px-3 py-1.5 rounded-xl text-xs text-muted hover:text-ink"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={operating}
-                  className="px-4 py-1.5 rounded-xl text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white"
+                  className="px-4 py-1.5 rounded-xl text-xs font-semibold bg-primary hover:bg-primary-strong text-white"
                 >
                   Create Account
                 </button>
@@ -1339,39 +1339,39 @@ export default function AdminDatabasePage() {
 
       {/* Modal: Reset Password */}
       {resetEmail && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="glass p-6 rounded-2xl border border-white/10 max-w-sm w-full space-y-4 shadow-2xl">
-            <h3 className="text-base font-bold text-white flex items-center gap-2">
-              <KeyRound size={18} className="text-amber-400" />
+        <div className="fixed inset-0 z-50 bg-ink/50 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="glass p-6 rounded-2xl border border-line max-w-sm w-full space-y-4 shadow-2xl">
+            <h3 className="text-base font-bold text-ink flex items-center gap-2">
+              <KeyRound size={18} className="text-accent-ink" />
               Reset User Password
             </h3>
-            <p className="text-xs text-gray-400">
-              Set a new secure password for <strong className="text-white">{resetEmail}</strong>:
+            <p className="text-xs text-muted">
+              Set a new secure password for <strong className="text-ink">{resetEmail}</strong>:
             </p>
             <form onSubmit={handleResetPassword} className="space-y-3">
               <div>
-                <label className="text-[11px] font-medium text-gray-400">New Password</label>
+                <label className="text-[11px] font-medium text-muted">New Password</label>
                 <input
                   type="password"
                   required
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   placeholder="Minimum 6 characters"
-                  className="w-full mt-1 px-3 py-2 rounded-xl bg-black/40 border border-white/10 text-white text-xs focus:border-emerald-500 outline-none"
+                  className="w-full mt-1 px-3 py-2 rounded-xl bg-surface border border-line text-ink text-xs focus:border-primary outline-none"
                 />
               </div>
               <div className="flex items-center justify-end gap-2 pt-2">
                 <button
                   type="button"
                   onClick={() => setResetEmail(null)}
-                  className="px-3 py-1.5 rounded-xl text-xs text-gray-400 hover:text-white"
+                  className="px-3 py-1.5 rounded-xl text-xs text-muted hover:text-ink"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={operating}
-                  className="px-4 py-1.5 rounded-xl text-xs font-semibold bg-amber-600 hover:bg-amber-500 text-white"
+                  className="px-4 py-1.5 rounded-xl text-xs font-semibold bg-accent hover:bg-accent text-ink"
                 >
                   Update Password
                 </button>
@@ -1383,21 +1383,21 @@ export default function AdminDatabasePage() {
 
       {/* Modal: Delete User Confirmation */}
       {deleteEmail && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="glass p-6 rounded-2xl border border-red-500/30 max-w-sm w-full space-y-4 shadow-2xl">
-            <h3 className="text-base font-bold text-red-400 flex items-center gap-2">
+        <div className="fixed inset-0 z-50 bg-ink/50 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="glass p-6 rounded-2xl border border-danger/40 max-w-sm w-full space-y-4 shadow-2xl">
+            <h3 className="text-base font-bold text-danger flex items-center gap-2">
               <Trash2 size={18} />
               Confirm Delete User
             </h3>
-            <p className="text-xs text-gray-300">
-              Are you sure you want to permanently remove <strong className="text-white">{deleteEmail}</strong> and all their scan history from the database?
+            <p className="text-xs text-ink">
+              Are you sure you want to permanently remove <strong className="text-ink">{deleteEmail}</strong> and all their scan history from the database?
             </p>
-            <label className="flex items-center gap-2 text-xs text-gray-400 cursor-pointer">
+            <label className="flex items-center gap-2 text-xs text-muted cursor-pointer">
               <input
                 type="checkbox"
                 checked={wipeUploads}
                 onChange={(e) => setWipeUploads(e.target.checked)}
-                className="rounded border-white/20 text-red-600 focus:ring-0"
+                className="rounded border-line text-danger focus:ring-0"
               />
               Also wipe their uploaded images folder from disk
             </label>
@@ -1405,14 +1405,14 @@ export default function AdminDatabasePage() {
               <button
                 type="button"
                 onClick={() => setDeleteEmail(null)}
-                className="px-3 py-1.5 rounded-xl text-xs text-gray-400 hover:text-white"
+                className="px-3 py-1.5 rounded-xl text-xs text-muted hover:text-ink"
               >
                 Cancel
               </button>
               <button
                 onClick={handleDeleteUser}
                 disabled={operating}
-                className="px-4 py-1.5 rounded-xl text-xs font-semibold bg-red-600 hover:bg-red-500 text-white"
+                className="px-4 py-1.5 rounded-xl text-xs font-semibold bg-danger hover:bg-danger text-white"
               >
                 Permanently Delete
               </button>

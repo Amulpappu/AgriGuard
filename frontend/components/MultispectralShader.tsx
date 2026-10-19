@@ -149,32 +149,32 @@ export function MultispectralShader({ imageSrc, onAnalysisComplete }: Multispect
   }, [imageSrc, mode, blend, onAnalysisComplete]);
 
   return (
-    <div className="glass rounded-2xl p-5 border border-emerald-500/30 space-y-4 shadow-xl">
+    <div className="glass rounded-2xl p-5 border border-primary/40 space-y-4 shadow-xl">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+          <div className="w-8 h-8 rounded-lg bg-leaf text-primary-strong flex items-center justify-center">
             <Sparkles size={18} />
           </div>
           <div>
-            <h3 className="text-sm font-bold text-white flex items-center gap-1.5">
+            <h3 className="text-sm font-bold text-ink flex items-center gap-1.5">
               Photo colour filter (illustrative, not real NDVI)
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-mono">
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-leaf text-primary-strong border border-primary/40 font-mono">
                 EDGE-NGRDI
               </span>
             </h3>
-            <p className="text-xs text-gray-400">
+            <p className="text-xs text-muted">
               Reveals pre-symptomatic cellular stress before visible spots appear
             </p>
           </div>
         </div>
 
         {/* Mode Selector Buttons */}
-        <div className="flex items-center gap-1 bg-black/40 p-1 rounded-xl border border-white/10 text-xs">
+        <div className="flex items-center gap-1 bg-surface p-1 rounded-xl border border-line text-xs">
           <button
             type="button"
             onClick={() => setMode("rgb")}
             className={`px-3 py-1.5 rounded-lg transition-all font-medium ${
-              mode === "rgb" ? "bg-white/20 text-white shadow" : "text-gray-400 hover:text-white"
+              mode === "rgb" ? "bg-surface text-ink shadow" : "text-muted hover:text-ink"
             }`}
           >
             RGB Lens
@@ -183,7 +183,7 @@ export function MultispectralShader({ imageSrc, onAnalysisComplete }: Multispect
             type="button"
             onClick={() => setMode("ngrdi")}
             className={`px-3 py-1.5 rounded-lg transition-all font-medium flex items-center gap-1 ${
-              mode === "ngrdi" ? "bg-emerald-600 text-white shadow" : "text-gray-400 hover:text-emerald-300"
+              mode === "ngrdi" ? "bg-primary text-white shadow" : "text-white hover:text-white"
             }`}
           >
             <Layers size={13} /> NGRDI Heatmap
@@ -192,7 +192,7 @@ export function MultispectralShader({ imageSrc, onAnalysisComplete }: Multispect
             type="button"
             onClick={() => setMode("exg")}
             className={`px-3 py-1.5 rounded-lg transition-all font-medium flex items-center gap-1 ${
-              mode === "exg" ? "bg-cyan-600 text-white shadow" : "text-gray-400 hover:text-cyan-300"
+              mode === "exg" ? "bg-primary text-white shadow" : "text-white hover:text-white"
             }`}
           >
             ExG Vigor
@@ -201,23 +201,23 @@ export function MultispectralShader({ imageSrc, onAnalysisComplete }: Multispect
       </div>
 
       {/* Canvas Rendering Area */}
-      <div className="relative rounded-xl overflow-hidden bg-black/60 border border-white/10 flex items-center justify-center min-h-[280px]">
+      <div className="relative rounded-xl overflow-hidden bg-surface border border-line flex items-center justify-center min-h-[280px]">
         <canvas ref={canvasRef} className="max-w-full max-h-[420px] object-contain rounded-lg shadow-2xl" />
 
         {/* Legend Overlay */}
         {mode !== "rgb" && (
-          <div className="absolute bottom-3 left-3 bg-black/80 backdrop-blur-md px-3 py-2 rounded-lg border border-white/10 text-[11px] space-y-1">
+          <div className="absolute bottom-3 left-3 bg-ink/50 backdrop-blur-md px-3 py-2 rounded-lg border border-line text-[11px] space-y-1">
             <div className="flex items-center gap-2">
-              <span className="w-3 h-3 rounded-full bg-emerald-500 inline-block"></span>
-              <span className="text-gray-200">High Chlorophyll Vigor (Intact Cuticle)</span>
+              <span className="w-3 h-3 rounded-full bg-primary inline-block"></span>
+              <span className="text-ink">High Chlorophyll Vigor (Intact Cuticle)</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="w-3 h-3 rounded-full bg-amber-400 inline-block"></span>
-              <span className="text-gray-200">Pre-Visual Cellular Disruption</span>
+              <span className="w-3 h-3 rounded-full bg-accent inline-block"></span>
+              <span className="text-ink">Pre-Visual Cellular Disruption</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="w-3 h-3 rounded-full bg-rose-500 inline-block"></span>
-              <span className="text-gray-200">Active Cellular Breakdown / Lesion Core</span>
+              <span className="w-3 h-3 rounded-full bg-danger inline-block"></span>
+              <span className="text-ink">Active Cellular Breakdown / Lesion Core</span>
             </div>
           </div>
         )}
@@ -226,12 +226,12 @@ export function MultispectralShader({ imageSrc, onAnalysisComplete }: Multispect
       {/* Interactive Shader Blend Slider & Metrics */}
       <div className="space-y-3 pt-1">
         {mode !== "rgb" && (
-          <div className="flex items-center gap-4 bg-white/5 p-3 rounded-xl border border-white/5">
-            <Sliders size={16} className="text-gray-400" />
+          <div className="flex items-center gap-4 bg-surface p-3 rounded-xl border border-line">
+            <Sliders size={16} className="text-muted" />
             <div className="flex-1">
-              <div className="flex justify-between text-xs text-gray-300 mb-1">
+              <div className="flex justify-between text-xs text-ink mb-1">
                 <span>Spectral Shader Overlay Intensity</span>
-                <span className="font-mono text-emerald-400 font-bold">{blend}%</span>
+                <span className="font-mono text-primary-strong font-bold">{blend}%</span>
               </div>
               <input
                 type="range"
@@ -239,7 +239,7 @@ export function MultispectralShader({ imageSrc, onAnalysisComplete }: Multispect
                 max="100"
                 value={blend}
                 onChange={(e) => setBlend(Number(e.target.value))}
-                className="w-full h-1.5 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-emerald-500"
+                className="w-full h-1.5 bg-line rounded-lg appearance-none cursor-pointer accent-emerald-500"
               />
             </div>
           </div>
@@ -247,19 +247,19 @@ export function MultispectralShader({ imageSrc, onAnalysisComplete }: Multispect
 
         {stats && (
           <div className="grid grid-cols-3 gap-2.5 text-center">
-            <div className="bg-black/30 p-2.5 rounded-xl border border-white/5">
-              <p className="text-[11px] text-gray-400">Mean NGRDI</p>
-              <p className="text-base font-extrabold text-emerald-400 mt-0.5">{stats.ngrdiMean}</p>
+            <div className="bg-surface p-2.5 rounded-xl border border-line">
+              <p className="text-[11px] text-muted">Mean NGRDI</p>
+              <p className="text-base font-extrabold text-primary-strong mt-0.5">{stats.ngrdiMean}</p>
             </div>
-            <div className="bg-black/30 p-2.5 rounded-xl border border-white/5">
-              <p className="text-[11px] text-gray-400">Healthy Canopy</p>
-              <p className="text-base font-extrabold text-white mt-0.5">{stats.healthyPct}%</p>
+            <div className="bg-surface p-2.5 rounded-xl border border-line">
+              <p className="text-[11px] text-muted">Healthy Canopy</p>
+              <p className="text-base font-extrabold text-ink mt-0.5">{stats.healthyPct}%</p>
             </div>
-            <div className="bg-black/30 p-2.5 rounded-xl border border-rose-500/20">
-              <p className="text-[11px] text-rose-300 flex items-center justify-center gap-1">
+            <div className="bg-surface p-2.5 rounded-xl border border-danger/40">
+              <p className="text-[11px] text-danger flex items-center justify-center gap-1">
                 <ShieldAlert size={12} /> Pre-Lesion Stress
               </p>
-              <p className="text-base font-extrabold text-rose-400 mt-0.5">{stats.stressPct}%</p>
+              <p className="text-base font-extrabold text-danger mt-0.5">{stats.stressPct}%</p>
             </div>
           </div>
         )}

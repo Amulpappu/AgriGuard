@@ -23,12 +23,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen flex flex-col">
       <NavBar />
       {/* Content area padded for top bar (desktop) and bottom nav (mobile) */}
-      <main className="flex-1 pt-0 sm:pt-14 pb-20 sm:pb-0">
+      <main className="flex-1 pt-0 lg:pt-16 pb-24 lg:pb-0">
         {children}
       </main>
       {/* Persistent disclaimer footer */}
-      <footer className="sm:block hidden glass border-t border-white/5 py-2 px-4 text-center text-xs text-gray-600">
-        <Leaf size={10} className="inline mr-1 text-green-800" />
+      <footer className="lg:block hidden glass border-t border-line py-3 px-4 text-center text-[14px] text-muted">
+        <Leaf size={10} className="inline mr-1 text-primary-strong" />
         {t("app.disclaimer")}
       </footer>
     </div>

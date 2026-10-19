@@ -34,22 +34,22 @@ function ReadingCard({
   icon: any; label: string; value?: number; unit: string; color: string; badge?: string;
 }) {
   return (
-    <div className="glass rounded-2xl p-5 flex flex-col justify-between border border-white/5 space-y-3">
+    <div className="glass rounded-2xl p-5 flex flex-col justify-between border border-line space-y-3">
       <div className="flex items-center justify-between">
         <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${color} shadow-lg`}>
-          <Icon size={20} className="text-white" />
+          <Icon size={20} className="text-ink" />
         </div>
         {badge && (
-          <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-white/5 text-gray-400">
+          <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-surface text-muted">
             {badge}
           </span>
         )}
       </div>
       <div>
-        <p className="text-xs font-semibold text-gray-400">{label}</p>
-        <p className="text-3xl font-extrabold text-white mt-1">
+        <p className="text-xs font-semibold text-muted">{label}</p>
+        <p className="text-3xl font-extrabold text-ink mt-1">
           {value != null ? value.toFixed(1) : "—"}
-          <span className="text-sm font-medium text-gray-400 ml-1.5">{unit}</span>
+          <span className="text-sm font-medium text-muted ml-1.5">{unit}</span>
         </p>
       </div>
     </div>
@@ -98,8 +98,8 @@ export default function FieldPage() {
     getBioRisk(live?.temp_c ?? undefined, live?.humidity ?? undefined, live?.soil_moisture ?? undefined),
   );
   const risk = riskQ.data;
-  const riskTone = !risk ? "text-gray-300" : risk.risk_percentage > 70 ? "text-rose-400" : risk.risk_percentage > 40 ? "text-amber-400" : "text-emerald-400";
-  const riskBar = !risk ? "bg-gray-500" : risk.risk_percentage > 70 ? "bg-rose-500" : risk.risk_percentage > 40 ? "bg-amber-500" : "bg-emerald-500";
+  const riskTone = !risk ? "text-ink" : risk.risk_percentage > 70 ? "text-danger" : risk.risk_percentage > 40 ? "text-accent-ink" : "text-primary-strong";
+  const riskBar = !risk ? "bg-line" : risk.risk_percentage > 70 ? "bg-danger" : risk.risk_percentage > 40 ? "bg-accent" : "bg-primary";
 
   // Web Serial connect function
   async function connectUSB() {
@@ -211,12 +211,12 @@ export default function FieldPage() {
     <div className="p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto space-y-6 pb-12">
       <div className="pt-2 flex items-center justify-between">
         <div>
-          <h1 className="font-display text-3xl sm:text-5xl font-semibold text-white tracking-tight leading-[1.05]">{t("field.title")}</h1>
-          <p className="text-xs sm:text-sm text-gray-400 mt-1">Live microclimate conditions from greenhouse & field ESP32 nodes</p>
+          <h1 className="font-display text-3xl sm:text-5xl font-semibold text-ink tracking-tight leading-[1.05]">{t("field.title")}</h1>
+          <p className="text-xs sm:text-sm text-muted mt-1">Live microclimate conditions from greenhouse & field ESP32 nodes</p>
         </div>
         <button
           onClick={fetchLatest}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-semibold text-gray-300 transition-all"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surface hover:bg-ink/5 text-xs font-semibold text-ink transition-all"
         >
           <RefreshCw size={13} className={loading ? "animate-spin" : ""} /> Refresh
         </button>
@@ -226,28 +226,28 @@ export default function FieldPage() {
       <BioShieldRadar />
 
       {/* ⚡ ESP32 USB Cable Direct Stream Card */}
-      <div className="glass rounded-2xl p-4 sm:p-5 border border-emerald-500/30 bg-emerald-950/15 space-y-3 shadow-lg shadow-emerald-950/20">
+      <div className="glass rounded-2xl p-4 sm:p-5 border border-primary/40 bg-leaf space-y-3 shadow-lg ">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className={`w-11 h-11 rounded-2xl flex items-center justify-center transition-all ${
               usbConnected
-                ? "bg-emerald-500 text-black shadow-lg shadow-emerald-500/30 animate-pulse"
-                : "bg-white/10 text-emerald-400 border border-white/10"
+                ? "bg-primary text-white shadow-lg animate-pulse"
+                : "bg-surface text-muted border border-line"
             }`}>
               <Cable size={22} />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="text-sm font-bold text-white tracking-tight">ESP32 Data Cable Direct Stream</h3>
+                <h3 className="text-sm font-bold text-ink tracking-tight">ESP32 Data Cable Direct Stream</h3>
                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
                   usbConnected
-                    ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
-                    : "bg-white/10 text-gray-400"
+                    ? "bg-leaf text-primary-strong border border-primary/40"
+                    : "bg-surface text-muted"
                 }`}>
                   {usbConnected ? "🟢 USB Connected & Streaming" : "USB Ready"}
                 </span>
               </div>
-              <p className="text-xs text-gray-400 mt-0.5">
+              <p className="text-xs text-muted mt-0.5">
                 Plug your ESP32 into this laptop via USB cable and stream real-time DHT & Soil data straight into AgriGuard.
               </p>
             </div>
@@ -258,7 +258,7 @@ export default function FieldPage() {
               <button
                 type="button"
                 onClick={disconnectUSB}
-                className="px-4 py-2 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/40 text-xs font-bold transition-all"
+                className="px-4 py-2 rounded-xl bg-danger-soft hover:bg-danger-soft text-danger border border-danger/40 text-xs font-bold transition-all"
               >
                 Disconnect Cable
               </button>
@@ -267,7 +267,7 @@ export default function FieldPage() {
                 type="button"
                 onClick={connectUSB}
                 disabled={usbConnecting}
-                className="px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-bold text-xs flex items-center gap-2 shadow-lg shadow-emerald-500/20 transition-all active:scale-95 disabled:opacity-50"
+                className="px-4 py-2.5 rounded-xl bg-primary hover:bg-primary-strong text-white font-bold text-xs flex items-center gap-2 shadow-lg transition-all active:scale-95 disabled:opacity-50"
               >
                 <Cable size={14} />
                 {usbConnecting ? "Selecting COM Port..." : "Connect ESP32 (USB Cable)"}
@@ -276,7 +276,7 @@ export default function FieldPage() {
             <button
               type="button"
               onClick={() => setShowLogs(!showLogs)}
-              className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 text-xs font-semibold flex items-center gap-1 border border-white/10 transition-all"
+              className="p-2 rounded-xl bg-surface hover:bg-ink/5 text-ink text-xs font-semibold flex items-center gap-1 border border-line transition-all"
               title="Toggle Live Serial Monitor Logs"
             >
               <Terminal size={14} />
@@ -285,11 +285,11 @@ export default function FieldPage() {
         </div>
 
         {usbError && (
-          <div className="flex items-start gap-2 p-3 bg-rose-500/10 border border-rose-500/30 rounded-xl text-rose-300 text-xs">
+          <div className="flex items-start gap-2 p-3 bg-danger-soft border border-danger/40 rounded-xl text-danger text-xs">
             <AlertCircle size={15} className="flex-shrink-0 mt-0.5" />
             <div>
               <p>{usbError}</p>
-              <p className="text-[11px] text-gray-400 mt-1">
+              <p className="text-[11px] text-muted mt-1">
                 Tip: Close Arduino IDE&apos;s Serial Monitor if it is currently open, then try connecting again.
               </p>
             </div>
@@ -297,13 +297,13 @@ export default function FieldPage() {
         )}
 
         {showLogs && (
-          <div className="bg-black/70 rounded-xl p-3 border border-white/10 font-mono text-[11px] text-emerald-400 space-y-1 max-h-40 overflow-y-auto">
-            <div className="flex items-center justify-between text-gray-400 text-[10px] pb-1 border-b border-white/10">
+          <div className="bg-ink/50 rounded-xl p-3 border border-line font-mono text-[11px] text-primary-strong space-y-1 max-h-40 overflow-y-auto">
+            <div className="flex items-center justify-between text-muted text-[10px] pb-1 border-b border-line">
               <span>ESP32 115200 Baud Live Serial Stream:</span>
-              <button onClick={() => setUsbLogs([])} className="hover:text-white">Clear</button>
+              <button onClick={() => setUsbLogs([])} className="hover:text-ink">Clear</button>
             </div>
             {usbLogs.length === 0 ? (
-              <p className="text-gray-500 italic">No serial lines received yet. Click Connect ESP32 to open port.</p>
+              <p className="text-muted italic">No serial lines received yet. Click Connect ESP32 to open port.</p>
             ) : (
               usbLogs.map((log, idx) => (
                 <div key={idx} className="leading-relaxed truncate">{log}</div>
@@ -314,13 +314,13 @@ export default function FieldPage() {
       </div>
 
       {/* Status Banner */}
-      <div className="flex items-center justify-between p-3 rounded-2xl glass border border-white/5 text-xs">
+      <div className="flex items-center justify-between p-3 rounded-2xl glass border border-line text-xs">
         <div className={`flex items-center gap-2 font-semibold ${
           hasRealData
             ? isStale
-              ? "text-amber-400"
-              : "text-emerald-400"
-            : "text-gray-400"
+              ? "text-accent-ink"
+              : "text-primary-strong"
+            : "text-muted"
         }`}>
           {hasRealData && !isStale ? (
             <Wifi size={16} className="animate-pulse" />
@@ -335,7 +335,7 @@ export default function FieldPage() {
               : "No sensor readings recorded — node offline"}
           </span>
         </div>
-        <span className="text-[11px] text-gray-400 font-mono">
+        <span className="text-[11px] text-muted font-mono">
           {hasRealData
             ? `Recorded: ${recordedDate?.toLocaleDateString()} ${recordedDate?.toLocaleTimeString()}`
             : "No Data"}
@@ -358,7 +358,7 @@ export default function FieldPage() {
               label={t("field.soil_moisture")}
               value={activeData.latest?.soil_moisture ?? undefined}
               unit="%"
-              color="bg-blue-600"
+              color="bg-primary"
               badge={isStale ? "Offline" : "Root Zone"}
             />
             <ReadingCard
@@ -366,7 +366,7 @@ export default function FieldPage() {
               label={t("field.temperature")}
               value={activeData.latest?.temp_c ?? undefined}
               unit="°C"
-              color="bg-amber-600"
+              color="bg-accent"
               badge={isStale ? "Offline" : "Ambient"}
             />
             <ReadingCard
@@ -374,20 +374,20 @@ export default function FieldPage() {
               label={t("field.humidity")}
               value={activeData.latest?.humidity ?? undefined}
               unit="%"
-              color="bg-cyan-600"
+              color="bg-primary"
               badge={isStale ? "Offline" : "Canopy"}
             />
           </div>
 
           {/* DSV Disease-Risk Index */}
-          <div className="glass rounded-2xl p-5 sm:p-6 border border-white/5 space-y-4">
+          <div className="glass rounded-2xl p-5 sm:p-6 border border-line space-y-4">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-2">
                 <ShieldAlert size={18} className={riskTone} />
-                <h3 className="text-sm font-bold text-white uppercase tracking-wider">DSV Disease-Risk Index</h3>
+                <h3 className="text-sm font-bold text-ink uppercase tracking-wider">DSV Disease-Risk Index</h3>
               </div>
               {risk && (
-                <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-white/5 border border-white/10 ${riskTone}`}>
+                <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-surface border border-line ${riskTone}`}>
                   {risk.risk_level}
                 </span>
               )}
@@ -397,11 +397,11 @@ export default function FieldPage() {
                 <div>
                   <div className="flex items-end justify-between mb-1.5">
                     <p className={`text-4xl font-extrabold ${riskTone}`}>
-                      {risk.risk_percentage}<span className="text-base font-medium text-gray-400 ml-1">%</span>
+                      {risk.risk_percentage}<span className="text-base font-medium text-muted ml-1">%</span>
                     </p>
-                    <p className="text-xs text-gray-400">DSV {risk.dsv_index} / 4</p>
+                    <p className="text-xs text-muted">DSV {risk.dsv_index} / 4</p>
                   </div>
-                  <div className="h-2 rounded-full bg-white/5 overflow-hidden">
+                  <div className="h-2 rounded-full bg-surface overflow-hidden">
                     <div className={`h-full rounded-full transition-all duration-700 ${riskBar}`} style={{ width: `${risk.risk_percentage}%` }} />
                   </div>
                 </div>
@@ -412,16 +412,16 @@ export default function FieldPage() {
                     ["Leaf wetness", `${risk.wet_hours_estimated} h`],
                     ["Germination", `~${risk.hours_to_germination} h`],
                   ].map(([k, v]) => (
-                    <div key={k} className="bg-white/5 rounded-xl p-2.5">
-                      <p className="text-sm font-bold text-white">{v}</p>
-                      <p className="text-[10px] text-gray-400">{k}</p>
+                    <div key={k} className="bg-surface rounded-xl p-2.5">
+                      <p className="text-sm font-bold text-ink">{v}</p>
+                      <p className="text-[10px] text-muted">{k}</p>
                     </div>
                   ))}
                 </div>
-                <p className="text-xs text-gray-300 leading-relaxed">{risk.action_summary}</p>
+                <p className="text-xs text-ink leading-relaxed">{risk.action_summary}</p>
               </>
             ) : !live ? (
-              <div className="p-4 rounded-xl bg-white/5 text-center text-xs text-gray-400">
+              <div className="p-4 rounded-xl bg-surface text-center text-xs text-muted">
                 No active sensor readings to calculate DSV disease risk. Connect an ESP32 field telemetry station.
               </div>
             ) : (
@@ -431,29 +431,29 @@ export default function FieldPage() {
 
           {/* Environmental Trend 24h Chart */}
           {seriesChartData.length > 0 && (
-            <div className="glass rounded-2xl p-5 sm:p-6 space-y-3 border border-white/5">
+            <div className="glass rounded-2xl p-5 sm:p-6 space-y-3 border border-line">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Activity size={18} className="text-emerald-400" />
-                  <h3 className="text-sm font-bold text-white uppercase tracking-wider">24-Hour Telemetry Progression</h3>
+                  <Activity size={18} className="text-primary-strong" />
+                  <h3 className="text-sm font-bold text-ink uppercase tracking-wider">24-Hour Telemetry Progression</h3>
                 </div>
-                <span className="text-[11px] text-gray-500">
+                <span className="text-[11px] text-muted">
                   {seriesChartData.length} records
                 </span>
               </div>
               <ResponsiveContainer width="100%" height={260}>
                 <LineChart data={seriesChartData} margin={{ top: 10, right: 15, left: -15, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                  <XAxis dataKey="time" tick={{ fontSize: 11, fill: "#94a3b8" }} tickLine={false} />
-                  <YAxis tick={{ fontSize: 11, fill: "#94a3b8" }} tickLine={false} axisLine={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#D5DCCF" />
+                  <XAxis dataKey="time" tick={{ fontSize: 11, fill: "#4F5E51" }} tickLine={false} />
+                  <YAxis tick={{ fontSize: 11, fill: "#4F5E51" }} tickLine={false} axisLine={false} />
                   <Tooltip
-                    contentStyle={{ background: "#0f172a", border: "1px solid #334155", borderRadius: 10, fontSize: 12 }}
-                    labelStyle={{ color: "#94a3b8" }}
+                    contentStyle={{ background: "#FFFFFF", border: "1px solid #D5DCCF", color: "#1C2A1E", borderRadius: 10, fontSize: 12 }}
+                    labelStyle={{ color: "#4F5E51" }}
                   />
                   <Legend wrapperStyle={{ fontSize: 12, paddingTop: 10 }} />
-                  <Line type="monotone" dataKey="moisture" name="Soil Moisture (%)" stroke="#3b82f6" strokeWidth={2} dot={{ r: 3 }} />
-                  <Line type="monotone" dataKey="temp" name="Temperature (°C)" stroke="#f59e0b" strokeWidth={2} dot={{ r: 3 }} />
-                  <Line type="monotone" dataKey="humidity" name="Humidity (%)" stroke="#06b6d4" strokeWidth={2} dot={{ r: 3 }} />
+                  <Line type="monotone" dataKey="moisture" name="Soil Moisture (%)" stroke="#2E7D32" strokeWidth={2} dot={{ r: 3 }} />
+                  <Line type="monotone" dataKey="temp" name="Temperature (°C)" stroke="#C7852A" strokeWidth={2} dot={{ r: 3 }} />
+                  <Line type="monotone" dataKey="humidity" name="Humidity (%)" stroke="#4F5E51" strokeWidth={2} dot={{ r: 3 }} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -461,16 +461,16 @@ export default function FieldPage() {
 
           {/* Environmental Disease Risk Advisory Box */}
           {activeData.context_hint && (
-            <div className="glass rounded-2xl p-4 sm:p-5 border border-amber-500/30 flex items-start gap-3.5">
-              <Info size={20} className="text-amber-400 flex-shrink-0 mt-0.5" />
+            <div className="glass rounded-2xl p-4 sm:p-5 border border-accent/60 flex items-start gap-3.5">
+              <Info size={20} className="text-accent-ink flex-shrink-0 mt-0.5" />
               <div>
-                <p className="text-xs font-bold text-amber-300 uppercase tracking-wider mb-1">{t("field.context_hint")}</p>
-                <p className="text-xs sm:text-sm text-gray-200 leading-relaxed">{activeData.context_hint}</p>
+                <p className="text-xs font-bold text-accent-ink uppercase tracking-wider mb-1">{t("field.context_hint")}</p>
+                <p className="text-xs sm:text-sm text-ink leading-relaxed">{activeData.context_hint}</p>
               </div>
             </div>
           )}
 
-          <div className="flex items-center justify-between text-xs text-gray-500 px-2">
+          <div className="flex items-center justify-between text-xs text-muted px-2">
             <span>
               {t("field.last_updated")}: {hasRealData ? `${timeAgo} (${recordedDate?.toLocaleTimeString()})` : "Offline"}
             </span>
@@ -480,7 +480,7 @@ export default function FieldPage() {
       )}
 
       {/* Persistent Disclaimer */}
-      <div className="bg-white/5 border border-white/10 rounded-xl p-3.5 text-xs text-gray-400 leading-relaxed text-center">
+      <div className="bg-surface border border-line rounded-xl p-3.5 text-xs text-muted leading-relaxed text-center">
         ⚠️ <strong>Notice:</strong> Sensor readings are for environmental decision-support context only. They do not confirm or diagnose plant pathogens without visual leaf examination.
       </div>
     </div>

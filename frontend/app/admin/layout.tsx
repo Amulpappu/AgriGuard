@@ -10,11 +10,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   return (
     <div className="min-h-screen flex flex-col">
       <NavBar />
-      <main className="flex-1 pt-0 sm:pt-14 pb-20 sm:pb-0">
+      <main className="flex-1 pt-0 lg:pt-16 pb-24 lg:pb-0">
         {children}
       </main>
-      <footer className="sm:block hidden glass border-t border-white/5 py-2 px-4 text-center text-xs text-gray-600">
-        <Database size={10} className="inline mr-1 text-emerald-600" />
+      <footer className="lg:block hidden glass border-t border-line py-3 px-4 text-center text-[14px] text-muted">
+        <Database size={10} className="inline mr-1 text-primary-strong" />
         AgriGuard Central Database & Admin Console
       </footer>
     </div>
