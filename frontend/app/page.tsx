@@ -1,30 +1,88 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Camera, Globe } from "lucide-react";
+import "./landing.css";
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import AuthModal, { AuthMode } from "@/components/AuthModal";
-import SpotlightCard from "@/components/SpotlightCard";
-import HeroLeaf from "@/components/landing/HeroLeaf";
-import HeroHeadline from "@/components/landing/HeroHeadline";
-import StatNumber from "@/components/landing/StatNumber";
+import {
+  Camera,
+  Globe,
+  LogIn,
+  UserPlus,
+  Radar,
+  Calculator,
+  Languages,
+  Activity,
+  ArrowRight,
+} from "lucide-react";
 
-const STEPS = [1, 2, 3] as const;
-const FEATURES = ["f1", "f2", "f3"] as const;
-
-// ─── Facts strip: only true statements about the product ────────────────────
-// `count` animates with CountUp; facts without a number show `big` as text.
-const FACTS: { count?: number; big?: string; label: string }[] = [
-  { count: 14, label: "home.fact_crops" },
-  { count: 2, label: "home.fact_langs" },
-  { big: "home.fact_alerts_big", label: "home.fact_alerts" },
-  { big: "home.fact_fast_big", label: "home.fact_fast" },
+// Illustrative screening results for the specimen explorer (not live data).
+const SAMPLE_SPECIMENS = [
+  {
+    slug: "cucumber",
+    emoji: "🥒",
+    disease: "cucumber_downy_mildew",
+    confidence: 94,
+    damage: 34,
+    pills: ["Angular yellow patches", "Grey underside growth", "Humid canopy"],
+    care: "Remove heavily affected leaves, improve airflow between vines and water at the base in the morning.",
+  },
+  {
+    slug: "rice",
+    emoji: "🌾",
+    disease: "rice_blast",
+    confidence: 96,
+    damage: 14,
+    pills: ["Diamond-shaped lesions", "Grey centres", "Leaf blade"],
+    care: "Keep bunds clean, avoid excess late-season nitrogen and maintain steady field water.",
+  },
+  {
+    slug: "tomato",
+    emoji: "🍅",
+    disease: "tomato_early_blight",
+    confidence: 95,
+    damage: 18,
+    pills: ["Concentric rings", "Lower leaves first", "Yellow halo"],
+    care: "Prune lower leaves touching the soil, mulch the bed and avoid wetting the foliage.",
+  },
+  {
+    slug: "potato",
+    emoji: "🥔",
+    disease: "potato_late_blight",
+    confidence: 93,
+    damage: 22,
+    pills: ["Water-soaked margins", "White sporulation", "Cool nights"],
+    care: "Scout neighbouring rows daily, remove infected haulms and avoid evening irrigation.",
+  },
+  {
+    slug: "cotton",
+    emoji: "🌿",
+    disease: "cotton_bacterial_blight",
+    confidence: 97,
+    damage: 9,
+    pills: ["Angular leaf spots", "Vein darkening", "Low spread"],
+    care: "Use clean seed, clear crop debris after harvest and avoid working in wet fields.",
+  },
 ];
 
-const SUPPORT_EMAIL = "lohithgamer12@gmail.com";
+// Other crops, plants & vegetables with screening profiles (keys in locales `crop.*`).
+const SUPPORTED_CROPS: Array<[string, string]> = [
+  ["wheat", "🌾"], ["corn", "🌽"], ["pepper", "🌶️"], ["brinjal", "🍆"], ["onion", "🧅"],
+  ["banana", "🍌"], ["mango", "🥭"], ["grape", "🍇"], ["cabbage", "🥬"],
+];
+
+const FEATURES = [
+  { icon: Radar, key: "f1" },
+  { icon: Calculator, key: "f2" },
+  { icon: Languages, key: "f3" },
+  { icon: Activity, key: "f4" },
+];
+
+const LeafScene = dynamic(() => import("@/components/LandingLeafScene"), { ssr: false });
 
 export default function LandingPage() {
   const { isLoggedIn, logout } = useAuth();
@@ -36,199 +94,204 @@ export default function LandingPage() {
   const [authNext, setAuthNext] = useState("/dashboard");
   const closeAuth = useCallback(() => setAuthOpen(false), []);
 
+  // Active specimen preview
+  const [activeSpecimenIdx, setActiveSpecimenIdx] = useState(0);
+  const spec = SAMPLE_SPECIMENS[activeSpecimenIdx];
+
   function openAuth(mode: AuthMode, next = "/dashboard") {
     setAuthMode(mode);
     setAuthNext(next);
     setAuthOpen(true);
   }
 
-  // Anyone can check a leaf; guests are asked to sign in only to save the result.
-  const checkCrop = () => router.push("/scan");
-  const langToggle = (
-    <button
-      type="button"
-      onClick={() => setLang(lang === "en" ? "ta" : "en")}
-      className="btn-ghost px-3 text-[15px]"
-      title={t("home.language")}
-    >
-      <Globe size={18} aria-hidden="true" />
-      <span lang={lang === "en" ? "ta" : "en"}>{lang === "en" ? "தமிழ்" : "English"}</span>
-    </button>
-  );
+  // Anyone can scan a leaf; guests are asked to sign in only to save the result.
+  const launchScan = () => router.push("/scan");
+  const exploreTelemetry = () => (isLoggedIn ? router.push("/field") : openAuth("register", "/field"));
+
+  const stepOf = (n: number) => t("lp.step_of").replace("{n}", String(n));
 
   return (
-    <div className="min-h-screen bg-canvas text-ink">
-      {/* ─── Top nav ─────────────────────────────────────────────── */}
-      <header data-site-header className="sticky top-0 z-40 bg-canvas border-b border-line/70">
-        <nav
-          aria-label={t("nav.main")}
-          className="mx-auto max-w-6xl flex items-center gap-2 px-4 sm:px-6 h-16"
-        >
-          <Link href="/" className="flex items-center gap-2 mr-auto min-h-tap">
-            <span className="w-2.5 h-2.5 rounded-full bg-primary" aria-hidden="true" />
-            <span className="font-display text-xl font-semibold">{t("app.name")}</span>
-          </Link>
-          <div className="hidden md:flex items-center gap-1 mr-2 text-[15px]">
-            <a href="#how" className="btn-ghost px-3 font-medium">{t("home.nav_how")}</a>
-            <a href="#features" className="btn-ghost px-3 font-medium">{t("home.nav_features")}</a>
-          </div>
-          {langToggle}
+    <div className="lp">
+      <LeafScene />
+
+      <nav className="lp-nav" aria-label="Main">
+        <Link href="/" className="lp-mark"><span />AgriGuard</Link>
+        <div className="lp-links">
+          <a href="#lp-specimens">{t("lp.nav_crops")}</a>
+          <a href="#lp-story">{t("lp.nav_how")}</a>
+          <a href="#lp-checks">{t("lp.nav_checks")}</a>
+          <a href="#lp-faq">{t("lp.nav_faq")}</a>
+        </div>
+        <div className="lp-ctl">
+          <button className="lp-btn sm" onClick={() => setLang(lang === "en" ? "ta" : "en")}>
+            <Globe size={14} /> {lang === "en" ? "தமிழ்" : "EN"}
+          </button>
           {isLoggedIn ? (
             <>
-              <Link href="/dashboard" className="btn-primary px-4 text-[15px]">{t("landing.dashboard")}</Link>
-              <button type="button" onClick={logout} className="hidden sm:inline-flex btn-ghost px-3 text-[15px]">
-                {t("landing.sign_out")}
-              </button>
+              <Link href="/dashboard" className="lp-btn sm fill">{t("landing.dashboard")}</Link>
+              <button className="lp-btn sm" onClick={logout}>{t("landing.sign_out")}</button>
             </>
           ) : (
             <>
-              <button type="button" onClick={() => openAuth("login")} className="btn-ghost px-3 text-[15px]">
-                {t("landing.log_in")}
+              <button className="lp-btn sm" onClick={() => openAuth("login")}>
+                <LogIn size={14} /> {t("landing.log_in")}
               </button>
-              <button type="button" onClick={() => openAuth("register")} className="hidden sm:inline-flex btn-secondary px-4 text-[15px]">
-                {t("auth.tab_signup")}
+              <button className="lp-btn sm fill" onClick={() => openAuth("register")}>
+                <UserPlus size={14} /> {t("lp.signup")}
               </button>
             </>
           )}
-        </nav>
-      </header>
+        </div>
+      </nav>
 
-      <main>
-        {/* ─── Hero ────────────────────────────────────────────────── */}
-        <section className="relative">
-          <div className="mx-auto max-w-6xl px-4 sm:px-6 pt-6 pb-16 sm:pt-16 lg:pt-12 sm:pb-28 grid lg:min-h-[calc(100svh-4rem)] lg:grid-cols-[minmax(0,1.3fr)_minmax(0,0.7fr)] lg:items-center lg:gap-10">
-            {/* Leaf: above the headline on phones/tablets, right column on desktop */}
-            <div className="-mb-2 sm:mb-0 lg:order-last">
-              <HeroLeaf />
-            </div>
-            <div className="relative z-10">
-            <HeroHeadline text={t("home.h1")} />
-            <p className="mt-5 max-w-[38ch] text-body-lg text-ink/85">{t("home.sub")}</p>
-            <div className="mt-8 flex flex-col sm:flex-row sm:items-center gap-3">
-              <button type="button" onClick={checkCrop} className="btn-primary btn-lg w-full sm:w-auto">
-                <Camera size={22} aria-hidden="true" />
-                {t("home.cta")}
-              </button>
-              <a href="#how" className="btn-ghost justify-center sm:justify-start text-[17px] underline underline-offset-4 decoration-line-strong">
-                {t("home.cta_secondary")}
-              </a>
-            </div>
-            <p className="mt-6 text-[15px] text-muted">{t("home.screening_note")}</p>
-            </div>
-          </div>
-        </section>
-
-        {/* ─── How it works ────────────────────────────────────────── */}
-        <section id="how" className="scroll-mt-20 mx-auto max-w-6xl px-4 sm:px-6 py-16 sm:py-20">
-          <h2 className="text-3xl sm:text-4xl">{t("home.how_h")}</h2>
-          <ol className="mt-10 grid gap-10 md:grid-cols-3 md:gap-8">
-            {STEPS.map((n) => (
-              <li key={n} className="relative md:pr-6">
-                <span className="font-display text-5xl font-semibold text-primary leading-none tabular-nums" aria-hidden="true">
-                  {n}
-                </span>
-                <h3 className="mt-3 text-2xl">
-                  <span className="sr-only">{t("home.step_label").replace("{n}", String(n))}: </span>
-                  {t(`home.step${n}_h`)}
-                </h3>
-                <p className="mt-2 text-body text-muted max-w-[34ch]">{t(`home.step${n}_p`)}</p>
-                {n < 3 && (
-                  <ArrowRight
-                    size={22}
-                    aria-hidden="true"
-                    className="hidden md:block absolute right-0 top-3 text-line-strong"
-                  />
-                )}
-              </li>
-            ))}
-          </ol>
-        </section>
-
-        {/* ─── Features ────────────────────────────────────────────── */}
-        <section id="features" className="scroll-mt-20 bg-leaf/60 border-y border-line/70">
-          <div className="mx-auto max-w-6xl px-4 sm:px-6 py-16 sm:py-20">
-            <h2 className="text-3xl sm:text-4xl">{t("home.feat_h")}</h2>
-            <div className="mt-10 grid gap-4 md:grid-cols-3">
-              {FEATURES.map((f) => (
-                <SpotlightCard
-                  key={f}
-                  theme="light"
-                  spotlightColor="#2E7D32"
-                  intensity={0.35}
-                  className="!p-6 sm:!p-7 !rounded-2xl"
-                  style={
-                    {
-                      "--spotlight-card-surface": "#FFFFFF",
-                      "--spotlight-card-border": "rgba(28,42,30,0.10)",
-                      "--spotlight-card-shadow": "none",
-                    } as React.CSSProperties
-                  }
-                >
-                  <h3 className="text-2xl">{t(`home.${f}_h`)}</h3>
-                  <p className="mt-3 text-body text-muted">{t(`home.${f}_p`)}</p>
-                </SpotlightCard>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* ─── Facts ──────────────────────────────────────────────── */}
-        <section className="mx-auto max-w-6xl px-4 sm:px-6 py-16 sm:py-20">
-          <h2 className="text-3xl sm:text-4xl">{t("home.facts_h")}</h2>
-          <dl className="mt-10 grid sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-8 border-t border-line pt-10">
-            {FACTS.map((f) => (
-              <div key={f.label} className="flex flex-col-reverse">
-                <dt className="mt-2 text-[16px] text-ink">{t(f.label)}</dt>
-                <dd className="font-display font-semibold text-primary-strong leading-none">
-                  {f.count !== undefined ? (
-                    <span className="text-5xl"><StatNumber value={f.count} /></span>
-                  ) : (
-                    <span className="text-3xl sm:text-[2.1rem] leading-tight">{t(f.big!)}</span>
-                  )}
-                </dd>
-              </div>
-            ))}
-          </dl>
-        </section>
-
-        {/* ─── Closing CTA ─────────────────────────────────────────── */}
-        <section className="bg-primary text-white">
-          <div className="mx-auto max-w-6xl px-4 sm:px-6 py-14 sm:py-16 flex flex-col sm:flex-row sm:items-center gap-6 sm:justify-between">
-            <h2 className="text-3xl sm:text-4xl text-white max-w-[20ch]">{t("home.end_h")}</h2>
-            <button type="button" onClick={checkCrop} className="btn btn-lg bg-white text-primary-strong hover:bg-leaf w-full sm:w-auto">
-              <Camera size={22} aria-hidden="true" />
-              {t("home.cta")}
+      <section className="lp-hero" id="lp-top">
+        <div>
+          <span className="lp-badge"><i />{t("lp.badge")}</span>
+          <h1>{t("lp.h1")}</h1>
+          <p>{t("lp.sub")}</p>
+          <div className="lp-row">
+            <button className="lp-btn fill" onClick={launchScan}>
+              <Camera size={18} /> {t("lp.cta_scan")}
+            </button>
+            <button className="lp-btn" onClick={exploreTelemetry}>
+              <Activity size={18} /> {t("lp.cta_tel")}
             </button>
           </div>
-        </section>
-      </main>
+          <dl className="lp-metrics">
+            <div><dt>14</dt><dd>{t("lp.m1")}</dd></div>
+            <div><dt>34</dt><dd>{t("lp.m2")}</dd></div>
+            <div><dt>2</dt><dd>{t("lp.m3")}</dd></div>
+          </dl>
+        </div>
+      </section>
 
-      {/* ─── Footer ──────────────────────────────────────────────── */}
-      <footer className="bg-canvas">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6 py-12 grid gap-8 md:grid-cols-[1.4fr_1fr]">
-          <div>
-            <p className="font-display text-xl font-semibold">{t("app.name")}</p>
-            <p className="mt-2 text-[15px] text-muted max-w-[40ch]">{t("home.foot_tagline")}</p>
-            <p className="mt-4 text-[15px] text-ink">
-              {t("support.issue")}{" "}
-              <a
-                href={`mailto:${SUPPORT_EMAIL}?subject=AgriGuard%20website%20issue`}
-                className="inline-flex items-center min-h-[44px] text-primary underline underline-offset-2 hover:text-primary-strong [overflow-wrap:anywhere]"
+      <section className="lp-paper" id="lp-specimens">
+        <h2>{t("lp.spec_h")}</h2>
+        <p className="lp-lead">{t("lp.spec_p")}</p>
+        <div className="lp-spec">
+          <div className="lp-chips" role="tablist" aria-label={t("lp.spec_h")}>
+            {SAMPLE_SPECIMENS.map((s, i) => (
+              <button
+                key={s.slug}
+                role="tab"
+                aria-selected={i === activeSpecimenIdx}
+                className={`lp-chip${i === activeSpecimenIdx ? " on" : ""}`}
+                onClick={() => setActiveSpecimenIdx(i)}
               >
-                {SUPPORT_EMAIL}
-              </a>
-            </p>
+                <span aria-hidden="true">{s.emoji}</span> {t(`crop.${s.slug}`)}
+                <b>{s.confidence}%</b>
+              </button>
+            ))}
           </div>
-          <div className="flex flex-wrap items-start gap-2 md:justify-end">
-            {langToggle}
-            <button type="button" onClick={checkCrop} className="btn-ghost px-3 text-[15px]">{t("home.cta")}</button>
+          <article className="lp-card" role="tabpanel" key={spec.slug}>
+            <div className="lp-card-top">
+              <span className="lp-emoji" aria-hidden="true">{spec.emoji}</span>
+              <div>
+                <small>{t(`crop.${spec.slug}`)} · {t("lp.spec_sample")}</small>
+                <h3>{t(`disease.${spec.disease}`)}</h3>
+              </div>
+            </div>
+            <div className="lp-meter">
+              <div><span>{t("lp.spec_conf")}</span><b>{spec.confidence}%</b></div>
+              <i><em style={{ width: `${spec.confidence}%` }} /></i>
+            </div>
+            <div className="lp-meter warn">
+              <div><span>{t("lp.spec_dmg")}</span><b>{spec.damage}%</b></div>
+              <i><em style={{ width: `${spec.damage}%` }} /></i>
+            </div>
+            <ul className="lp-pills">
+              {spec.pills.map((p) => <li key={p}>{p}</li>)}
+            </ul>
+            <p className="lp-care"><strong>{t("lp.spec_care")}:</strong> {spec.care}</p>
+            <button className="lp-btn fill sm" onClick={launchScan}>
+              {t("lp.cta_scan")} <ArrowRight size={14} />
+            </button>
+          </article>
+        </div>
+        <div className="lp-also">
+          <span>{t("lp.supported")}:</span>
+          {SUPPORTED_CROPS.map(([slug, emoji]) => (
+            <span key={slug} className="lp-pill-soft"><span aria-hidden="true">{emoji}</span> {t(`crop.${slug}`)}</span>
+          ))}
+        </div>
+      </section>
+
+      <section className="lp-paper nt" id="lp-features">
+        <h2>{t("lp.feat_h")}</h2>
+        <div className="lp-feat">
+          {FEATURES.map(({ icon: Icon, key }) => (
+            <div key={key}>
+              <span className="lp-ico"><Icon size={22} /></span>
+              <h3>{t(`lp.${key}h`)}</h3>
+              <p>{t(`lp.${key}p`)}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="lp-story" id="lp-story">
+        <div className="lp-stick">
+          <div className="lp-cap">
+            <i id="lp-bar" />
+            <div className="lp-step"><h2>{t("lp.s1h")}</h2><p>{t("lp.s1p")}</p><small>{stepOf(1)}</small></div>
+            <div className="lp-step"><h2>{t("lp.s2h")}</h2><p>{t("lp.s2p")}</p><small>{stepOf(2)}</small></div>
+            <div className="lp-step"><h2>{t("lp.s3h")}</h2><p>{t("lp.s3p")}</p><small>{stepOf(3)}</small></div>
           </div>
         </div>
-        <div className="border-t border-line">
-          <p className="mx-auto max-w-6xl px-4 sm:px-6 py-6 text-[15px] text-muted leading-relaxed"><span className="block max-w-3xl">
-            {t("scan.footer_disclaimer")}
-          </span></p>
+      </section>
+
+      <section className="lp-paper">
+        <h2>{t("lp.hon_h")}</h2>
+        <p className="lp-lead">{t("lp.hon_p")}</p>
+        <div className="lp-nums">
+          {[["1", "lp.n1"], ["3", "lp.n2"], ["0", "lp.n3"], ["2", "lp.n4"]].map(([n, k]) => (
+            <div key={k}><b>{n}</b><span>{t(k)}</span></div>
+          ))}
         </div>
+      </section>
+
+      <section className="lp-paper nt" id="lp-checks">
+        <h2>{t("lp.chk_h")}</h2>
+        <div className="lp-rail" tabIndex={0} aria-label={t("lp.chk_h")}>
+          {[1, 2, 3, 4].map((i) => (
+            <div className="lp-tile" key={i}>
+              <div><h3>{t(`lp.c${i}h`)}</h3><p>{t(`lp.c${i}p`)}</p></div>
+            </div>
+          ))}
+          <div className="lp-tile soon">
+            <span className="lp-tag">{t("lp.soon")}</span>
+            <div><h3>{t("lp.c5h")}</h3><p>{t("lp.c5p")}</p></div>
+          </div>
+        </div>
+      </section>
+
+      <section className="lp-paper nt" id="lp-faq">
+        <h2>{t("lp.faq_h")}</h2>
+        <div className="lp-faq">
+          {[1, 2, 3, 4].map((i) => (
+            <details key={i}><summary>{t(`lp.q${i}`)}</summary><p>{t(`lp.a${i}`)}</p></details>
+          ))}
+        </div>
+      </section>
+
+      <section className="lp-cta">
+        <h2>{t("lp.end_h")}</h2>
+        <div className="lp-row" style={{ marginTop: 34 }}>
+          <button className="lp-btn fill" onClick={launchScan}>
+            <Camera size={18} /> {t("lp.cta_scan")}
+          </button>
+          <button className="lp-btn" onClick={exploreTelemetry}>
+            <Activity size={18} /> {t("lp.cta_tel")}
+          </button>
+        </div>
+      </section>
+
+      <footer className="lp-foot">
+        <p>{t("scan.footer_disclaimer")}</p>
+        <p style={{ marginTop: 10 }}>
+          {t("support.issue")}{" "}
+          <a href="mailto:lohithgamer12@gmail.com?subject=AgriGuard%20website%20issue">lohithgamer12@gmail.com</a>
+        </p>
       </footer>
 
       <AuthModal open={authOpen} mode={authMode} onModeChange={setAuthMode} onClose={closeAuth} next={authNext} />
