@@ -360,7 +360,7 @@ This file is the Airbnb reference system. AgriGuard uses its **layout, type scal
 - Mobile-first: every layout must work at 360px wide.
 - Tap targets are at least 48px.
 - No purple gradients. No card inside a card. No grey or muted text on coloured fills. No icon tile above every heading.
-- No animated backgrounds or heavy effects on the upload and results pages. Animation is only allowed on the landing hero (the 3D leaf). The 3D version runs at 768px and wider; phones get a static SVG leaf with a gentle bob, and `prefers-reduced-motion` gets a fully static leaf. Animate with transform and opacity only.
+- No animated backgrounds or heavy effects on the upload and results pages. Animation is only allowed on the landing hero (the original 3D leaf). The live 3D leaf runs at 768px and wider; phones use `public/images/hero-leaf.webp`, a snapshot of the same leaf. On scroll the leaf pins below the navbar, turns about 15° and fades out before the hero ends. Under `prefers-reduced-motion` it is fully static. Animate with transform and opacity only.
 - All text goes through `t()` with keys in both `en.json` and `ta.json`. No text baked into images.
 
 ---

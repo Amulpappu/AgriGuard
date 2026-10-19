@@ -130,10 +130,3 @@
     animation-iteration-count: 1 !important;
   }
 }
-
-/* Hero leaf on phones/tablets: a light bob instead of 3D (stopped under reduced motion) */
-@keyframes hero-leaf-bob {
-  0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg); }
-  50% { transform: translate3d(0, -6px, 0) rotate(-1.5deg); }
-}
-.hero-leaf-bob { animation: hero-leaf-bob 6s ease-in-out infinite; }

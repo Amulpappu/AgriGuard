@@ -8,7 +8,6 @@ import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import AuthModal, { AuthMode } from "@/components/AuthModal";
 import SpotlightCard from "@/components/SpotlightCard";
-import HeroBackdrop from "@/components/landing/HeroBackdrop";
 import HeroLeaf from "@/components/landing/HeroLeaf";
 import HeroHeadline from "@/components/landing/HeroHeadline";
 import StatNumber from "@/components/landing/StatNumber";
@@ -60,7 +59,7 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-canvas text-ink">
       {/* ─── Top nav ─────────────────────────────────────────────── */}
-      <header className="sticky top-0 z-40 bg-canvas/90 backdrop-blur border-b border-line/70">
+      <header data-site-header className="sticky top-0 z-40 bg-canvas border-b border-line/70">
         <nav
           aria-label={t("nav.main")}
           className="mx-auto max-w-6xl flex items-center gap-2 px-4 sm:px-6 h-16"
@@ -96,14 +95,13 @@ export default function LandingPage() {
 
       <main>
         {/* ─── Hero ────────────────────────────────────────────────── */}
-        <section className="relative isolate">
-          <HeroBackdrop />
-          <div className="mx-auto max-w-6xl px-4 sm:px-6 pt-6 pb-16 sm:pt-16 lg:pt-20 sm:pb-28 grid lg:grid-cols-[minmax(0,1.3fr)_minmax(0,0.7fr)] lg:items-center lg:gap-10">
+        <section className="relative">
+          <div className="mx-auto max-w-6xl px-4 sm:px-6 pt-6 pb-16 sm:pt-16 lg:pt-12 sm:pb-28 grid lg:min-h-[calc(100svh-4rem)] lg:grid-cols-[minmax(0,1.3fr)_minmax(0,0.7fr)] lg:items-center lg:gap-10">
             {/* Leaf: above the headline on phones/tablets, right column on desktop */}
-            <div className="-mb-4 sm:mb-0 lg:order-last">
+            <div className="-mb-2 sm:mb-0 lg:order-last">
               <HeroLeaf />
             </div>
-            <div>
+            <div className="relative z-10">
             <HeroHeadline text={t("home.h1")} />
             <p className="mt-5 max-w-[38ch] text-body-lg text-ink/85">{t("home.sub")}</p>
             <div className="mt-8 flex flex-col sm:flex-row sm:items-center gap-3">

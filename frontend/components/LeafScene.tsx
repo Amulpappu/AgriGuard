@@ -4,22 +4,18 @@ import { useEffect, useRef } from "react";
 import * as THREE from "three";
 
 interface Props {
-  /** Called after the first frame is drawn, so the static poster can fade out. */
+  /** Called after the first frame is drawn, so the static leaf image can fade out. */
   onReady?: () => void;
 }
 
-const clamp01 = (v: number) => Math.max(0, Math.min(1, v));
-const smooth = (a: number, b: number, v: number) => {
-  const t = clamp01((v - a) / (b - a));
-  return t * t * (3 - 2 * t);
-};
-
 /**
- * Procedural 3D leaf for the landing hero (no model files).
- * Fills its parent. Scroll drives a slow turn; as "How it works" (#how) comes into
- * view a scan line sweeps the leaf and early disease spots fade in, to suggest
- * the AI check. Rendering pauses while the hero is off screen.
- * Only loaded on tablet/desktop with motion allowed (see HeroLeaf).
+ * The original AgriGuard 3D leaf (procedural, no model files), unchanged in shape,
+ * texture, lighting and resting pose. public/images/hero-leaf.webp is a snapshot
+ * of this exact render at rest, used on phones and with reduced motion.
+ *
+ * Here the leaf only breathes (slow idle sway) and leans toward the pointer.
+ * Scroll rotation and fade are applied by HeroLeaf on the wrapper.
+ * Rendering pauses while the leaf is off screen.
  */
 export default function LeafScene({ onReady }: Props) {
   const ref = useRef<HTMLCanvasElement>(null);
@@ -32,51 +28,36 @@ export default function LeafScene({ onReady }: Props) {
     try {
       R = new THREE.WebGLRenderer({ canvas: cv, antialias: true, alpha: true, powerPreference: "low-power" });
     } catch {
-      return; // no WebGL: the SVG poster simply stays
+      return; // no WebGL: the leaf image simply stays
     }
     R.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    R.outputColorSpace = THREE.SRGBColorSpace;
     const S = new THREE.Scene();
-    const C = new THREE.PerspectiveCamera(30, 1, 0.1, 50);
-    C.position.set(0, 0, 9.5);
+    const C = new THREE.PerspectiveCamera(32, 1, 0.1, 50);
+    C.position.set(0, 0, 9);
 
-    function tex(spots: boolean) {
+    function tex() {
       const c = document.createElement("canvas");
       c.width = 512;
       c.height = 1024;
       const x = c.getContext("2d")!;
-      if (!spots) {
-        // AgriGuard greens around primary #2E7D32
-        const g = x.createLinearGradient(0, 0, 0, 1024);
-        g.addColorStop(0, "#5FA357");
-        g.addColorStop(0.5, "#2E7D32");
-        g.addColorStop(1, "#1D4F20");
-        x.fillStyle = g;
-        x.fillRect(0, 0, 512, 1024);
-        x.strokeStyle = "rgba(230,239,224,.6)";
-        x.lineWidth = 7;
-        x.beginPath(); x.moveTo(256, 0); x.lineTo(256, 1024); x.stroke();
-        x.lineWidth = 2.5;
-        x.strokeStyle = "rgba(230,239,224,.38)";
-        for (let i = 0; i < 14; i++) {
-          const y = 90 + i * 66;
-          x.beginPath();
-          x.moveTo(256, y); x.quadraticCurveTo(170, y - 30, 70, y - 110);
-          x.moveTo(256, y); x.quadraticCurveTo(342, y - 30, 442, y - 110);
-          x.stroke();
-        }
-      } else {
-        [[170,380,34],[330,520,26],[220,640,20],[300,300,16],[200,820,28],[310,760,14]].forEach((p) => {
-          const g = x.createRadialGradient(p[0], p[1], 2, p[0], p[1], p[2] * 1.8);
-          g.addColorStop(0, "rgba(70,32,10,.95)");
-          g.addColorStop(0.55, "rgba(120,70,20,.75)");
-          g.addColorStop(1, "rgba(233,162,59,0)");
-          x.fillStyle = g;
-          x.beginPath(); x.arc(p[0], p[1], p[2] * 1.8, 0, 7); x.fill();
-        });
+      const g = x.createLinearGradient(0, 0, 0, 1024);
+      g.addColorStop(0, "#5E8F3A");
+      g.addColorStop(0.5, "#3E7A32");
+      g.addColorStop(1, "#2B5A28");
+      x.fillStyle = g;
+      x.fillRect(0, 0, 512, 1024);
+      x.strokeStyle = "rgba(200,230,150,.55)";
+      x.lineWidth = 7;
+      x.beginPath(); x.moveTo(256, 0); x.lineTo(256, 1024); x.stroke();
+      x.lineWidth = 2.5;
+      for (let i = 0; i < 14; i++) {
+        const y = 90 + i * 66;
+        x.beginPath();
+        x.moveTo(256, y); x.quadraticCurveTo(170, y - 30, 70, y - 110);
+        x.moveTo(256, y); x.quadraticCurveTo(342, y - 30, 442, y - 110);
+        x.stroke();
       }
       const t = new THREE.CanvasTexture(c);
-      t.colorSpace = THREE.SRGBColorSpace;
       t.anisotropy = 4;
       return t;
     }
@@ -108,24 +89,13 @@ export default function LeafScene({ onReady }: Props) {
     }
 
     const G = geometry();
-    const leafMat = new THREE.MeshStandardMaterial({ map: tex(false), roughness: 0.55, side: THREE.DoubleSide });
-    const lesionMat = new THREE.MeshStandardMaterial({
-      map: tex(true), transparent: true, opacity: 0, roughness: 0.8, side: THREE.DoubleSide,
-      depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2,
-    });
-    const leaf = new THREE.Mesh(G, leafMat);
-    const lesion = new THREE.Mesh(G, lesionMat);
-    // Scan line: pale leaf-green so it reads over the dark leaf and stays quiet on the cream page
-    const beamMat = new THREE.MeshBasicMaterial({ color: 0xf1f7ee, transparent: true, opacity: 0, depthWrite: false });
-    const beam = new THREE.Mesh(new THREE.PlaneGeometry(3.2, 0.045), beamMat);
+    const leafMat = new THREE.MeshStandardMaterial({ map: tex(), roughness: 0.5, side: THREE.DoubleSide });
     const grp = new THREE.Group();
-    grp.add(leaf, lesion, beam);
-    beam.position.z = 0.6;
+    grp.add(new THREE.Mesh(G, leafMat));
     S.add(grp);
-    // Daylight: bright sky, warm cream bounce from the page, soft key light
-    S.add(new THREE.HemisphereLight(0xffffff, 0xd9d2bf, 1.1));
-    const key = new THREE.DirectionalLight(0xffffff, 1.4); key.position.set(3, 4, 5); S.add(key);
-    const fill = new THREE.DirectionalLight(0xe6efe0, 0.5); fill.position.set(-4, 1, 2); S.add(fill);
+    S.add(new THREE.HemisphereLight(0xeaf4e6, 0x14151d, 0.85));
+    const d = new THREE.DirectionalLight(0xffffff, 1.1); d.position.set(3, 4, 5); S.add(d);
+    const rim = new THREE.DirectionalLight(0x3ea094, 1.2); rim.position.set(-4, 1, -3); S.add(rim);
 
     const size = () => {
       const w = host.clientWidth, h = host.clientHeight;
@@ -138,42 +108,20 @@ export default function LeafScene({ onReady }: Props) {
     ro.observe(host);
     size();
 
-    let mx = 0, my = 0, smx = 0, smy = 0, p = 0, q = 0, raf = 0, visible = true, readySent = false;
+    let mx = 0, my = 0, smx = 0, smy = 0, raf = 0, visible = true, readySent = false;
     const onMove = (e: PointerEvent) => { mx = e.clientX / window.innerWidth - 0.5; my = e.clientY / window.innerHeight - 0.5; };
     window.addEventListener("pointermove", onMove, { passive: true });
 
-    const hero = cv.closest("section");
-    const how = document.getElementById("how");
-
     const frame = () => {
       raf = 0;
-      // p: how far the hero has scrolled away (0 → 1)
-      let tp = 0;
-      if (hero) { const r = hero.getBoundingClientRect(); tp = clamp01(-r.top / (r.height * 0.9)); }
-      // q: how far "How it works" has come into view (0 → 1)
-      let tq = 0;
-      // Completes over the first ~45% of the viewport so the sweep finishes while the leaf is still in view
-      if (how) { const r = how.getBoundingClientRect(); tq = clamp01((window.innerHeight - r.top) / (window.innerHeight * 0.45)); }
-      p += (tp - p) * 0.08;
-      q += (tq - q) * 0.08;
-      smx += (mx - smx) * 0.05; smy += (my - smy) * 0.05;
-
-      // Slow, subtle turn: under one radian across the whole hero scroll
-      const sway = Math.sin(performance.now() / 2800) * 0.04;
-      grp.rotation.set(-0.3 + smy * 0.2 + p * 0.35, -0.6 + smx * 0.35 + p * 0.9 + sway, 0.25 - p * 0.2);
-
-      // AI check: one sweep of the scan line, spots appear behind it
-      const sweep = smooth(0.15, 0.85, q);
-      beam.position.y = 2.1 - sweep * 4.3;
-      beamMat.opacity = q > 0.12 && q < 0.9 ? 0.85 * Math.sin(Math.PI * sweep) : 0;
-      lesionMat.opacity = smooth(0.35, 0.8, q);
-
+      smx += (mx - smx) * 0.06; smy += (my - smy) * 0.06;
+      // Original resting pose; the leaf leans a little toward the pointer and sways slowly
+      grp.rotation.set(-0.35 + smy * 0.3, -0.7 + smx * 0.5 + Math.sin(performance.now() / 2600) * 0.05, 0.28);
       R.render(S, C);
       if (!readySent) { readySent = true; onReady?.(); }
       if (visible) raf = requestAnimationFrame(frame);
     };
 
-    // Stop drawing while the hero is off screen (battery, cheap GPUs)
     const io = new IntersectionObserver(([e]) => {
       visible = e.isIntersecting;
       if (visible && !raf) raf = requestAnimationFrame(frame);
@@ -186,8 +134,7 @@ export default function LeafScene({ onReady }: Props) {
       io.disconnect();
       ro.disconnect();
       window.removeEventListener("pointermove", onMove);
-      G.dispose(); leafMat.map?.dispose(); lesionMat.map?.dispose();
-      leafMat.dispose(); lesionMat.dispose(); beamMat.dispose(); beam.geometry.dispose();
+      G.dispose(); leafMat.map?.dispose(); leafMat.dispose();
       R.dispose();
     };
   }, [onReady]);
