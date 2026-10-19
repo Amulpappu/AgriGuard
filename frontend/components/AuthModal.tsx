@@ -14,7 +14,7 @@ interface Props {
   mode: AuthMode;
   onModeChange: (m: AuthMode) => void;
   onClose: () => void;
-  /** Where to go after email login (Google always returns to /dashboard). */
+  /** Where to go after signing in (email or Google). */
   next?: string;
 }
 
@@ -34,7 +34,7 @@ export default function AuthModal({ open, mode, onModeChange, onClose, next = "/
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState("");
-  const [persona, setPersona] = useState<UserPersona>("student_gardener");
+  const [persona, setPersona] = useState<UserPersona>("farmer");
   const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
@@ -67,7 +67,7 @@ export default function AuthModal({ open, mode, onModeChange, onClose, next = "/
     setGoogleLoading(true);
     try {
       if (mode === "register") setUserPersona(persona);
-      await loginWithGoogle(); // leaves the page for Google, then returns to /dashboard
+      await loginWithGoogle(next); // leaves the page for Google, then returns to `next`
     } catch (err: any) {
       setError(err?.message || t("auth.error_google"));
       setGoogleLoading(false);
@@ -200,8 +200,8 @@ export default function AuthModal({ open, mode, onModeChange, onClose, next = "/
               <fieldset className="space-y-1.5">
                 <legend className="text-[15px] font-medium text-ink mb-1.5">{t("auth.persona_q")}</legend>
                 <div className="grid grid-cols-2 gap-2">
-                  {personaBtn("student_gardener", t("auth.persona_student"), t("auth.persona_student_sub"), "🪴")}
                   {personaBtn("farmer", t("auth.persona_farmer"), t("auth.persona_farmer_sub"), "🚜")}
+                  {personaBtn("student_gardener", t("auth.persona_student"), t("auth.persona_student_sub"), "🪴")}
                 </div>
               </fieldset>
             </>

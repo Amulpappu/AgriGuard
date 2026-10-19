@@ -25,8 +25,8 @@ interface AuthContext {
   ready: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, fullName?: string) => Promise<void>;
-  /** Opens Google sign-in; the browser comes back to /dashboard signed in. */
-  loginWithGoogle: () => Promise<void>;
+  /** Opens Google sign-in; the browser comes back signed in to `next` (default /dashboard). */
+  loginWithGoogle: (next?: string) => Promise<void>;
   logout: () => void;
 }
 
@@ -176,13 +176,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     applySession(data.session);
   }, [applySession]);
 
-  const loginWithGoogle = useCallback(async () => {
+  const loginWithGoogle = useCallback(async (next?: string) => {
     // A stale demo/admin session must not shadow the real Google session.
     localStorage.removeItem("agriguard_synthetic_session");
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/dashboard`,
+        redirectTo: `${window.location.origin}${next && next.startsWith("/") ? next : "/dashboard"}`,
         queryParams: { prompt: "select_account" },
       },
     });

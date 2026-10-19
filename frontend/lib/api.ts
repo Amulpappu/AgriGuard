@@ -537,13 +537,14 @@ export async function getCrops(): Promise<CropOut[]> {
 
 export type UserPersona = "farmer" | "student_gardener";
 
+// Farmer is the default advice view; Student / Home is opt-in.
 export function getUserPersona(): UserPersona {
-  if (typeof window === "undefined") return "student_gardener";
+  if (typeof window === "undefined") return "farmer";
   try {
     const p = localStorage.getItem("agriguard_user_persona");
-    if (p === "farmer") return "farmer";
+    if (p === "student_gardener") return "student_gardener";
   } catch {}
-  return "student_gardener";
+  return "farmer";
 }
 
 export function setUserPersona(persona: UserPersona) {
@@ -704,8 +705,15 @@ export async function createScan(cropId: string | null | undefined, imageFile: F
     throw err;
   }
 
+  // Guests (no session at all) get the in-browser result only: nothing is uploaded
+  // or saved until they sign in (see saveGuestScan).
+  let isGuest = false;
+  try {
+    isGuest = !(await getActiveSession())?.user;
+  } catch (_) {}
+
   // 1. If backend configured, try FastAPI proxy first
-  if (getBackendUrl()) {
+  if (getBackendUrl() && !isGuest) {
     try {
       const form = new FormData();
       form.append("crop_id", cropId && cropId !== "auto" ? cropId : "auto");
@@ -811,7 +819,6 @@ export async function createScan(cropId: string | null | undefined, imageFile: F
     const activeSession = await getActiveSession();
     userId = isValidUuid(activeSession?.user?.id) ? activeSession.user!.id : null;
   } catch (_) {}
-  const folderUid = userId || "anonymous";
 
   // Convert to high-fidelity Base64 Data URL for instant local report rendering
   try {
@@ -820,6 +827,70 @@ export async function createScan(cropId: string | null | undefined, imageFile: F
       sessionStorage.setItem(`scan_img_${newScanId}`, fullDataUrl);
     }
   } catch (_) {}
+
+  // Build the complete ScanOut result object FIRST so user report is 100% ready immediately
+  const scanOutResult: ScanOut = {
+    id: newScanId,
+    crop: matchedCrop,
+    status: scanStatus,
+    disease: matchedDisease && matchedDisease.slug ? {
+      id: isValidUuid(matchedDisease.id) ? matchedDisease.id : undefined,
+      slug: matchedDisease.slug,
+      name_key: matchedDisease.name_key,
+    } : undefined,
+    confidence: confidence,
+    low_confidence: lowConfidence,
+    top3: top3Items,
+    severity: {
+      level: severityLevel,
+      affected_pct: affectedPct,
+      is_estimate: true,
+    },
+    model_version: modelVersion,
+    condition_type: conditionType,
+    image_url: `/uploads/scans/${newScanId}.jpg`,
+    thumb_url: `/uploads/scans/${newScanId}.jpg`,
+    created_at: new Date().toISOString(),
+    crop_auto_detected: pred.autoDetected,
+  };
+
+  // IMMEDIATE SESSION STORAGE PERSISTENCE (GUARANTEES 100% REPORT RETRIEVAL IN 0ms)
+  if (typeof window !== "undefined") {
+    try {
+      sessionStorage.setItem(`scan_data_${newScanId}`, JSON.stringify(scanOutResult));
+    } catch (_) {}
+  }
+
+  if (isGuest) {
+    if (typeof window !== "undefined") {
+      try {
+        sessionStorage.setItem(`scan_guest_${newScanId}`, "1");
+      } catch (_) {}
+    }
+    return scanOutResult;
+  }
+
+  return persistScan(scanOutResult, scaledImage, thumbImage, userId);
+}
+
+/**
+ * Upload the scan photos and insert the scan row for the signed-in user.
+ * Used right after a scan, and later by saveGuestScan once a guest signs in.
+ */
+async function persistScan(scan: ScanOut, scaledImage: Blob, thumbImage: Blob, userId: string | null): Promise<ScanOut> {
+  const newScanId = scan.id;
+  const folderUid = userId || "anonymous";
+  const isHealthy = scan.status === "healthy";
+  const matchedCrop = scan.crop;
+  const matchedDisease: any = scan.disease || null;
+  const top3Items = scan.top3;
+  const confidence = scan.confidence;
+  const lowConfidence = scan.low_confidence;
+  const scanStatus = scan.status;
+  const modelVersion = scan.model_version;
+  const conditionType = scan.condition_type;
+  const severityLevel = scan.severity.level;
+  const affectedPct = scan.severity.affected_pct;
 
   let imageUrl = `/uploads/scans/${newScanId}.jpg`;
   let thumbUrl: string = imageUrl;
@@ -878,33 +949,7 @@ export async function createScan(cropId: string | null | undefined, imageFile: F
     thumbUrl = imageUrl;
   }
 
-  // Build the complete ScanOut result object FIRST so user report is 100% ready immediately
-  const scanOutResult: ScanOut = {
-    id: newScanId,
-    crop: matchedCrop,
-    status: scanStatus,
-    disease: matchedDisease && matchedDisease.slug ? {
-      id: isValidUuid(matchedDisease.id) ? matchedDisease.id : undefined,
-      slug: matchedDisease.slug,
-      name_key: matchedDisease.name_key,
-    } : undefined,
-    confidence: confidence,
-    low_confidence: lowConfidence,
-    top3: top3Items,
-    severity: {
-      level: severityLevel,
-      affected_pct: affectedPct,
-      is_estimate: true,
-    },
-    model_version: modelVersion,
-    condition_type: conditionType,
-    image_url: imageUrl,
-    thumb_url: thumbUrl || imageUrl,
-    created_at: new Date().toISOString(),
-    crop_auto_detected: pred.autoDetected,
-  };
-
-  // IMMEDIATE SESSION STORAGE PERSISTENCE (GUARANTEES 100% REPORT RETRIEVAL IN 0ms)
+  const scanOutResult: ScanOut = { ...scan, image_url: imageUrl, thumb_url: thumbUrl || imageUrl };
   if (typeof window !== "undefined") {
     try {
       sessionStorage.setItem(`scan_data_${newScanId}`, JSON.stringify(scanOutResult));
@@ -931,7 +976,7 @@ export async function createScan(cropId: string | null | undefined, imageFile: F
     low_confidence: lowConfidence,
     status: scanStatus,
     model_version: modelVersion,
-    crop_auto_detected: pred.autoDetected,
+    crop_auto_detected: scan.crop_auto_detected,
     condition_type: conditionType,
     created_at: scanOutResult.created_at,
   };
@@ -955,6 +1000,41 @@ export async function createScan(cropId: string | null | undefined, imageFile: F
 
   return scanOutResult;
 }
+
+/**
+ * Save a scan that was made before signing in. Rebuilds the photo from the copy kept
+ * in this tab, uploads it and inserts the row for the now signed-in user.
+ * Returns the saved scan, or null when there is nothing to save or no session.
+ */
+export async function saveGuestScan(scanId: string): Promise<ScanOut | null> {
+  if (typeof window === "undefined") return null;
+  if (sessionStorage.getItem(`scan_guest_${scanId}`) !== "1") return null;
+  const raw = sessionStorage.getItem(`scan_data_${scanId}`);
+  const dataUrl = sessionStorage.getItem(`scan_img_${scanId}`);
+  if (!raw || !dataUrl) return null;
+
+  const { user } = await getActiveSession();
+  if (!user) return null;
+  const userId = isValidUuid(user.id) ? user.id : null;
+
+  const blob = await (await fetch(dataUrl)).blob();
+  const image = new File([blob], `${scanId}.jpg`, { type: blob.type || "image/jpeg" });
+  const thumb = await downscaleImage(image, 256, 0.75);
+  const saved = await persistScan(JSON.parse(raw) as ScanOut, image, thumb, userId);
+  sessionStorage.removeItem(`scan_guest_${scanId}`);
+  return saved;
+}
+
+/** True when this scan was made as a guest and has not been saved yet. */
+export function isUnsavedGuestScan(scanId: string): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    return sessionStorage.getItem(`scan_guest_${scanId}`) === "1";
+  } catch {
+    return false;
+  }
+}
+
 
 export const SCAN_LIST_SELECT = "*, crop:crops(id, slug, name_key, icon_emoji), disease:diseases(id, slug, name_key)";
 
@@ -1552,7 +1632,7 @@ export async function downscaleImage(file: File, maxPx = 1280, quality = 0.85): 
   });
 }
 
-// ─── Bio-Shield 360° Epiphytology & Mandi ROI Client ─────────────────────────
+// ─── My Field (formerly Bio-Shield 360°): epiphytology & mandi ROI client ─────────────────────────
 
 export interface BioRiskOut {
   timestamp: string;

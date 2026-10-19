@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -11,12 +11,16 @@ import {
   resolveImageUrl,
   getUserPersona,
   setUserPersona,
+  isUnsavedGuestScan,
+  saveGuestScan,
   UserPersona,
   ScanOut,
   AdvisoryOut,
   CropOut,
 } from "@/lib/api";
 import { useI18n, useLang } from "@/lib/i18n";
+import { useAuth } from "@/lib/auth";
+import AuthModal, { AuthMode } from "@/components/AuthModal";
 import {
   CheckCircle2,
   AlertTriangle,
@@ -29,6 +33,7 @@ import {
   ChevronDown,
   Loader2,
   Info,
+  LogIn,
 } from "lucide-react";
 
 // Below this confidence the farmer is always told to consult a human expert.
@@ -39,6 +44,7 @@ export default function ScanDetailPage() {
   const { t } = useI18n();
   const lang = useLang();
   const router = useRouter();
+  const { isLoggedIn } = useAuth();
 
   const [scan, setScan] = useState<ScanOut | null>(null);
   const [advisory, setAdvisory] = useState<AdvisoryOut | null>(null);
@@ -50,7 +56,36 @@ export default function ScanDetailPage() {
   const [reclassifyError, setReclassifyError] = useState(false);
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const [activeTab, setActiveTab] = useState<"actions" | "symptoms" | "prevention">("actions");
-  const [persona, setPersona] = useState<UserPersona>("student_gardener");
+  const [persona, setPersona] = useState<UserPersona>("farmer");
+  // Guest scans live only in this tab until the user signs in and we save them.
+  const [unsaved, setUnsaved] = useState(false);
+  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "failed">("idle");
+  const [authOpen, setAuthOpen] = useState(false);
+  const [authMode, setAuthMode] = useState<AuthMode>("login");
+  const closeAuth = useCallback(() => setAuthOpen(false), []);
+
+  const saveForUser = useCallback(async () => {
+    if (!id) return;
+    setSaveState("saving");
+    try {
+      const saved = await saveGuestScan(id as string);
+      if (saved) setScan(saved);
+      setUnsaved(isUnsavedGuestScan(id as string));
+      setSaveState(saved ? "saved" : "failed");
+    } catch (e) {
+      console.error("Failed to save guest scan", e);
+      setSaveState("failed");
+    }
+  }, [id]);
+
+  useEffect(() => {
+    if (id) setUnsaved(isUnsavedGuestScan(id as string));
+  }, [id, scan]);
+
+  // A guest who signs in (email or Google) comes back here: save the scan for them.
+  useEffect(() => {
+    if (isLoggedIn && unsaved && saveState === "idle") void saveForUser();
+  }, [isLoggedIn, unsaved, saveState, saveForUser]);
 
   useEffect(() => {
     setPersona(getUserPersona());
@@ -382,13 +417,14 @@ export default function ScanDetailPage() {
               <button
                 type="button"
                 onClick={() => setShowCropPicker(!showCropPicker)}
+                disabled={unsaved}
                 aria-expanded={showCropPicker}
-                aria-label={t("result.change_crop")}
+                aria-label={unsaved ? undefined : t("result.change_crop")}
                 className="min-h-[48px] px-4 rounded-full bg-surface text-ink text-[15px] font-semibold shadow-float flex items-center gap-2"
               >
                 <span className="text-lg" aria-hidden="true">{scan.crop.icon_emoji}</span>
                 {t(scan.crop.name_key)}
-                <ChevronDown size={16} aria-hidden="true" />
+                {!unsaved && <ChevronDown size={16} aria-hidden="true" />}
               </button>
               {showCropPicker && (
                 <div className="absolute left-0 mt-2 w-72 max-w-[calc(100vw-3rem)] bg-surface rounded-xl shadow-float border border-line p-2 z-50">
@@ -487,7 +523,7 @@ export default function ScanDetailPage() {
               <div className="flex flex-wrap items-center gap-3">
                 <h3 id="advice-for" className="text-xl">{t("result.advice_for")}</h3>
                 <div className="inline-grid grid-cols-2 gap-1 p-1 rounded-lg bg-surface border border-line">
-                  {([["student_gardener", t("result.view_garden")], ["farmer", t("result.view_farm")]] as const).map(([p, label]) => (
+                  {([["farmer", t("result.view_farm")], ["student_gardener", t("result.view_garden")]] as const).map(([p, label]) => (
                     <button
                       key={p}
                       type="button"
@@ -565,19 +601,57 @@ export default function ScanDetailPage() {
             {!showExpert && <p className="mt-4 text-[16px] font-semibold">{t("result.consult_officer")}</p>}
           </section>
 
+          {(unsaved || saveState !== "idle") && (
+            <section className="order-6 lg:order-none rounded-xl border border-primary/30 bg-leaf p-5" aria-live="polite">
+              {saveState === "saving" ? (
+                <p className="flex items-center gap-2 text-[16px] font-medium">
+                  <Loader2 size={18} className="animate-spin text-primary" aria-hidden="true" /> {t("result.saving")}
+                </p>
+              ) : saveState === "saved" ? (
+                <p className="flex items-center gap-2 text-[16px] font-medium text-primary-strong">
+                  <CheckCircle2 size={18} aria-hidden="true" /> {t("result.saved")}
+                </p>
+              ) : saveState === "failed" && isLoggedIn ? (
+                <div className="flex flex-wrap items-center gap-3">
+                  <p className="text-[16px] text-danger flex-1 min-w-[12rem]">{t("result.save_failed")}</p>
+                  <button type="button" onClick={saveForUser} className="btn-secondary px-4">{t("result.retry")}</button>
+                </div>
+              ) : (
+                <>
+                  <h3 className="text-xl">{t("result.guest_save_title")}</h3>
+                  <p className="mt-1 text-[16px] text-ink/85">{t("result.guest_save_body")}</p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAuthMode("login");
+                      setAuthOpen(true);
+                    }}
+                    className="btn-primary mt-4 w-full sm:w-auto"
+                  >
+                    <LogIn size={18} aria-hidden="true" /> {t("result.guest_save_btn")}
+                  </button>
+                </>
+              )}
+            </section>
+          )}
+
           <div className="flex flex-col sm:flex-row gap-3 order-6 lg:order-none">
             <Link href="/scan" className="btn-primary btn-lg flex-1">
               <Camera size={22} aria-hidden="true" />
               {t("scan.new_scan")}
             </Link>
-            <Link href="/compare" className="btn-secondary btn-lg">
-              <GitCompareArrows size={20} aria-hidden="true" /> {t("nav.compare")}
-            </Link>
+            {isLoggedIn && (
+              <Link href="/compare" className="btn-secondary btn-lg">
+                <GitCompareArrows size={20} aria-hidden="true" /> {t("nav.compare")}
+              </Link>
+            )}
           </div>
         </div>
       </div>
 
       <p className="text-center text-[14px] text-muted pt-2 max-w-3xl mx-auto">{t("scan.footer_disclaimer")}</p>
+
+      <AuthModal open={authOpen} mode={authMode} onModeChange={setAuthMode} onClose={closeAuth} next={`/scan/${id}`} />
     </div>
   );
 }
