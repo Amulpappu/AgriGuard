@@ -1,530 +1,233 @@
 "use client";
 
-import { useState } from "react";
-import dynamic from "next/dynamic";
+import { useCallback, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import "./landing.css";
+import { ArrowRight, Camera, Globe } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
-import { getUserPersona, setUserPersona, UserPersona } from "@/lib/api";
-import {
-  Camera,
-  Globe,
-  LogIn,
-  UserPlus,
-  Eye,
-  EyeOff,
-  X,
-  Play,
-  Radar,
-  Calculator,
-  Languages,
-  Activity,
-  ArrowRight,
-} from "lucide-react";
+import AuthModal, { AuthMode } from "@/components/AuthModal";
+import SpotlightCard from "@/components/SpotlightCard";
+import HeroBackdrop from "@/components/landing/HeroBackdrop";
+import HeroHeadline from "@/components/landing/HeroHeadline";
+import StatNumber from "@/components/landing/StatNumber";
 
-// Illustrative screening results for the specimen explorer (not live data).
-const SAMPLE_SPECIMENS = [
-  {
-    slug: "cucumber",
-    emoji: "🥒",
-    disease: "cucumber_downy_mildew",
-    confidence: 94,
-    damage: 34,
-    pills: ["Angular yellow patches", "Grey underside growth", "Humid canopy"],
-    care: "Remove heavily affected leaves, improve airflow between vines and water at the base in the morning.",
-  },
-  {
-    slug: "rice",
-    emoji: "🌾",
-    disease: "rice_blast",
-    confidence: 96,
-    damage: 14,
-    pills: ["Diamond-shaped lesions", "Grey centres", "Leaf blade"],
-    care: "Keep bunds clean, avoid excess late-season nitrogen and maintain steady field water.",
-  },
-  {
-    slug: "tomato",
-    emoji: "🍅",
-    disease: "tomato_early_blight",
-    confidence: 95,
-    damage: 18,
-    pills: ["Concentric rings", "Lower leaves first", "Yellow halo"],
-    care: "Prune lower leaves touching the soil, mulch the bed and avoid wetting the foliage.",
-  },
-  {
-    slug: "potato",
-    emoji: "🥔",
-    disease: "potato_late_blight",
-    confidence: 93,
-    damage: 22,
-    pills: ["Water-soaked margins", "White sporulation", "Cool nights"],
-    care: "Scout neighbouring rows daily, remove infected haulms and avoid evening irrigation.",
-  },
-  {
-    slug: "cotton",
-    emoji: "🌿",
-    disease: "cotton_bacterial_blight",
-    confidence: 97,
-    damage: 9,
-    pills: ["Angular leaf spots", "Vein darkening", "Low spread"],
-    care: "Use clean seed, clear crop debris after harvest and avoid working in wet fields.",
-  },
+const STEPS = [1, 2, 3] as const;
+const FEATURES = ["f1", "f2", "f3"] as const;
+
+// ─── PLACEHOLDER STATS: edit these numbers before launch ─────────────────────
+// They render with a visible "sample figures" note (locale key home.stats_note).
+// Remove that note in the Stats section below once the numbers are real.
+const STATS: { value: number; suffix?: string; label: string }[] = [
+  { value: 12500, suffix: "+", label: "home.stat1" }, // PLACEHOLDER
+  { value: 3200, suffix: "+", label: "home.stat2" },  // PLACEHOLDER
+  { value: 14, label: "home.stat3" },                 // current AI model: 14 crops
+  { value: 40, label: "home.stat4" },                 // PLACEHOLDER
 ];
 
-// Other crops, plants & vegetables with screening profiles (keys in locales `crop.*`).
-const SUPPORTED_CROPS: Array<[string, string]> = [
-  ["wheat", "🌾"], ["corn", "🌽"], ["pepper", "🌶️"], ["brinjal", "🍆"], ["onion", "🧅"],
-  ["banana", "🍌"], ["mango", "🥭"], ["grape", "🍇"], ["cabbage", "🥬"],
-];
-
-const FEATURES = [
-  { icon: Radar, key: "f1" },
-  { icon: Calculator, key: "f2" },
-  { icon: Languages, key: "f3" },
-  { icon: Activity, key: "f4" },
-];
-
-const LeafScene = dynamic(() => import("@/components/LeafScene"), { ssr: false });
+const SUPPORT_EMAIL = "lohithgamer12@gmail.com";
 
 export default function LandingPage() {
-  const { login, register, loginWithGoogle, isLoggedIn, logout } = useAuth();
+  const { isLoggedIn, logout } = useAuth();
   const { t, lang, setLang } = useI18n();
   const router = useRouter();
 
-  // Auth modal state
-  const [authModalOpen, setAuthModalOpen] = useState(false);
-  const [authMode, setAuthMode] = useState<"login" | "register">("login");
-  const [authName, setAuthName] = useState("");
-  const [authEmail, setAuthEmail] = useState("");
-  const [authPassword, setAuthPassword] = useState("");
-  const [authLoading, setAuthLoading] = useState(false);
-  const [authError, setAuthError] = useState("");
-  const [selectedPersona, setSelectedPersona] = useState<UserPersona>("student_gardener");
-  const [showPassword, setShowPassword] = useState(false);
-  const [googleLoading, setGoogleLoading] = useState(false);
+  const [authOpen, setAuthOpen] = useState(false);
+  const [authMode, setAuthMode] = useState<AuthMode>("login");
+  const [authNext, setAuthNext] = useState("/dashboard");
+  const closeAuth = useCallback(() => setAuthOpen(false), []);
 
-  async function handleGoogle() {
-    setAuthError("");
-    setGoogleLoading(true);
-    try {
-      if (authMode === "register") setUserPersona(selectedPersona);
-      await loginWithGoogle(); // leaves the page for Google, then returns to /dashboard
-    } catch (err: any) {
-      setAuthError(err?.message || "Google sign-in failed. Please try again.");
-      setGoogleLoading(false);
-    }
-  }
-
-  // Active specimen preview
-  const [activeSpecimenIdx, setActiveSpecimenIdx] = useState(0);
-  const spec = SAMPLE_SPECIMENS[activeSpecimenIdx];
-
-  function openAuth(mode: "login" | "register") {
+  function openAuth(mode: AuthMode, next = "/dashboard") {
     setAuthMode(mode);
-    setAuthError("");
-    setAuthModalOpen(true);
+    setAuthNext(next);
+    setAuthOpen(true);
   }
 
-  async function handleAuthSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setAuthError("");
-    setAuthLoading(true);
-    try {
-      if (authMode === "register") {
-        setUserPersona(selectedPersona);
-        await register(authEmail, authPassword, authName);
-      } else {
-        await login(authEmail, authPassword);
-      }
-      setAuthModalOpen(false);
-      router.push("/dashboard");
-    } catch (err: any) {
-      console.error("Auth error:", err);
-      setAuthError(err?.message || (authMode === "register" ? "Account creation failed." : "Login failed. Please verify credentials."));
-    } finally {
-      setAuthLoading(false);
-    }
-  }
-
-  const launchScan = () => (isLoggedIn ? router.push("/scan") : openAuth("login"));
-  const exploreTelemetry = () => (isLoggedIn ? router.push("/field") : openAuth("register"));
-
-  const stepOf = (n: number) => t("lp.step_of").replace("{n}", String(n));
+  const checkCrop = () => (isLoggedIn ? router.push("/scan") : openAuth("login", "/scan"));
+  const langToggle = (
+    <button
+      type="button"
+      onClick={() => setLang(lang === "en" ? "ta" : "en")}
+      className="btn-ghost px-3 text-[15px]"
+      title={t("home.language")}
+    >
+      <Globe size={18} aria-hidden="true" />
+      <span lang={lang === "en" ? "ta" : "en"}>{lang === "en" ? "தமிழ்" : "English"}</span>
+    </button>
+  );
 
   return (
-    <div className="lp">
-      <LeafScene />
-
-      <nav className="lp-nav" aria-label="Main">
-        <Link href="/" className="lp-mark"><span />AgriGuard</Link>
-        <div className="lp-links">
-          <a href="#lp-specimens">{t("lp.nav_crops")}</a>
-          <a href="#lp-story">{t("lp.nav_how")}</a>
-          <a href="#lp-checks">{t("lp.nav_checks")}</a>
-          <a href="#lp-faq">{t("lp.nav_faq")}</a>
-        </div>
-        <div className="lp-ctl">
-          <button className="lp-btn sm" onClick={() => setLang(lang === "en" ? "ta" : "en")}>
-            <Globe size={14} /> {lang === "en" ? "தமிழ்" : "EN"}
-          </button>
+    <div className="min-h-screen bg-canvas text-ink">
+      {/* ─── Top nav ─────────────────────────────────────────────── */}
+      <header className="sticky top-0 z-40 bg-canvas/90 backdrop-blur border-b border-line/70">
+        <nav
+          aria-label={t("nav.main")}
+          className="mx-auto max-w-6xl flex items-center gap-2 px-4 sm:px-6 h-16"
+        >
+          <Link href="/" className="flex items-center gap-2 mr-auto min-h-tap">
+            <span className="w-2.5 h-2.5 rounded-full bg-primary" aria-hidden="true" />
+            <span className="font-display text-xl font-semibold">{t("app.name")}</span>
+          </Link>
+          <div className="hidden md:flex items-center gap-1 mr-2 text-[15px]">
+            <a href="#how" className="btn-ghost px-3 font-medium">{t("home.nav_how")}</a>
+            <a href="#features" className="btn-ghost px-3 font-medium">{t("home.nav_features")}</a>
+          </div>
+          {langToggle}
           {isLoggedIn ? (
             <>
-              <Link href="/dashboard" className="lp-btn sm fill">{t("landing.dashboard")}</Link>
-              <button className="lp-btn sm" onClick={logout}>{t("landing.sign_out")}</button>
+              <Link href="/dashboard" className="btn-primary px-4 text-[15px]">{t("landing.dashboard")}</Link>
+              <button type="button" onClick={logout} className="hidden sm:inline-flex btn-ghost px-3 text-[15px]">
+                {t("landing.sign_out")}
+              </button>
             </>
           ) : (
             <>
-              <button className="lp-btn sm" onClick={() => openAuth("login")}>
-                <LogIn size={14} /> {t("landing.log_in")}
+              <button type="button" onClick={() => openAuth("login")} className="btn-ghost px-3 text-[15px]">
+                {t("landing.log_in")}
               </button>
-              <button className="lp-btn sm fill" onClick={() => openAuth("register")}>
-                <UserPlus size={14} /> {t("lp.signup")}
+              <button type="button" onClick={() => openAuth("register")} className="hidden sm:inline-flex btn-secondary px-4 text-[15px]">
+                {t("auth.tab_signup")}
               </button>
             </>
           )}
-        </div>
-      </nav>
+        </nav>
+      </header>
 
-      <section className="lp-hero" id="lp-top">
-        <div>
-          <span className="lp-badge"><i />{t("lp.badge")}</span>
-          <h1>{t("lp.h1")}</h1>
-          <p>{t("lp.sub")}</p>
-          <div className="lp-row">
-            <button className="lp-btn fill" onClick={launchScan}>
-              <Camera size={18} /> {t("lp.cta_scan")}
-            </button>
-            <button className="lp-btn" onClick={exploreTelemetry}>
-              <Activity size={18} /> {t("lp.cta_tel")}
-            </button>
-          </div>
-          <dl className="lp-metrics">
-            <div><dt>14</dt><dd>{t("lp.m1")}</dd></div>
-            <div><dt>34</dt><dd>{t("lp.m2")}</dd></div>
-            <div><dt>2</dt><dd>{t("lp.m3")}</dd></div>
-          </dl>
-          {authError && !authModalOpen && <p style={{ color: "#fca5a5", margin: "12px 0 0", fontSize: 14 }}>{authError}</p>}
-        </div>
-      </section>
-
-      <section className="lp-paper" id="lp-specimens">
-        <h2>{t("lp.spec_h")}</h2>
-        <p className="lp-lead">{t("lp.spec_p")}</p>
-        <div className="lp-spec">
-          <div className="lp-chips" role="tablist" aria-label={t("lp.spec_h")}>
-            {SAMPLE_SPECIMENS.map((s, i) => (
-              <button
-                key={s.slug}
-                role="tab"
-                aria-selected={i === activeSpecimenIdx}
-                className={`lp-chip${i === activeSpecimenIdx ? " on" : ""}`}
-                onClick={() => setActiveSpecimenIdx(i)}
-              >
-                <span aria-hidden="true">{s.emoji}</span> {t(`crop.${s.slug}`)}
-                <b>{s.confidence}%</b>
+      <main>
+        {/* ─── Hero ────────────────────────────────────────────────── */}
+        <section className="relative isolate">
+          <HeroBackdrop />
+          <div className="mx-auto max-w-6xl px-4 sm:px-6 pt-12 pb-16 sm:pt-24 sm:pb-28">
+            <HeroHeadline text={t("home.h1")} />
+            <p className="mt-5 max-w-[38ch] text-body-lg text-ink/85">{t("home.sub")}</p>
+            <div className="mt-8 flex flex-col sm:flex-row sm:items-center gap-3">
+              <button type="button" onClick={checkCrop} className="btn-primary btn-lg w-full sm:w-auto">
+                <Camera size={22} aria-hidden="true" />
+                {t("home.cta")}
               </button>
+              <a href="#how" className="btn-ghost justify-center sm:justify-start text-[17px] underline underline-offset-4 decoration-line-strong">
+                {t("home.cta_secondary")}
+              </a>
+            </div>
+            <p className="mt-6 text-[15px] text-muted">{t("home.screening_note")}</p>
+          </div>
+        </section>
+
+        {/* ─── How it works ────────────────────────────────────────── */}
+        <section id="how" className="scroll-mt-20 mx-auto max-w-6xl px-4 sm:px-6 py-16 sm:py-20">
+          <h2 className="text-3xl sm:text-4xl">{t("home.how_h")}</h2>
+          <ol className="mt-10 grid gap-10 md:grid-cols-3 md:gap-8">
+            {STEPS.map((n) => (
+              <li key={n} className="relative md:pr-6">
+                <span className="font-display text-5xl font-semibold text-primary leading-none tabular-nums" aria-hidden="true">
+                  {n}
+                </span>
+                <h3 className="mt-3 text-2xl">
+                  <span className="sr-only">{t("home.step_label").replace("{n}", String(n))}: </span>
+                  {t(`home.step${n}_h`)}
+                </h3>
+                <p className="mt-2 text-body text-muted max-w-[34ch]">{t(`home.step${n}_p`)}</p>
+                {n < 3 && (
+                  <ArrowRight
+                    size={22}
+                    aria-hidden="true"
+                    className="hidden md:block absolute right-0 top-3 text-line-strong"
+                  />
+                )}
+              </li>
             ))}
+          </ol>
+        </section>
+
+        {/* ─── Features ────────────────────────────────────────────── */}
+        <section id="features" className="scroll-mt-20 bg-leaf/60 border-y border-line/70">
+          <div className="mx-auto max-w-6xl px-4 sm:px-6 py-16 sm:py-20">
+            <h2 className="text-3xl sm:text-4xl">{t("home.feat_h")}</h2>
+            <div className="mt-10 grid gap-4 md:grid-cols-3">
+              {FEATURES.map((f) => (
+                <SpotlightCard
+                  key={f}
+                  theme="light"
+                  spotlightColor="#2E7D32"
+                  intensity={0.35}
+                  className="!p-6 sm:!p-7 !rounded-2xl"
+                  style={
+                    {
+                      "--spotlight-card-surface": "#FFFFFF",
+                      "--spotlight-card-border": "rgba(28,42,30,0.10)",
+                      "--spotlight-card-shadow": "none",
+                    } as React.CSSProperties
+                  }
+                >
+                  <h3 className="text-2xl">{t(`home.${f}_h`)}</h3>
+                  <p className="mt-3 text-body text-muted">{t(`home.${f}_p`)}</p>
+                </SpotlightCard>
+              ))}
+            </div>
           </div>
-          <article className="lp-card" role="tabpanel" key={spec.slug}>
-            <div className="lp-card-top">
-              <span className="lp-emoji" aria-hidden="true">{spec.emoji}</span>
-              <div>
-                <small>{t(`crop.${spec.slug}`)} · {t("lp.spec_sample")}</small>
-                <h3>{t(`disease.${spec.disease}`)}</h3>
+        </section>
+
+        {/* ─── Stats (placeholder numbers, see STATS above) ────────── */}
+        <section className="mx-auto max-w-6xl px-4 sm:px-6 py-16 sm:py-20">
+          <h2 className="text-3xl sm:text-4xl">{t("home.stats_h")}</h2>
+          {/* Remove this note once the STATS numbers are real */}
+          <p className="mt-4 inline-flex rounded-lg bg-accent-soft border border-accent/60 px-3 py-2 text-[15px] font-medium text-ink">
+            {t("home.stats_note")}
+          </p>
+          <dl className="mt-10 grid grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-10 border-t border-line pt-10">
+            {STATS.map((s) => (
+              <div key={s.label}>
+                <dt className="sr-only">{t(s.label)}</dt>
+                <dd className="font-display text-4xl sm:text-5xl font-semibold text-primary-strong leading-none">
+                  <StatNumber value={s.value} suffix={s.suffix} />
+                </dd>
+                <dd className="mt-2 text-[15px] text-muted" aria-hidden="true">{t(s.label)}</dd>
               </div>
-            </div>
-            <div className="lp-meter">
-              <div><span>{t("lp.spec_conf")}</span><b>{spec.confidence}%</b></div>
-              <i><em style={{ width: `${spec.confidence}%` }} /></i>
-            </div>
-            <div className="lp-meter warn">
-              <div><span>{t("lp.spec_dmg")}</span><b>{spec.damage}%</b></div>
-              <i><em style={{ width: `${spec.damage}%` }} /></i>
-            </div>
-            <ul className="lp-pills">
-              {spec.pills.map((p) => <li key={p}>{p}</li>)}
-            </ul>
-            <p className="lp-care"><strong>{t("lp.spec_care")}:</strong> {spec.care}</p>
-            <button className="lp-btn fill sm" onClick={launchScan}>
-              {t("lp.cta_scan")} <ArrowRight size={14} />
+            ))}
+          </dl>
+        </section>
+
+        {/* ─── Closing CTA ─────────────────────────────────────────── */}
+        <section className="bg-primary text-white">
+          <div className="mx-auto max-w-6xl px-4 sm:px-6 py-14 sm:py-16 flex flex-col sm:flex-row sm:items-center gap-6 sm:justify-between">
+            <h2 className="text-3xl sm:text-4xl text-white max-w-[20ch]">{t("home.end_h")}</h2>
+            <button type="button" onClick={checkCrop} className="btn btn-lg bg-white text-primary-strong hover:bg-leaf w-full sm:w-auto">
+              <Camera size={22} aria-hidden="true" />
+              {t("home.cta")}
             </button>
-          </article>
-        </div>
-        <div className="lp-also">
-          <span>{t("lp.supported")}:</span>
-          {SUPPORTED_CROPS.map(([slug, emoji]) => (
-            <span key={slug} className="lp-pill-soft"><span aria-hidden="true">{emoji}</span> {t(`crop.${slug}`)}</span>
-          ))}
-        </div>
-      </section>
+          </div>
+        </section>
+      </main>
 
-      <section className="lp-paper nt" id="lp-features">
-        <h2>{t("lp.feat_h")}</h2>
-        <div className="lp-feat">
-          {FEATURES.map(({ icon: Icon, key }) => (
-            <div key={key}>
-              <span className="lp-ico"><Icon size={22} /></span>
-              <h3>{t(`lp.${key}h`)}</h3>
-              <p>{t(`lp.${key}p`)}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="lp-story" id="lp-story">
-        <div className="lp-stick">
-          <div className="lp-cap">
-            <i id="lp-bar" />
-            <div className="lp-step"><h2>{t("lp.s1h")}</h2><p>{t("lp.s1p")}</p><small>{stepOf(1)}</small></div>
-            <div className="lp-step"><h2>{t("lp.s2h")}</h2><p>{t("lp.s2p")}</p><small>{stepOf(2)}</small></div>
-            <div className="lp-step"><h2>{t("lp.s3h")}</h2><p>{t("lp.s3p")}</p><small>{stepOf(3)}</small></div>
+      {/* ─── Footer ──────────────────────────────────────────────── */}
+      <footer className="bg-canvas">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 py-12 grid gap-8 md:grid-cols-[1.4fr_1fr]">
+          <div>
+            <p className="font-display text-xl font-semibold">{t("app.name")}</p>
+            <p className="mt-2 text-[15px] text-muted max-w-[40ch]">{t("home.foot_tagline")}</p>
+            <p className="mt-4 text-[15px] text-ink">
+              {t("support.issue")}{" "}
+              <a
+                href={`mailto:${SUPPORT_EMAIL}?subject=AgriGuard%20website%20issue`}
+                className="inline-flex items-center min-h-[44px] text-primary underline underline-offset-2 hover:text-primary-strong [overflow-wrap:anywhere]"
+              >
+                {SUPPORT_EMAIL}
+              </a>
+            </p>
+          </div>
+          <div className="flex flex-wrap items-start gap-2 md:justify-end">
+            {langToggle}
+            <button type="button" onClick={checkCrop} className="btn-ghost px-3 text-[15px]">{t("home.cta")}</button>
           </div>
         </div>
-      </section>
-
-      <section className="lp-paper">
-        <h2>{t("lp.hon_h")}</h2>
-        <p className="lp-lead">{t("lp.hon_p")}</p>
-        <div className="lp-nums">
-          {[["1", "lp.n1"], ["3", "lp.n2"], ["0", "lp.n3"], ["2", "lp.n4"]].map(([n, k]) => (
-            <div key={k}><b>{n}</b><span>{t(k)}</span></div>
-          ))}
+        <div className="border-t border-line">
+          <p className="mx-auto max-w-6xl px-4 sm:px-6 py-6 text-[15px] text-muted leading-relaxed"><span className="block max-w-3xl">
+            {t("scan.footer_disclaimer")}
+          </span></p>
         </div>
-      </section>
-
-      <section className="lp-paper nt" id="lp-checks">
-        <h2>{t("lp.chk_h")}</h2>
-        <div className="lp-rail" tabIndex={0} aria-label={t("lp.chk_h")}>
-          {[1, 2, 3, 4].map((i) => (
-            <div className="lp-tile" key={i}>
-              <div><h3>{t(`lp.c${i}h`)}</h3><p>{t(`lp.c${i}p`)}</p></div>
-            </div>
-          ))}
-          <div className="lp-tile soon">
-            <span className="lp-tag">{t("lp.soon")}</span>
-            <div><h3>{t("lp.c5h")}</h3><p>{t("lp.c5p")}</p></div>
-          </div>
-        </div>
-      </section>
-
-      <section className="lp-paper nt" id="lp-faq">
-        <h2>{t("lp.faq_h")}</h2>
-        <div className="lp-faq">
-          {[1, 2, 3, 4].map((i) => (
-            <details key={i}><summary>{t(`lp.q${i}`)}</summary><p>{t(`lp.a${i}`)}</p></details>
-          ))}
-        </div>
-      </section>
-
-      <section className="lp-cta">
-        <h2>{t("lp.end_h")}</h2>
-        <div className="lp-row" style={{ marginTop: 34 }}>
-          <button className="lp-btn fill" onClick={launchScan}>
-            <Camera size={18} /> {t("lp.cta_scan")}
-          </button>
-          <button className="lp-btn" onClick={exploreTelemetry}>
-            <Activity size={18} /> {t("lp.cta_tel")}
-          </button>
-        </div>
-      </section>
-
-      <footer className="lp-foot">
-        <p>{t("scan.footer_disclaimer")}</p>
-        <p style={{ marginTop: 10 }}>
-          {t("support.issue")}{" "}
-          <a href="mailto:lohithgamer12@gmail.com?subject=AgriGuard%20website%20issue" style={{ color: "#5eead4", textDecoration: "underline" }}>lohithgamer12@gmail.com</a>
-        </p>
       </footer>
 
-      {/* ─── Interactive Auth Modal (Log In & Sign Up) ─────────────────────────── */}
-      {authModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-md flex items-center justify-center p-4 animate-fadeIn">
-          <div className="glass rounded-3xl p-6 sm:p-7 border border-emerald-500/30 max-w-sm w-full space-y-5 shadow-2xl relative bg-[#1D2030]">
-            {/* Close Button */}
-            <button
-              onClick={() => setAuthModalOpen(false)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-white p-1 rounded-lg bg-white/5 hover:bg-white/10 transition"
-              title="Close modal"
-            >
-              <X size={18} />
-            </button>
-
-            {/* Modal Title & Toggle Tabs */}
-            <div className="text-center pt-1">
-              <div className="w-12 h-12 rounded-2xl overflow-hidden border border-emerald-500/40 p-0.5 bg-black/40 mx-auto mb-2 shadow-lg">
-                <img src="/agriguard_logo_4k.png" alt="AgriGuard" className="w-full h-full object-cover rounded-xl" />
-              </div>
-              <h3 className="text-lg font-extrabold text-white">
-                {authMode === "login" ? "Welcome Back to AgriGuard" : "Create Farmer Account"}
-              </h3>
-              <p className="text-xs text-gray-400 mt-0.5">
-                {authMode === "login" ? "Access your diagnostic history and crop radar" : "Start monitoring your fields with AI"}
-              </p>
-            </div>
-
-            {/* Tabs */}
-            <div className="grid grid-cols-2 gap-1 p-1 rounded-xl bg-black/50 border border-white/10">
-              <button
-                type="button"
-                onClick={() => { setAuthMode("login"); setAuthError(""); }}
-                className={`py-1.5 text-xs font-bold rounded-lg transition-all ${
-                  authMode === "login"
-                    ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 shadow-sm"
-                    : "text-gray-400 hover:text-white"
-                }`}
-              >
-                Log In
-              </button>
-              <button
-                type="button"
-                onClick={() => { setAuthMode("register"); setAuthError(""); }}
-                className={`py-1.5 text-xs font-bold rounded-lg transition-all ${
-                  authMode === "register"
-                    ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 shadow-sm"
-                    : "text-gray-400 hover:text-white"
-                }`}
-              >
-                Sign Up
-              </button>
-            </div>
-
-            {/* Error Banner */}
-            {authError && (
-              <div className="p-3 rounded-xl bg-rose-950/60 border border-rose-600/50 text-xs text-rose-200 leading-relaxed">
-                {authError}
-              </div>
-            )}
-
-            {/* Continue with Google */}
-            <button
-              type="button"
-              onClick={handleGoogle}
-              disabled={googleLoading || authLoading}
-              className="w-full flex items-center justify-center gap-2.5 py-2.5 rounded-xl bg-white text-[#1f1f1f] text-xs font-semibold border border-white/20 hover:bg-gray-100 transition-all disabled:opacity-60"
-            >
-              <svg width="16" height="16" viewBox="0 0 48 48" aria-hidden="true">
-                <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/>
-                <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/>
-                <path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/>
-                <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/>
-              </svg>
-              {googleLoading ? "Opening Google..." : "Continue with Google"}
-            </button>
-
-            <div className="flex items-center gap-3 text-[11px] text-gray-500">
-              <span className="flex-1 h-px bg-white/10" />
-              or use email
-              <span className="flex-1 h-px bg-white/10" />
-            </div>
-
-            {/* Form */}
-            <form onSubmit={handleAuthSubmit} className="space-y-3.5">
-              {authMode === "register" && (
-                <>
-                  <div className="space-y-1">
-                    <label className="text-xs font-medium text-gray-300">{t("auth.full_name")}</label>
-                    <input
-                      type="text"
-                      required
-                      value={authName}
-                      onChange={(e) => setAuthName(e.target.value)}
-                      placeholder="e.g. Ramesh Kumar"
-                      className="w-full bg-black/40 border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500/50"
-                    />
-                  </div>
-
-                  <div className="space-y-1.5 pt-1">
-                    <label className="text-xs font-semibold text-gray-200">I am using AgriGuard as:</label>
-                    <div className="grid grid-cols-2 gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setSelectedPersona("student_gardener")}
-                        className={`p-2.5 rounded-xl border text-left transition-all ${
-                          selectedPersona === "student_gardener"
-                            ? "border-emerald-500 bg-emerald-500/15 text-white shadow-sm ring-1 ring-emerald-500"
-                            : "border-white/10 bg-black/40 text-gray-400 hover:border-white/20"
-                        }`}
-                      >
-                        <span className="text-base block mb-0.5">🪴</span>
-                        <strong className="text-[11px] block text-white leading-tight">Student / Home</strong>
-                        <span className="text-[9px] text-gray-400 block leading-tight mt-0.5">Pots, Balcony & Learning</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => setSelectedPersona("farmer")}
-                        className={`p-2.5 rounded-xl border text-left transition-all ${
-                          selectedPersona === "farmer"
-                            ? "border-emerald-500 bg-emerald-500/15 text-white shadow-sm ring-1 ring-emerald-500"
-                            : "border-white/10 bg-black/40 text-gray-400 hover:border-white/20"
-                        }`}
-                      >
-                        <span className="text-base block mb-0.5">🚜</span>
-                        <strong className="text-[11px] block text-white leading-tight">Farmer</strong>
-                        <span className="text-[9px] text-gray-400 block leading-tight mt-0.5">Farmland & Field Acreage</span>
-                      </button>
-                    </div>
-                  </div>
-                </>
-              )}
-
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-gray-300">{t("auth.email")}</label>
-                <input
-                  type="email"
-                  required
-                  value={authEmail}
-                  onChange={(e) => setAuthEmail(e.target.value)}
-                  placeholder="farmer@example.com"
-                  className="w-full bg-black/40 border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500/50"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-gray-300">{t("auth.password")}</label>
-                <div className="relative">
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    required
-                    minLength={6}
-                    value={authPassword}
-                    onChange={(e) => setAuthPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="w-full bg-black/40 border border-white/10 rounded-xl px-3.5 py-2.5 pr-10 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500/50"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
-                  >
-                    {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
-                  </button>
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                disabled={authLoading}
-                className="w-full py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white text-xs font-bold hover:scale-[1.01] transition-all shadow-lg shadow-emerald-500/20 disabled:opacity-50 mt-2"
-              >
-                {authLoading ? "Processing..." : authMode === "login" ? "Sign In to AgriGuard" : "Create Your Account"}
-              </button>
-            </form>
-
-            {/* Anonymous quick access */}
-            <div className="pt-2 border-t border-white/10 text-center">
-              <p className="text-[11px] text-gray-500">
-                Or jump directly to{" "}
-                <Link href="/scan" className="text-gray-300 hover:text-emerald-400 underline" onClick={() => setAuthModalOpen(false)}>
-                  Anonymous Leaf Scanner
-                </Link>
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
+      <AuthModal open={authOpen} mode={authMode} onModeChange={setAuthMode} onClose={closeAuth} next={authNext} />
     </div>
   );
 }
