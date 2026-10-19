@@ -36,26 +36,17 @@
 6. **🌱 Real-Time IoT Field Telemetry:**
    - ESP32 hardware firmware with capacitive soil moisture sensor and DHT22.
    - Realistic Python simulator (`scripts/fake_sensor.py`) providing day/night telemetry curves.
-7. **💻 Laptop-as-Server & Remote Access (No 24/7 Cloud Required):**
-   - Run AgriGuard directly on your laptop as the host server.
-   - Built-in zero-config Cloudflare tunnel (`cloudflared`) allows friends and judges on any phone or desktop to access AgriGuard anywhere in the world without being on the same Wi-Fi network.
+7. **☁️ Cloud Deployed (Vercel + Supabase):**
+   - Live at **[agriguard.vercel.app](https://agriguard.vercel.app)**, so anyone can use it on mobile or PC with no install.
 8. **👥 Multi-Tenant Accounts & Isolated Storage:**
    - Anyone can create their own account (Name, Email, Password) directly in the app.
-   - Separate accounts, private scan histories, and isolated image storage saved locally on the laptop:
-     - User Database: `backend/agriguard.db`
-     - Isolated Photos: `backend/uploads/users/<username>/`
+   - Each user gets a private scan history, with authentication and image storage handled by Supabase.
 
 ---
 
-## ⚡ Quick 1-Click Launch (Laptop Host & Remote Sharing)
+## 🌐 Try It Live
 
-Double-click **`Start_AgriGuard_Server.bat`** or run **`AgriGuard.exe`** on your laptop.
-It automatically:
-1. Starts the FastAPI backend (port `8001`)
-2. Starts the Next.js frontend (port `3000`)
-3. Launches a secure Cloudflare HTTPS tunnel
-4. Saves your public link to `ONLINE_URL.txt` (e.g., `https://xxxx.trycloudflare.com`)
-5. You can send this link to anyone on mobile or PC to use the app with separate accounts and separate data!
+👉 **[agriguard.vercel.app](https://agriguard.vercel.app)**: open it on your phone, create an account, and scan a leaf.
 
 ---
 
