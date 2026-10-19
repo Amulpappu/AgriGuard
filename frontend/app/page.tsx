@@ -15,14 +15,13 @@ import StatNumber from "@/components/landing/StatNumber";
 const STEPS = [1, 2, 3] as const;
 const FEATURES = ["f1", "f2", "f3"] as const;
 
-// ─── PLACEHOLDER STATS: edit these numbers before launch ─────────────────────
-// They render with a visible "sample figures" note (locale key home.stats_note).
-// Remove that note in the Stats section below once the numbers are real.
-const STATS: { value: number; suffix?: string; label: string }[] = [
-  { value: 12500, suffix: "+", label: "home.stat1" }, // PLACEHOLDER
-  { value: 3200, suffix: "+", label: "home.stat2" },  // PLACEHOLDER
-  { value: 14, label: "home.stat3" },                 // current AI model: 14 crops
-  { value: 40, label: "home.stat4" },                 // PLACEHOLDER
+// ─── Facts strip: only true statements about the product ────────────────────
+// `count` animates with CountUp; facts without a number show `big` as text.
+const FACTS: { count?: number; big?: string; label: string }[] = [
+  { count: 14, label: "home.fact_crops" },
+  { count: 2, label: "home.fact_langs" },
+  { big: "home.fact_alerts_big", label: "home.fact_alerts" },
+  { big: "home.fact_fast_big", label: "home.fact_fast" },
 ];
 
 const SUPPORT_EMAIL = "lohithgamer12@gmail.com";
@@ -43,7 +42,8 @@ export default function LandingPage() {
     setAuthOpen(true);
   }
 
-  const checkCrop = () => (isLoggedIn ? router.push("/scan") : openAuth("login", "/scan"));
+  // Anyone can check a leaf; guests are asked to sign in only to save the result.
+  const checkCrop = () => router.push("/scan");
   const langToggle = (
     <button
       type="button"
@@ -167,21 +167,20 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* ─── Stats (placeholder numbers, see STATS above) ────────── */}
+        {/* ─── Facts ──────────────────────────────────────────────── */}
         <section className="mx-auto max-w-6xl px-4 sm:px-6 py-16 sm:py-20">
-          <h2 className="text-3xl sm:text-4xl">{t("home.stats_h")}</h2>
-          {/* Remove this note once the STATS numbers are real */}
-          <p className="mt-4 inline-flex rounded-lg bg-accent-soft border border-accent/60 px-3 py-2 text-[15px] font-medium text-ink">
-            {t("home.stats_note")}
-          </p>
-          <dl className="mt-10 grid grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-10 border-t border-line pt-10">
-            {STATS.map((s) => (
-              <div key={s.label}>
-                <dt className="sr-only">{t(s.label)}</dt>
-                <dd className="font-display text-4xl sm:text-5xl font-semibold text-primary-strong leading-none">
-                  <StatNumber value={s.value} suffix={s.suffix} />
+          <h2 className="text-3xl sm:text-4xl">{t("home.facts_h")}</h2>
+          <dl className="mt-10 grid sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-8 border-t border-line pt-10">
+            {FACTS.map((f) => (
+              <div key={f.label} className="flex flex-col-reverse">
+                <dt className="mt-2 text-[16px] text-ink">{t(f.label)}</dt>
+                <dd className="font-display font-semibold text-primary-strong leading-none">
+                  {f.count !== undefined ? (
+                    <span className="text-5xl"><StatNumber value={f.count} /></span>
+                  ) : (
+                    <span className="text-3xl sm:text-[2.1rem] leading-tight">{t(f.big!)}</span>
+                  )}
                 </dd>
-                <dd className="mt-2 text-[15px] text-muted" aria-hidden="true">{t(s.label)}</dd>
               </div>
             ))}
           </dl>
