@@ -355,6 +355,12 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+
+      {/* Support contact */}
+      <p className="text-center text-xs text-gray-400 pt-2 pb-4">
+        {t("support.issue")}{" "}
+        <a href="mailto:lohithgamer12@gmail.com?subject=AgriGuard%20website%20issue" className="text-emerald-400 hover:text-emerald-300 underline">lohithgamer12@gmail.com</a>
+      </p>
     </div>
   );
 }

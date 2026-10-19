@@ -185,7 +185,8 @@
     "potato_common_scab": "Common Scab",
     "potato_blackleg": "Blackleg / Soft Rot",
     "potato_pink_rot": "Pink Rot",
-    "potato_black_scurf": "Black Scurf"
+    "potato_black_scurf": "Black Scurf",
+    "tomato_bacterial_spot": "Bacterial Spot"
   },
   "persona": {
     "farmer_title": "Farmer / Commercial Grower",
@@ -438,5 +439,8 @@
     "f3p": "Every screen and voice read-out in English and Tamil, switchable in one tap.",
     "f4h": "Live field telemetry",
     "f4p": "Soil moisture, temperature, humidity and a DSV disease-risk index beside your scans."
+  },
+  "support": {
+    "issue": "Facing any issue with the website? Email us at"
   }
 }

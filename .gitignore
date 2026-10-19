@@ -76,3 +76,9 @@ AgriGuard-redesigned/
 .DS_Store
 Thumbs.db
 .claude/
+
+# Google OAuth client files (never commit)
+client_secret*.json
+*client_secret*.json
+*oauth*client*.json
+google-oauth*.json
