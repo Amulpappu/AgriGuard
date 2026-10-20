@@ -6,9 +6,10 @@ import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import { useCachedQuery } from "@/lib/useCachedQuery";
 import { supabase } from "@/lib/supabase";
+import { buildDailyMessage } from "@/lib/whatsappMessage";
 import { 
   Wifi, WifiOff, Droplets, Thermometer, Wind, Info, Activity, RefreshCw, 
-  ShieldAlert, Cable, Terminal, AlertCircle, CheckCircle2 
+  ShieldAlert, Cable, Terminal, AlertCircle, CheckCircle2, MessageCircle 
 } from "lucide-react";
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
@@ -57,7 +58,7 @@ function ReadingCard({
 }
 
 export default function FieldPage() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const { userId, email } = useAuth();
 
   // USB Data Cable Live Web Serial State
@@ -74,6 +75,10 @@ export default function FieldPage() {
     humidity: number;
     recorded_at: string;
   } | null>(null);
+  // WhatsApp daily reading (Twilio sandbox send + wa.me share, no SIM module)
+  const [waPhone, setWaPhone] = useState("");
+  const [waBusy, setWaBusy] = useState(false);
+  const [waMsg, setWaMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const portRef = useRef<any>(null);
 
   // Live telemetry: cached reading scoped by user, refreshed every 15s in the background.
@@ -199,6 +204,35 @@ export default function FieldPage() {
     setUsbConnected(false);
   }
 
+  async function sendWhatsApp() {
+    setWaBusy(true);
+    setWaMsg(null);
+    try {
+      const res = await fetch("/api/whatsapp/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ to: waPhone, lang: lang === "ta" ? "ta" : "en" }),
+      });
+      const j = await res.json().catch(() => ({}));
+      setWaMsg(res.ok ? { ok: true, text: t("field.wa_sent") } : { ok: false, text: j?.detail || "Failed" });
+    } catch {
+      setWaMsg({ ok: false, text: "Network error" });
+    } finally {
+      setWaBusy(false);
+    }
+  }
+
+  function shareWhatsApp() {
+    if (!live || live.soil_moisture == null || live.temp_c == null || live.humidity == null) {
+      setWaMsg({ ok: false, text: t("field.wa_no_data") });
+      return;
+    }
+    const text = buildDailyMessage(
+      { soil_moisture: live.soil_moisture, temp_c: live.temp_c, humidity: live.humidity },
+      lang === "ta" ? "ta" : "en");
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener");
+  }
+
   // Format series for chart
   const seriesChartData = (activeData.series || []).map((s) => ({
     time: new Date(s.recorded_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
@@ -310,6 +344,49 @@ export default function FieldPage() {
               ))
             )}
           </div>
+        )}
+      </div>
+
+      {/* WhatsApp daily reading */}
+      <div className="glass rounded-2xl p-4 sm:p-5 border border-line space-y-3">
+        <div className="flex items-start gap-3">
+          <div className="w-11 h-11 rounded-2xl flex items-center justify-center bg-surface text-primary-strong border border-line flex-shrink-0">
+            <MessageCircle size={22} />
+          </div>
+          <div>
+            <h3 className="text-sm font-bold text-ink tracking-tight">{t("field.wa_title")}</h3>
+            <p className="text-xs text-muted mt-0.5">{t("field.wa_hint")}</p>
+          </div>
+        </div>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <input
+            type="tel"
+            inputMode="tel"
+            value={waPhone}
+            onChange={(e) => setWaPhone(e.target.value)}
+            placeholder={t("field.wa_phone")}
+            aria-label={t("field.wa_phone")}
+            className="flex-1 px-3 py-2.5 rounded-xl border border-line bg-surface text-sm text-ink"
+          />
+          <button
+            type="button"
+            onClick={sendWhatsApp}
+            disabled={waBusy || waPhone.replace(/\D/g, "").length < 10}
+            className="px-4 py-2.5 rounded-xl bg-primary hover:bg-primary-strong text-white font-bold text-xs shadow-lg transition-all active:scale-95 disabled:opacity-50"
+          >
+            {waBusy ? t("field.wa_sending") : t("field.wa_send")}
+          </button>
+          <button
+            type="button"
+            onClick={shareWhatsApp}
+            className="px-4 py-2.5 rounded-xl bg-surface hover:bg-ink/5 text-ink font-bold text-xs border border-line transition-all"
+          >
+            {t("field.wa_share")}
+          </button>
+        </div>
+        <p className="text-[11px] text-muted">{t("field.wa_sandbox")}</p>
+        {waMsg && (
+          <p className={`text-xs font-semibold ${waMsg.ok ? "text-primary-strong" : "text-danger"}`}>{waMsg.text}</p>
         )}
       </div>
 

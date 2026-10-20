@@ -341,7 +341,16 @@
     "humidity": "Humidity",
     "last_updated": "Last updated",
     "no_device": "No sensor device connected.",
-    "context_hint": "Environmental Context"
+    "context_hint": "Environmental Context",
+    "wa_title": "Daily reading on WhatsApp",
+    "wa_hint": "Get today's soil, temperature and humidity on WhatsApp. No SIM module needed.",
+    "wa_phone": "WhatsApp number",
+    "wa_send": "Send to my WhatsApp",
+    "wa_sending": "Sending...",
+    "wa_share": "Share on WhatsApp",
+    "wa_sent": "Sent. Check your WhatsApp.",
+    "wa_no_data": "No sensor reading yet. Connect the ESP32 first.",
+    "wa_sandbox": "First time: send \"join <code>\" to the Twilio WhatsApp number once, then press Send."
   },
   "severity": {
     "none": "None",
