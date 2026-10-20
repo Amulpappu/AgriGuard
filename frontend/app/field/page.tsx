@@ -228,7 +228,7 @@ export default function FieldPage() {
       return;
     }
     const text = buildDailyMessage(
-      { soil_moisture: live.soil_moisture, temp_c: live.temp_c, humidity: live.humidity },
+      { soil_moisture: live.soil_moisture, temp_c: live.temp_c, humidity: live.humidity, recorded_at: live.recorded_at },
       lang === "ta" ? "ta" : "en");
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener");
   }

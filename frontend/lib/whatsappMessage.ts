@@ -1,4 +1,4 @@
-export type ReadingLike = { soil_moisture: number; temp_c: number; humidity: number };
+export type ReadingLike = { soil_moisture: number; temp_c: number; humidity: number; recorded_at?: string | null };
 export type MsgLang = "en" | "ta";
 
 /** One plain-text daily reading for WhatsApp. Shared by the server route and the share button. */
@@ -35,8 +35,20 @@ export function buildDailyMessage(r: ReadingLike, lang: MsgLang = "en"): string 
       ? { s: "மண் ஈரம்", t: "வெப்பநிலை", h: "ஈரப்பதம்" }
       : { s: "Soil moisture", t: "Temperature", h: "Humidity" };
 
+  // Flag a reading older than 30 minutes so an offline sensor is never passed off as live.
+  let stale = "";
+  const ts = r.recorded_at ? new Date(r.recorded_at).getTime() : NaN;
+  if (Number.isFinite(ts) && Date.now() - ts > 30 * 60 * 1000) {
+    const hrs = Math.max(1, Math.round((Date.now() - ts) / 3_600_000));
+    stale =
+      lang === "ta"
+        ? `எச்சரிக்கை: கடைசி சென்சார் தரவு ${hrs} மணி நேரத்திற்கு முன்னது. சென்சார் offline ஆக இருக்கலாம்.`
+        : `Note: last sensor reading was about ${hrs} h ago. The sensor may be offline.`;
+  }
+
   return [
     `*${head}*`,
+    ...(stale ? [stale] : []),
     `${labels.s}: ${soil}%`,
     `${labels.t}: ${temp} C`,
     `${labels.h}: ${hum}%`,
