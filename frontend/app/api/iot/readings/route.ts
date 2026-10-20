@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { createHash, randomUUID } from "crypto";
+import { createHash } from "crypto";
 
 // ESP32 -> cloud. The board POSTs JSON over HTTPS with an X-Device-Key header.
 // The key is checked against devices.key_hash (sha256) and the reading is stored
@@ -50,13 +50,15 @@ export async function POST(req: NextRequest) {
   }
 
   const { error } = await admin.from("sensor_readings").insert({
-    id: randomUUID(),
     device_id: device.id,
     soil_moisture: soil,
     temp_c: temp,
     humidity: hum,
   });
-  if (error) return NextResponse.json({ detail: "Could not save reading" }, { status: 500 });
+  if (error) {
+    console.error("iot insert failed:", error.message);
+    return NextResponse.json({ detail: "Could not save reading", reason: error.message }, { status: 500 });
+  }
 
   return NextResponse.json({ ok: true }, { status: 201 });
 }
