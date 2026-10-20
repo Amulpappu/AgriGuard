@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { buildDailyMessage, normalisePhone } from "@/lib/whatsappMessage";
-import { latestReading, sendWhatsApp, twilioConfigured } from "@/lib/twilioWhatsapp";
+import { deliver, latestReading, whatsappConfigured } from "@/lib/twilioWhatsapp";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
   if (!secret || req.headers.get("authorization") !== `Bearer ${secret}`) {
     return NextResponse.json({ detail: "Unauthorized" }, { status: 401 });
   }
-  if (!twilioConfigured()) return NextResponse.json({ detail: "Twilio not configured" }, { status: 503 });
+  if (!whatsappConfigured()) return NextResponse.json({ detail: "WhatsApp not configured" }, { status: 503 });
 
   const numbers = (process.env.WHATSAPP_DAILY_TO || "")
     .split(",")
@@ -24,6 +24,6 @@ export async function GET(req: NextRequest) {
   if (!reading) return NextResponse.json({ detail: "No sensor reading yet" }, { status: 404 });
 
   const text = buildDailyMessage(reading, process.env.WHATSAPP_DAILY_LANG === "ta" ? "ta" : "en");
-  const results = await Promise.all(numbers.map((n) => sendWhatsApp(n, text)));
+  const results = await Promise.all(numbers.map((n) => deliver(n, text)));
   return NextResponse.json({ sent: results.filter((r) => r.ok).length, total: numbers.length });
 }

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { buildDailyMessage, normalisePhone } from "@/lib/whatsappMessage";
-import { latestReading, sendWhatsApp, twilioConfigured } from "@/lib/twilioWhatsapp";
+import { deliver, latestReading, whatsappConfigured } from "@/lib/twilioWhatsapp";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 const lastSent = new Map<string, number>();
 
 export async function POST(req: NextRequest) {
-  if (!twilioConfigured()) {
+  if (!whatsappConfigured()) {
     return NextResponse.json({ detail: "WhatsApp sending is not set up yet" }, { status: 503 });
   }
   let body: any;
@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
   const reading = await latestReading();
   if (!reading) return NextResponse.json({ detail: "No sensor reading yet" }, { status: 404 });
 
-  const r = await sendWhatsApp(to, buildDailyMessage(reading, body?.lang === "ta" ? "ta" : "en"));
+  const r = await deliver(to, buildDailyMessage(reading, body?.lang === "ta" ? "ta" : "en"));
   if (!r.ok) {
     return NextResponse.json(
       { detail: r.message || "WhatsApp send failed", hint: "Join the Twilio sandbox from this number first" },

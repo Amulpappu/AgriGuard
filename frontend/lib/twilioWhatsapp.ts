@@ -44,3 +44,30 @@ export async function latestReading() {
     .maybeSingle();
   return data;
 }
+
+/** Free CallMeBot route: only reaches the number that activated the key. */
+export function callmebotConfigured() {
+  return Boolean(process.env.CALLMEBOT_APIKEY && process.env.CALLMEBOT_PHONE);
+}
+
+export async function sendCallMeBot(body: string) {
+  const url =
+    "https://api.callmebot.com/whatsapp.php?" +
+    new URLSearchParams({
+      phone: process.env.CALLMEBOT_PHONE as string,
+      text: body,
+      apikey: process.env.CALLMEBOT_APIKEY as string,
+    }).toString();
+  const res = await fetch(url);
+  const text = await res.text().catch(() => "");
+  return { ok: res.ok, status: res.status, message: res.ok ? undefined : text.slice(0, 200) };
+}
+
+export function whatsappConfigured() {
+  return callmebotConfigured() || twilioConfigured();
+}
+
+/** CallMeBot first (free, no template), Twilio as the fallback. */
+export async function deliver(toE164: string, body: string) {
+  return callmebotConfigured() ? sendCallMeBot(body) : sendWhatsApp(toE164, body);
+}
