@@ -90,10 +90,6 @@ export default function FieldPage() {
   const recordedDate = live?.recorded_at ? new Date(live.recorded_at) : null;
   const recordedTs = recordedDate ? recordedDate.getTime() : null;
   const isStale = !usbConnected && recordedTs != null && !isNaN(recordedTs) && Date.now() - recordedTs > 30 * 60 * 1000;
-  // Wi-Fi node: newest saved reading came from a non-USB device within the last 2 minutes.
-  const wifiLive = !usbConnected && !!data?.latest && !String(data.latest.device_id || "").startsWith("ESP32-USB") &&
-    Date.now() - new Date(data.latest.recorded_at).getTime() < 2 * 60 * 1000;
-  const [showUsb, setShowUsb] = useState(false);
   const timeAgo = usbConnected ? "just now (USB Live)" : (live?.recorded_at ? formatTimeAgo(live.recorded_at) : null);
 
   // Disease Severity Value (DSV) risk derived from the current microclimate reading.
@@ -234,7 +230,7 @@ export default function FieldPage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className={`w-11 h-11 rounded-2xl flex items-center justify-center transition-all ${
-              usbConnected || wifiLive
+              usbConnected
                 ? "bg-primary text-white shadow-lg animate-pulse"
                 : "bg-surface text-muted border border-line"
             }`}>
@@ -242,33 +238,23 @@ export default function FieldPage() {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="text-sm font-bold text-ink tracking-tight">{usbConnected ? "ESP32 Data Cable Direct Stream" : "ESP32 Wi-Fi Live Stream"}</h3>
+                <h3 className="text-sm font-bold text-ink tracking-tight">ESP32 Data Cable Direct Stream</h3>
                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                  usbConnected || wifiLive
+                  usbConnected
                     ? "bg-leaf text-primary-strong border border-primary/40"
                     : "bg-surface text-muted"
                 }`}>
-                  {usbConnected ? "🟢 USB Connected & Streaming" : wifiLive ? "🟢 Wi-Fi Connected & Streaming" : "Waiting for ESP32 (Wi-Fi)"}
+                  {usbConnected ? "🟢 USB Connected & Streaming" : "USB Ready"}
                 </span>
               </div>
               <p className="text-xs text-muted mt-0.5">
-                {usbConnected
-                  ? "Streaming live DHT & soil data from your ESP32 over the USB cable."
-                  : "Power your ESP32 from any USB charger. It joins your Wi-Fi and sends DHT & soil readings here every few seconds. No cable or laptop needed."}
+                Plug your ESP32 into this laptop via USB cable and stream real-time DHT & Soil data straight into AgriGuard.
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-2 self-start sm:self-center">
-            {!usbConnected && !showUsb ? (
-              <button
-                type="button"
-                onClick={() => setShowUsb(true)}
-                className="px-3 py-2 rounded-xl bg-surface hover:bg-ink/5 text-muted text-[11px] font-semibold border border-line transition-all"
-              >
-                Use USB cable instead
-              </button>
-            ) : usbConnected ? (
+            {usbConnected ? (
               <button
                 type="button"
                 onClick={disconnectUSB}
