@@ -341,16 +341,7 @@
     "humidity": "Humidity",
     "last_updated": "Last updated",
     "no_device": "No sensor device connected.",
-    "context_hint": "Environmental Context",
-    "wa_title": "Daily reading on WhatsApp",
-    "wa_hint": "Get today's soil, temperature and humidity on WhatsApp. No SIM module needed.",
-    "wa_phone": "WhatsApp number",
-    "wa_send": "Send to my WhatsApp",
-    "wa_sending": "Sending...",
-    "wa_share": "Share on WhatsApp",
-    "wa_sent": "Sent. Check your WhatsApp.",
-    "wa_no_data": "No sensor reading yet. Connect the ESP32 first.",
-    "wa_sandbox": "First time: send \"join <code>\" to the Twilio WhatsApp number once, then press Send."
+    "context_hint": "Environmental Context"
   },
   "severity": {
     "none": "None",
@@ -496,7 +487,7 @@
     "feat_h": "What AgriGuard does",
     "f1_h": "Disease detection",
     "f1_p": "Screens leaf photos for common diseases across 14 crops, with a confidence level on every result.",
-    "f2_h": "WhatsApp & SMS field alerts",
+    "f2_h": "SMS field alerts",
     "f2_p": "Field sensors send an alert to the land owner's phone when conditions turn risky. No app is needed to receive it.",
     "f3_h": "Sensor monitoring",
     "f3_p": "ESP32 sensors track soil moisture, temperature and humidity, so you can spot disease-friendly weather early.",
@@ -506,7 +497,7 @@
     "facts_h": "AgriGuard at a glance",
     "fact_crops": "crops supported",
     "fact_langs": "languages: English, தமிழ்",
-    "fact_alerts_big": "WhatsApp + SMS",
+    "fact_alerts_big": "SMS",
     "fact_alerts": "field alerts to the land owner",
     "fact_fast_big": "In seconds",
     "fact_fast": "results from one leaf photo"
