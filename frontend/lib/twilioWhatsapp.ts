@@ -8,13 +8,23 @@ export async function sendWhatsApp(toE164: string, body: string) {
   const sid = process.env.TWILIO_ACCOUNT_SID as string;
   const token = process.env.TWILIO_AUTH_TOKEN as string;
   const from = process.env.TWILIO_WHATSAPP_FROM || "whatsapp:+14155238886"; // Twilio sandbox number
+  // Newer Twilio accounts require a Content Template (ContentSid). Template variables
+  // cannot hold line breaks, so the reading is joined on one line in that mode.
+  const contentSid = process.env.TWILIO_CONTENT_SID;
+  const params = new URLSearchParams({ From: from, To: `whatsapp:${toE164}` });
+  if (contentSid) {
+    params.set("ContentSid", contentSid);
+    params.set("ContentVariables", JSON.stringify({ "1": body.replace(/\s*\n+\s*/g, " | ") }));
+  } else {
+    params.set("Body", body);
+  }
   const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
     method: "POST",
     headers: {
       Authorization: "Basic " + Buffer.from(`${sid}:${token}`).toString("base64"),
       "Content-Type": "application/x-www-form-urlencoded",
     },
-    body: new URLSearchParams({ From: from, To: `whatsapp:${toE164}`, Body: body }),
+    body: params,
   });
   const json: any = await res.json().catch(() => ({}));
   return { ok: res.ok, status: res.status, message: json?.message as string | undefined };
